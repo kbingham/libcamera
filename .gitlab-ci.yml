@@ -1,0 +1,18 @@
+image: alpine:edge
+
+build:
+  stage: build
+  before_script:
+    - apk add --no-cache gcc g++ musl-dev meson py3-yaml py3-sphinx linux-headers pkgconfig eudev eudev-dev
+  script:
+    - mkdir libcamera && cd libcamera && meson -Dv4l2=true .. && ninja
+    - ninja Documentation/linkcheck
+    # We can't run the tests on gitlab currently: - ninja test
+    - DESTDIR=$PWD/package ninja install
+  artifacts:
+    expire_in: 6 hrs
+    paths:
+      - libcamera/Documentation/*
+      - libcamera/src/libcamera/libcamera.so
+      - libcamera/meson-logs/testlog.txt
+      - libcamera/package/*
