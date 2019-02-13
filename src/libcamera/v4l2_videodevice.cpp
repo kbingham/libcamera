@@ -352,6 +352,9 @@ int V4L2VideoDevice::open()
 
 	multiPlanar_ = V4L2_TYPE_IS_MULTIPLANAR(bufferType_);
 
+	LOG(V4L2, Debug)
+		<< "Using " << (multiPlanar_ ? "Multiplanar" : "SinglePlanar");
+
 	fdEvent_->activated.connect(this, &V4L2VideoDevice::bufferAvailable);
 	fdEvent_->setEnabled(false);
 
@@ -439,6 +442,9 @@ int V4L2VideoDevice::open(int handle, enum v4l2_buf_type type)
 	}
 
 	multiPlanar_ = V4L2_TYPE_IS_MULTIPLANAR(bufferType_);
+
+	LOG(V4L2, Debug)
+		<< "Using " << (multiPlanar_ ? "Multiplanar" : "SinglePlanar");
 
 	fdEvent_->activated.connect(this, &V4L2VideoDevice::bufferAvailable);
 	fdEvent_->setEnabled(false);
@@ -997,6 +1003,10 @@ int V4L2VideoDevice::queueBuffer(Buffer *buffer)
 	buf.memory = memoryType_;
 	buf.field = V4L2_FIELD_NONE;
 
+	LOG(V4L2, Debug)
+		<< "Queue Buffer Using "
+		<< (multiPlanar_? "Multiplanar" : "SinglePlanar");
+
 	BufferMemory *mem = &bufferPool_->buffers()[buf.index];
 	const std::vector<Plane> &planes = mem->planes();
 
@@ -1114,6 +1124,10 @@ Buffer *V4L2VideoDevice::dequeueBuffer()
 
 	buf.type = bufferType_;
 	buf.memory = memoryType_;
+
+	LOG(V4L2, Debug)
+		<< "DeQueue Buffer Using " << (multiPlanar_
+				? "Multiplanar" : "SinglePlanar");
 
 	if (multiPlanar_) {
 		buf.length = VIDEO_MAX_PLANES;
