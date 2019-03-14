@@ -146,10 +146,9 @@ run_command('ln', '-fsT', meson.source_root(),
 configure_file(output : 'config.h', configuration : config_h)
 
 pkg_mod = import('pkgconfig')
-pkg_mod.generate(libraries : libcamera,
+pkg_mod.generate(libcamera,
                  version : '1.0',
                  name : 'libcamera',
-                 filebase : 'camera',
                  description : 'Complex Camera Support Library',
                  subdirs : 'libcamera')
 
