@@ -350,6 +350,8 @@ int V4L2VideoDevice::open()
 		return -EINVAL;
 	}
 
+	multiPlanar_ = V4L2_TYPE_IS_MULTIPLANAR(bufferType_);
+
 	fdEvent_->activated.connect(this, &V4L2VideoDevice::bufferAvailable);
 	fdEvent_->setEnabled(false);
 
@@ -435,6 +437,8 @@ int V4L2VideoDevice::open(int handle, enum v4l2_buf_type type)
 		LOG(V4L2, Error) << "Unsupported buffer type";
 		return -EINVAL;
 	}
+
+	multiPlanar_ = V4L2_TYPE_IS_MULTIPLANAR(bufferType_);
 
 	fdEvent_->activated.connect(this, &V4L2VideoDevice::bufferAvailable);
 	fdEvent_->setEnabled(false);
@@ -870,7 +874,7 @@ int V4L2VideoDevice::exportBuffers(BufferPool *pool)
 			break;
 		}
 
-		if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+		if (multiPlanar_) {
 			for (unsigned int p = 0; p < buf.length; ++p) {
 				ret = createPlane(&buffer, i, p,
 						  buf.m.planes[p].length);
@@ -993,12 +997,11 @@ int V4L2VideoDevice::queueBuffer(Buffer *buffer)
 	buf.memory = memoryType_;
 	buf.field = V4L2_FIELD_NONE;
 
-	bool multiPlanar = V4L2_TYPE_IS_MULTIPLANAR(buf.type);
 	BufferMemory *mem = &bufferPool_->buffers()[buf.index];
 	const std::vector<Plane> &planes = mem->planes();
 
 	if (buf.memory == V4L2_MEMORY_DMABUF) {
-		if (multiPlanar) {
+		if (multiPlanar_) {
 			for (unsigned int p = 0; p < planes.size(); ++p)
 				v4l2Planes[p].m.fd = planes[p].dmabuf();
 		} else {
@@ -1006,7 +1009,7 @@ int V4L2VideoDevice::queueBuffer(Buffer *buffer)
 		}
 	}
 
-	if (multiPlanar) {
+	if (multiPlanar_) {
 		buf.length = planes.size();
 		buf.m.planes = v4l2Planes;
 	}
@@ -1099,7 +1102,7 @@ Buffer *V4L2VideoDevice::dequeueBuffer()
 	buf.type = bufferType_;
 	buf.memory = memoryType_;
 
-	if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+	if (multiPlanar_) {
 		buf.length = VIDEO_MAX_PLANES;
 		buf.m.planes = planes;
 	}
