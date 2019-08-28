@@ -182,6 +182,7 @@ private:
 
 	enum v4l2_buf_type bufferType_;
 	enum v4l2_memory memoryType_;
+	bool multiPlanar_;
 
 	BufferPool *bufferPool_;
 	std::map<unsigned int, Buffer *> queuedBuffers_;
