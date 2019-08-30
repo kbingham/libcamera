@@ -152,6 +152,9 @@ PipelineHandlerRPi::generateConfiguration(Camera *camera,
 
 	LOG(RPI, Debug) << "Sensor Resolution is: " << data->sensor_->resolution().toString();
 
+	cfg.size = { 320, 240 };
+	LOG(RPI, Debug) << "Default resolution reduced for debug to : " << cfg.size.toString();
+
 	cfg.bufferCount = 4;
 
 	config->addConfiguration(cfg);
