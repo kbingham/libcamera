@@ -1015,7 +1015,20 @@ int V4L2VideoDevice::queueBuffer(Buffer *buffer)
 	}
 
 	if (V4L2_TYPE_IS_OUTPUT(bufferType_)) {
-		buf.bytesused = buffer->bytesused_;
+		if (multiPlanar_) {
+			/*
+			 * V4L2 "should" set the planes bytesused fields for us,
+			 * but let's be good citizens and do it ourselves to
+			 * prevent ambiguity.
+			 */
+			for (unsigned int p = 0; p < planes.size(); ++p) {
+				v4l2Planes[p].length = planes[p].length();
+				v4l2Planes[p].bytesused = planes[p].length();
+			}
+		} else {
+			buf.bytesused = buffer->bytesused_;
+		}
+
 		buf.sequence = buffer->sequence_;
 		buf.timestamp.tv_sec = buffer->timestamp_ / 1000000000;
 		buf.timestamp.tv_usec = (buffer->timestamp_ / 1000) % 1000000;
