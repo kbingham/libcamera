@@ -1125,12 +1125,19 @@ Buffer *V4L2VideoDevice::dequeueBuffer()
 		fdEvent_->setEnabled(false);
 
 	buffer->index_ = buf.index;
-	buffer->bytesused_ = buf.bytesused;
 	buffer->timestamp_ = buf.timestamp.tv_sec * 1000000000ULL
 			   + buf.timestamp.tv_usec * 1000ULL;
 	buffer->sequence_ = buf.sequence;
 	buffer->status_ = buf.flags & V4L2_BUF_FLAG_ERROR
 			? Buffer::BufferError : Buffer::BufferSuccess;
+
+	if (multiPlanar_) {
+		buffer->bytesused_ = 0;
+		for (unsigned int p = 0; p < buf.length; ++p)
+			buffer->bytesused_ += planes[p].bytesused;
+	} else {
+		buffer->bytesused_ = buf.bytesused;
+	}
 
 	return buffer;
 }
