@@ -407,6 +407,12 @@ bool PipelineHandlerRPi::match(DeviceEnumerator *enumerator)
 			data->sensor_ = new CameraSensor(entity);
 			break;
 		}
+
+		if (entity->function() == MEDIA_ENT_F_VID_IF_BRIDGE) {
+			LOG(RPI, Error) << entity->name() << " is a BRIDGE";
+			data->sensor_ = new CameraSensor(entity);
+			break;
+		}
 	}
 
 	if (!data->sensor_)

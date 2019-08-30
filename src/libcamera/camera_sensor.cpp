@@ -82,7 +82,7 @@ int CameraSensor::init()
 		LOG(CameraSensor, Error)
 			<< "Invalid sensor function "
 			<< utils::hex(entity_->function());
-		return -EINVAL;
+	//	return -EINVAL;
 	}
 
 	ret = subdev_->open();
