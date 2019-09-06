@@ -78,7 +78,8 @@ private:
 			return;
 		}
 
-		const uint8_t cmd = message.data[0];
+		int cmd;
+		message.data >> cmd;
 
 		switch (cmd) {
 		case CMD_CLOSE:
@@ -86,8 +87,18 @@ private:
 			break;
 
 		case CMD_REVERSE: {
-			response.data = message.data;
-			std::reverse(response.data.begin() + 1, response.data.end());
+			/*
+			 * Expect to receive a vector of bytes.
+			 * The length is serialised as part of the vector.
+			 */
+			std::vector<uint8_t> array;
+			message.data >> array;
+
+			/* Rotate the bytes */
+			std::reverse(array.begin(), array.end());
+
+			/* And send them back. */
+			response.data << array;
 
 			ret = ipc_.send(response);
 			if (ret < 0) {
@@ -102,9 +113,7 @@ private:
 			for (int fd : message.fds)
 				size += calculateLength(fd);
 
-			response.data.resize(1 + sizeof(size));
-			response.data[0] = cmd;
-			memcpy(response.data.data() + 1, &size, sizeof(size));
+			response.data << size;
 
 			ret = ipc_.send(response);
 			if (ret < 0) {
@@ -120,7 +129,7 @@ private:
 				size += calculateLength(fd);
 
 			int cmp;
-			memcpy(&cmp, message.data.data() + 1, sizeof(cmp));
+			message.data >> cmp;
 
 			if (cmp != size) {
 				cerr << "Compare failed" << endl;
@@ -161,7 +170,7 @@ private:
 			}
 
 			lseek(outfd, 0, 0);
-			response.data.push_back(CMD_JOIN);
+			response.data << CMD_JOIN;
 			response.fds.push_back(outfd);
 
 			ret = ipc_.send(response);
@@ -237,15 +246,25 @@ protected:
 		IPCUnixSocket::Payload message, response;
 		int ret;
 
-		message.data = { CMD_REVERSE, 1, 2, 3, 4, 5 };
+		int cmd = CMD_REVERSE;
+		std::vector<uint8_t> array = { 1, 2, 3, 4, 5 };
+		std::vector<uint8_t> recv_array;
+
+		message.data << cmd;
+		message.data << array;
 
 		ret = call(message, &response);
 		if (ret)
 			return ret;
 
-		std::reverse(response.data.begin() + 1, response.data.end());
-		if (message.data != response.data)
+		response.data >> recv_array;
+
+		std::reverse(array.begin(), array.end());
+
+		if (array != recv_array) {
+			std::cout << "Failed to receive a reversed array" << std::endl;
 			return TestFail;
+		}
 
 		return 0;
 	}
@@ -266,13 +285,13 @@ protected:
 		if (sizeOut < 0)
 			return sizeOut;
 
-		message.data.push_back(CMD_LEN_CALC);
+		message.data << CMD_LEN_CALC;
 
 		ret = call(message, &response);
 		if (ret)
 			return ret;
 
-		memcpy(&sizeIn, response.data.data() + 1, sizeof(sizeIn));
+		response.data >> sizeIn;
 		if (sizeOut != sizeIn)
 			return TestFail;
 
@@ -288,9 +307,8 @@ protected:
 		if (size < 0)
 			return size;
 
-		message.data.resize(1 + sizeof(size));
-		message.data[0] = CMD_LEN_CMP;
-		memcpy(message.data.data() + 1, &size, sizeof(size));
+		message.data << CMD_LEN_CMP;
+		message.data << size;
 
 		if (ipc_.send(message))
 			return TestFail;
@@ -325,7 +343,7 @@ protected:
 			message.fds.push_back(fds[i]);
 		}
 
-		message.data.push_back(CMD_JOIN);
+		message.data << CMD_JOIN;
 
 		ret = call(message, &response);
 		if (ret)
@@ -400,7 +418,7 @@ protected:
 
 		/* Close slave connection. */
 		IPCUnixSocket::Payload close;
-		close.data.push_back(CMD_CLOSE);
+		close.data << CMD_CLOSE;
 		if (ipc_.send(close)) {
 			cerr << "Closing IPC channel failed" << endl;
 			return TestFail;

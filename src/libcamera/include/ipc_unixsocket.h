@@ -13,6 +13,7 @@
 #include <vector>
 
 #include <libcamera/event_notifier.h>
+#include <libcamera/ipa/serialisation.h>
 
 namespace libcamera {
 
@@ -20,7 +21,7 @@ class IPCUnixSocket
 {
 public:
 	struct Payload {
-		std::vector<uint8_t> data;
+		Bytestream data;
 		std::vector<int32_t> fds;
 	};
 
