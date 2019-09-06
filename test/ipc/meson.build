@@ -1,5 +1,6 @@
 ipc_tests = [
-    [ 'unixsocket',  'unixsocket.cpp' ],
+    [ 'vectorserial',   'vectorserial.cpp'],
+    [ 'unixsocket',     'unixsocket.cpp' ],
 ]
 
 foreach t : ipc_tests
