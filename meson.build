@@ -5,6 +5,9 @@ project('libcamera', 'c', 'cpp',
         'werror=true',
         'warning_level=2',
         'cpp_std=c++11',
+        'b_sanitize=address,undefined',
+        #'b_sanitize=thread',
+        #'b_sanitize=memory',
     ],
     license : 'LGPL 2.1+')
 
