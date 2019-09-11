@@ -234,6 +234,7 @@ int PipelineHandlerRPi::allocateBuffers(Camera *camera,
 	 *      unicam -> isp.output -> isp.capture -> Application
 	 */
 
+#if 0
 	/* Create a new intermediate buffer pool. */
 	data->bayerBuffers_.createBuffers(cfg.bufferCount);
 
@@ -245,6 +246,21 @@ int PipelineHandlerRPi::allocateBuffers(Camera *camera,
 	ret = data->isp_->output()->importBuffers(&data->bayerBuffers_);
 	if (ret)
 		return ret;
+#else
+	/* Create a new intermediate buffer pool. */
+	data->bayerBuffers_.createBuffers(cfg.bufferCount);
+
+	/* obtain buffers from the ISP output node */
+	ret = data->isp_->output()->exportBuffers(&data->bayerBuffers_);
+	if (ret)
+		return ret;
+
+	/* Give them to the Unicam */
+	ret = data->unicam_->importBuffers(&data->bayerBuffers_);
+	if (ret)
+		return ret;
+
+#endif
 
 	/* Tie the stream buffers to the capture device of the ISP. */
 	if (stream->memoryType() == InternalMemory)
