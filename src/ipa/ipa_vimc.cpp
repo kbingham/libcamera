@@ -17,6 +17,8 @@
 #include <ipa/ipa_interface.h>
 #include <ipa/ipa_module_info.h>
 
+#include "libipa/ipa_interface_wrapper.h"
+
 #include "log.h"
 
 namespace libcamera {
@@ -108,9 +110,9 @@ const struct IPAModuleInfo ipaModuleInfo = {
 	LICENSE,
 };
 
-IPAInterface *ipaCreate()
+struct ipa_context *ipaCreate()
 {
-	return new IPAVimc();
+	return new IPAInterfaceWrapper(new IPAVimc());
 }
 };
 
