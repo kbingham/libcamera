@@ -20,6 +20,8 @@
 #include "thread.h"
 #include "utils.h"
 
+#include "event_loop.h"
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPAProxyLinuxWorker)
@@ -39,6 +41,7 @@ public:
 private:
 	void readyRead(IPCUnixSocket *ipc);
 
+	EventLoop loop_;
 	IPCUnixSocket socket_;
 	std::unique_ptr<IPAModule> module_;
 	struct ipa_context *context_;
@@ -81,12 +84,7 @@ Worker::~Worker()
 
 int Worker::exec()
 {
-	/* \todo upgrade listening loop */
-	EventDispatcher *dispatcher = Thread::current()->eventDispatcher();
-	while (1)
-		dispatcher->processEvents();
-
-	return 0;
+	return loop_.exec();
 }
 
 void Worker::readyRead(IPCUnixSocket *ipc)
