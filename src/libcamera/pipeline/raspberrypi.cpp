@@ -165,6 +165,7 @@ int PipelineHandlerRPi::configure(Camera *camera, CameraConfiguration *config)
 {
 	RPiCameraData *data = cameraData(camera);
 	StreamConfiguration &cfg = config->at(0);
+	uint32_t unicam_fourcc;
 	int ret;
 
 	Size sensorSize = { 1920, 1080 };
@@ -172,7 +173,6 @@ int PipelineHandlerRPi::configure(Camera *camera, CameraConfiguration *config)
 
 	V4L2DeviceFormat format = {};
 	format.size = sensorSize;
-	format.fourcc = V4L2_PIX_FMT_SRGGB10P;
 
 	LOG(RPI, Debug) << "Setting format to " << format.toString();
 
@@ -180,8 +180,7 @@ int PipelineHandlerRPi::configure(Camera *camera, CameraConfiguration *config)
 	if (ret)
 		return ret;
 
-	if (format.size != sensorSize ||
-	    format.fourcc != V4L2_PIX_FMT_SRGGB10P) {
+	if (format.size != sensorSize) {
 		LOG(RPI, Error)
 			<< "Failed to set format on Video device: "
 			<< format.toString();
@@ -189,11 +188,12 @@ int PipelineHandlerRPi::configure(Camera *camera, CameraConfiguration *config)
 	}
 
 	format.size = outputSize;
+	unicam_fourcc = format.fourcc;
 
 	ret = data->isp_->output()->setFormat(&format);
 
 	if (format.size != outputSize ||
-	    format.fourcc != V4L2_PIX_FMT_SRGGB10P) {
+	    format.fourcc != unicam_fourcc) {
 		LOG(RPI, Error) << "Failed to set format on ISP output device: "
 				<< format.toString();
 		return -EINVAL;
