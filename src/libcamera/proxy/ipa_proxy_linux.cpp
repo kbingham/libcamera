@@ -20,11 +20,13 @@ namespace libcamera {
 
 LOG_DECLARE_CATEGORY(IPAProxy)
 
-class IPAProxyLinux : public IPAProxy
+namespace IPAProxyLinux {
+
+class Proxy : public IPAProxy
 {
 public:
-	IPAProxyLinux(IPAModule *ipam);
-	~IPAProxyLinux();
+	Proxy(IPAModule *ipam);
+	~Proxy();
 
 	int init() override { return 0; }
 	void configure(const std::map<unsigned int, IPAStream> &streamConfig,
@@ -41,7 +43,7 @@ private:
 	IPCUnixSocket *socket_;
 };
 
-IPAProxyLinux::IPAProxyLinux(IPAModule *ipam)
+Proxy::Proxy(IPAModule *ipam)
 	: proc_(nullptr), socket_(nullptr)
 {
 	LOG(IPAProxy, Debug)
@@ -65,7 +67,7 @@ IPAProxyLinux::IPAProxyLinux(IPAModule *ipam)
 			<< "Failed to create socket";
 		return;
 	}
-	socket_->readyRead.connect(this, &IPAProxyLinux::readyRead);
+	socket_->readyRead.connect(this, &Proxy::readyRead);
 	args.push_back(std::to_string(fd));
 	fds.push_back(fd);
 
@@ -80,16 +82,18 @@ IPAProxyLinux::IPAProxyLinux(IPAModule *ipam)
 	valid_ = true;
 }
 
-IPAProxyLinux::~IPAProxyLinux()
+Proxy::~Proxy()
 {
 	delete proc_;
 	delete socket_;
 }
 
-void IPAProxyLinux::readyRead(IPCUnixSocket *ipc)
+void Proxy::readyRead(IPCUnixSocket *ipc)
 {
 }
 
-REGISTER_IPA_PROXY(IPAProxyLinux)
+REGISTER_IPA_PROXY(Proxy)
 
-}; /* namespace libcamera */
+} /* namespace IPAProxyLinux */
+
+} /* namespace libcamera */
