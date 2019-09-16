@@ -21,6 +21,7 @@
 #include "utils.h"
 
 #include "event_loop.h"
+#include "../ipa_proxy_linux_protocol.h"
 
 namespace libcamera {
 
@@ -99,7 +100,23 @@ void Worker::readyRead(IPCUnixSocket *ipc)
 		return;
 	}
 
-	LOG(IPAProxyLinuxWorker, Debug) << "Received a message!";
+	Message *msg;
+	if (payload.data.size() < sizeof(*msg)) {
+		LOG(IPAProxyLinuxWorker, Error)
+			<< "Received message too short";
+		return;
+	}
+
+	msg = reinterpret_cast<Message *>(payload.data.data());
+	switch (msg->type) {
+	case MessageDestroy:
+		break;
+
+	default:
+		LOG(IPAProxyLinuxWorker, Error)
+			<< "Unknown message type " << msg->type;
+		break;
+	}
 }
 
 } /* namespace IPAProxyLinux */

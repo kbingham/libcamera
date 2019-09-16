@@ -12,6 +12,7 @@ namespace libcamera {
 namespace IPAProxyLinux {
 
 enum MessageType {
+	MessageDestroy,
 };
 
 struct Message {

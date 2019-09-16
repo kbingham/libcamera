@@ -5,6 +5,7 @@
  * ipa_proxy_linux.cpp - Default Image Processing Algorithm proxy for Linux
  */
 
+#include <string.h>
 #include <vector>
 
 #include <ipa/ipa_interface.h>
@@ -15,6 +16,8 @@
 #include "ipc_unixsocket.h"
 #include "log.h"
 #include "process.h"
+
+#include "ipa_proxy_linux_protocol.h"
 
 namespace libcamera {
 
@@ -36,6 +39,7 @@ public:
 	void processEvent(const IPAOperationData &event) override {}
 
 private:
+	int sendMessage(const Message &msg);
 	void readyRead(IPCUnixSocket *ipc);
 
 	Process *proc_;
@@ -86,6 +90,16 @@ Proxy::~Proxy()
 {
 	delete proc_;
 	delete socket_;
+}
+
+int Proxy::sendMessage(const Message &msg)
+{
+	struct IPCUnixSocket::Payload payload;
+
+	payload.data.resize(sizeof(msg));
+	memcpy(payload.data.data(), &msg, sizeof(msg));
+
+	return socket_->send(payload);
 }
 
 void Proxy::readyRead(IPCUnixSocket *ipc)
