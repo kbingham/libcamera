@@ -12,6 +12,7 @@
 #include <ipa/ipa_interface.h>
 #include <libcamera/event_dispatcher.h>
 #include <libcamera/logging.h>
+#include <libcamera/object.h>
 
 #include "ipa_module.h"
 #include "ipc_unixsocket.h"
@@ -19,16 +20,81 @@
 #include "thread.h"
 #include "utils.h"
 
-using namespace libcamera;
+namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPAProxyLinuxWorker)
 
-void readyRead(IPCUnixSocket *ipc)
+namespace IPAProxyLinux {
+
+class Worker : public Object
 {
-	IPCUnixSocket::Payload message;
+public:
+	Worker(const char *module, int socket);
+	~Worker();
+
+	bool isValid() { return context_ != nullptr; }
+
+	int exec();
+
+private:
+	void readyRead(IPCUnixSocket *ipc);
+
+	IPCUnixSocket socket_;
+	std::unique_ptr<IPAModule> module_;
+	struct ipa_context *context_;
+};
+
+Worker::Worker(const char *module, int socket)
+	: context_(nullptr)
+{
+	LOG(IPAProxyLinuxWorker, Debug)
+		<< "Starting worker for IPA module '" << module
+		<< "' with IPC socket " << socket;
+
+	module_ = utils::make_unique<IPAModule>(module);
+	if (!module_->isValid() || !module_->load()) {
+		LOG(IPAProxyLinuxWorker, Error)
+			<< "IPAModule " << module << " should be valid but isn't";
+		return;
+	}
+
+	socket_.readyRead.connect(this, &Worker::readyRead);
+	if (socket_.bind(socket) < 0) {
+		LOG(IPAProxyLinuxWorker, Error) << "IPC socket binding failed";
+		return;
+	}
+
+	context_ = module_->createContext();
+	if (!context_) {
+		LOG(IPAProxyLinuxWorker, Error) << "Failed to create IPA context";
+		return;
+	}
+
+	LOG(IPAProxyLinuxWorker, Debug) << "Proxy worker successfully started";
+}
+
+Worker::~Worker()
+{
+	if (context_)
+		context_->ops->destroy(context_);
+}
+
+int Worker::exec()
+{
+	/* \todo upgrade listening loop */
+	EventDispatcher *dispatcher = Thread::current()->eventDispatcher();
+	while (1)
+		dispatcher->processEvents();
+
+	return 0;
+}
+
+void Worker::readyRead(IPCUnixSocket *ipc)
+{
+	IPCUnixSocket::Payload payload;
 	int ret;
 
-	ret = ipc->receive(&message);
+	ret = ipc->receive(&payload);
 	if (ret) {
 		LOG(IPAProxyLinuxWorker, Error)
 			<< "Receive message failed: " << ret;
@@ -37,6 +103,12 @@ void readyRead(IPCUnixSocket *ipc)
 
 	LOG(IPAProxyLinuxWorker, Debug) << "Received a message!";
 }
+
+} /* namespace IPAProxyLinux */
+
+} /* namespace libcamera */
+
+using namespace libcamera;
 
 int main(int argc, char **argv)
 {
@@ -54,38 +126,10 @@ int main(int argc, char **argv)
 	}
 
 	int fd = std::stoi(argv[2]);
-	LOG(IPAProxyLinuxWorker, Debug)
-		<< "Starting worker for IPA module " << argv[1]
-		<< " with IPC fd = " << fd;
 
-	std::unique_ptr<IPAModule> ipam = utils::make_unique<IPAModule>(argv[1]);
-	if (!ipam->isValid() || !ipam->load()) {
-		LOG(IPAProxyLinuxWorker, Error)
-			<< "IPAModule " << argv[1] << " should be valid but isn't";
+	IPAProxyLinux::Worker worker(argv[1], fd);
+	if (!worker.isValid())
 		return EXIT_FAILURE;
-	}
 
-	IPCUnixSocket socket;
-	if (socket.bind(fd) < 0) {
-		LOG(IPAProxyLinuxWorker, Error) << "IPC socket binding failed";
-		return EXIT_FAILURE;
-	}
-	socket.readyRead.connect(&readyRead);
-
-	struct ipa_context *ipac = ipam->createContext();
-	if (!ipac) {
-		LOG(IPAProxyLinuxWorker, Error) << "Failed to create IPA context";
-		return EXIT_FAILURE;
-	}
-
-	LOG(IPAProxyLinuxWorker, Debug) << "Proxy worker successfully started";
-
-	/* \todo upgrade listening loop */
-	EventDispatcher *dispatcher = Thread::current()->eventDispatcher();
-	while (1)
-		dispatcher->processEvents();
-
-	ipac->ops->destroy(ipac);
-
-	return 0;
+	return worker.exec();
 }
