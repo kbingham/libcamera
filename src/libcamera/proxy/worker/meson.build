@@ -1,15 +1,35 @@
-ipa_proxy_sources = [
-    ['ipa_proxy_linux', 'ipa_proxy_linux_worker.cpp']
+#
+# libproxy - Helper library for IPA proxy workers
+#
+lib_proxy_sources = files([
+    'event_loop.cpp',
+])
+
+libproxy = static_library('proxy', lib_proxy_sources,
+                          include_directories : libcamera_internal_includes,
+                          dependencies : libcamera_dep)
+
+#
+# Proxy workers
+#
+ipa_proxy_workers = [
+    [
+        'ipa_proxy_linux',
+        files([
+            'ipa_proxy_linux_worker.cpp',
+        ]),
+    ],
 ]
 
 proxy_install_dir = join_paths(get_option('libexecdir'), 'libcamera')
 
-foreach t : ipa_proxy_sources
-    proxy = executable(t[0], t[1],
-                       include_directories : libcamera_internal_includes,
-                       install : true,
-                       install_dir : proxy_install_dir,
-                       dependencies : libcamera_dep)
+foreach worker : ipa_proxy_workers
+    executable(worker[0], worker[1],
+               include_directories : libcamera_internal_includes,
+               link_with : libproxy,
+               install : true,
+               install_dir : proxy_install_dir,
+               dependencies : libcamera_dep)
 endforeach
 
 config_h.set('IPA_PROXY_DIR',
