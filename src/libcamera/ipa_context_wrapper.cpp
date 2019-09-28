@@ -41,6 +41,12 @@ namespace libcamera {
 IPAContextWrapper::IPAContextWrapper(struct ipa_context *context)
 	: ctx_(context)
 {
+	if (ctx_ && ctx_->ops->get_interface) {
+		intf_ = reinterpret_cast<IPAInterface *>(ctx_->ops->get_interface(ctx_));
+		intf_->queueFrameAction.connect(this, &IPAContextWrapper::queueFrameAction);
+	} else {
+		intf_ = nullptr;
+	}
 }
 
 IPAContextWrapper::~IPAContextWrapper()
@@ -51,6 +57,9 @@ IPAContextWrapper::~IPAContextWrapper()
 
 int IPAContextWrapper::init()
 {
+	if (intf_)
+		return intf_->init();
+
 	if (!ctx_)
 		return 0;
 
@@ -63,6 +72,9 @@ int IPAContextWrapper::init()
 void IPAContextWrapper::configure(const std::map<unsigned int, IPAStream> &streamConfig,
 				  const std::map<unsigned int, ControlInfoMap> &entityControls)
 {
+	if (intf_)
+		return intf_->configure(streamConfig, entityControls);
+
 	if (!ctx_)
 		return;
 
@@ -71,6 +83,9 @@ void IPAContextWrapper::configure(const std::map<unsigned int, IPAStream> &strea
 
 void IPAContextWrapper::mapBuffers(const std::vector<IPABuffer> &buffers)
 {
+	if (intf_)
+		return intf_->mapBuffers(buffers);
+
 	if (!ctx_)
 		return;
 
@@ -96,6 +111,9 @@ void IPAContextWrapper::mapBuffers(const std::vector<IPABuffer> &buffers)
 
 void IPAContextWrapper::unmapBuffers(const std::vector<unsigned int> &ids)
 {
+	if (intf_)
+		return intf_->unmapBuffers(ids);
+
 	if (!ctx_)
 		return;
 
@@ -104,10 +122,19 @@ void IPAContextWrapper::unmapBuffers(const std::vector<unsigned int> &ids)
 
 void IPAContextWrapper::processEvent(const IPAOperationData &data)
 {
+	if (intf_)
+		return intf_->processEvent(data);
+
 	if (!ctx_)
 		return;
 
 	ctx_->ops->process_event(ctx_);
+}
+
+void IPAContextWrapper::queueFrameAction(unsigned int frame,
+					 const IPAOperationData &data)
+{
+	IPAInterface::queueFrameAction.emit(frame, data);
 }
 
 void IPAContextWrapper::queue_frame_action(void *ctx, unsigned int frame)
@@ -115,7 +142,7 @@ void IPAContextWrapper::queue_frame_action(void *ctx, unsigned int frame)
 	IPAContextWrapper *_this = static_cast<IPAContextWrapper *>(ctx);
 	IPAOperationData data;
 
-	_this->queueFrameAction.emit(frame, data);
+	_this->queueFrameAction(frame, data);
 }
 
 #ifndef __DOXYGEN__

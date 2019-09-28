@@ -30,7 +30,10 @@ private:
 	static void queue_frame_action(void *ctx, unsigned int frame);
 	static const struct ipa_callback_ops callbacks_;
 
+	void queueFrameAction(unsigned int frame, const IPAOperationData &data);
+
 	struct ipa_context *ctx_;
+	IPAInterface *intf_;
 };
 
 } /* namespace libcamera */
