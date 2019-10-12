@@ -7,6 +7,49 @@
 #ifndef __LIBCAMERA_IPA_INTERFACE_H__
 #define __LIBCAMERA_IPA_INTERFACE_H__
 
+#include <stddef.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct ipa_context {
+	const struct ipa_context_ops *ops;
+};
+
+struct ipa_buffer_plane {
+	int dmabuf;
+	size_t length;
+};
+
+struct ipa_buffer {
+	unsigned int id;
+	unsigned int num_planes;
+	struct ipa_buffer_plane planes[3];
+};
+
+struct ipa_callback_ops {
+	void (*queue_frame_action)(void *cb_ctx, unsigned int frame);
+};
+
+struct ipa_context_ops {
+	void (*destroy)(struct ipa_context *ctx);
+	void (*init)(struct ipa_context *ctx);
+	void (*register_callbacks)(struct ipa_context *ctx,
+				   const struct ipa_callback_ops *callbacks,
+				   void *cb_ctx);
+	void (*configure)(struct ipa_context *ctx);
+	void (*map_buffers)(struct ipa_context *ctx,
+			    const struct ipa_buffer *buffers,
+			    size_t num_buffers);
+	void (*unmap_buffers)(struct ipa_context *ctx, const unsigned int *ids,
+			      size_t num_buffers);
+	void (*process_event)(struct ipa_context *ctx);
+};
+
+#ifdef __cplusplus
+}
+
 #include <map>
 #include <vector>
 
@@ -53,5 +96,6 @@ public:
 };
 
 } /* namespace libcamera */
+#endif
 
 #endif /* __LIBCAMERA_IPA_INTERFACE_H__ */
