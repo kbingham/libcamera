@@ -29,8 +29,7 @@ class RPiCameraData : public CameraData
 {
 public:
 	RPiCameraData(PipelineHandler *pipe)
-		: CameraData(pipe), sensor_(nullptr), unicam_(nullptr),
-		  isp_(nullptr)
+		: CameraData(pipe), sensor_(nullptr), unicam_(nullptr)
 	{
 	}
 
@@ -39,12 +38,19 @@ public:
 		bayerBuffers_.destroyBuffers();
 		delete sensor_;
 		delete unicam_;
-		delete isp_;
+
+		/* Perhaps move this to an ISP container class or struct */
+		delete isp_.output_;
+		delete isp_.capture0_;
+		delete isp_.capture1_;
+		delete isp_.stats_;
 	}
 
 	void sensorReady(Buffer *buffer);
 	void ispOutputReady(Buffer *buffer);
 	void ispCaptureReady(Buffer *buffer);
+	void ispViewFinderReady(Buffer *buffer);
+	void ispStatsReady(Buffer *buffer);
 
 	int loadIPA();
 	void queueFrameAction(unsigned int frame,
@@ -54,7 +60,14 @@ public:
 
 	CameraSensor *sensor_;
 	V4L2VideoDevice *unicam_;
-	V4L2M2MDevice *isp_;
+
+	struct {
+		V4L2VideoDevice *output_;
+		V4L2VideoDevice *capture0_;
+		V4L2VideoDevice *capture1_;
+		V4L2VideoDevice *stats_;
+	} isp_;
+
 	Stream stream_;
 
 	BufferPool bayerBuffers_;
@@ -101,7 +114,7 @@ private:
 	}
 
 	std::shared_ptr<MediaDevice> unicam_;
-	std::shared_ptr<MediaDevice> codec_;
+	std::shared_ptr<MediaDevice> isp_;
 };
 
 RPiCameraConfiguration::RPiCameraConfiguration()
@@ -132,7 +145,7 @@ CameraConfiguration::Status RPiCameraConfiguration::validate()
 }
 
 PipelineHandlerRPi::PipelineHandlerRPi(CameraManager *manager)
-	: PipelineHandler(manager), unicam_(nullptr), codec_(nullptr)
+	: PipelineHandler(manager), unicam_(nullptr), isp_(nullptr)
 {
 }
 
@@ -141,8 +154,8 @@ PipelineHandlerRPi::~PipelineHandlerRPi()
 	if (unicam_)
 		unicam_->release();
 
-	if (codec_)
-		codec_->release();
+	if (isp_)
+		isp_->release();
 }
 
 CameraConfiguration *
@@ -199,7 +212,7 @@ int PipelineHandlerRPi::configure(Camera *camera, CameraConfiguration *config)
 	format.size = outputSize;
 	unicam_fourcc = format.fourcc;
 
-	ret = data->isp_->output()->setFormat(&format);
+	ret = data->isp_.output_->setFormat(&format);
 	if (ret)
 		return ret;
 
@@ -214,7 +227,7 @@ int PipelineHandlerRPi::configure(Camera *camera, CameraConfiguration *config)
 	format.size = cfg.size;
 	format.fourcc = cfg.pixelFormat;
 
-	ret = data->isp_->capture()->setFormat(&format);
+	ret = data->isp_.capture0_->setFormat(&format);
 
 	if (format.size != cfg.size ||
 	    format.fourcc != cfg.pixelFormat) {
@@ -238,8 +251,9 @@ int PipelineHandlerRPi::allocateBuffers(Camera *camera,
 	int ret;
 
 	/*
-	 * Buffers are allocated on the camera, and the capture pad of the ISP:
-	 *      unicam -> isp.output -> isp.capture -> Application
+	 * unicam -> isp.output |-> isp.capture0 -> Application
+	 *			|-> isp.capture1 -> (VF Not enabled, loopback)
+	 *			|-> isp.stats -> Internal IPA use only
 	 */
 
 	/* Create a new intermediate buffer pool. */
@@ -250,15 +264,15 @@ int PipelineHandlerRPi::allocateBuffers(Camera *camera,
 	if (ret)
 		return ret;
 
-	ret = data->isp_->output()->importBuffers(&data->bayerBuffers_);
+	ret = data->isp_.output_->importBuffers(&data->bayerBuffers_);
 	if (ret)
 		return ret;
 
 	/* Tie the stream buffers to the capture device of the ISP. */
 	if (stream->memoryType() == InternalMemory)
-		ret = data->isp_->capture()->exportBuffers(&stream->bufferPool());
+		ret = data->isp_.capture0_->exportBuffers(&stream->bufferPool());
 	else
-		ret = data->isp_->capture()->importBuffers(&stream->bufferPool());
+		ret = data->isp_.capture0_->importBuffers(&stream->bufferPool());
 
 	return ret;
 }
@@ -273,11 +287,11 @@ int PipelineHandlerRPi::freeBuffers(Camera *camera,
 	if (ret)
 		return ret;
 
-	ret = data->isp_->output()->releaseBuffers();
+	ret = data->isp_.output_->releaseBuffers();
 	if (ret)
 		return ret;
 
-	ret = data->isp_->capture()->releaseBuffers();
+	ret = data->isp_.capture0_->releaseBuffers();
 	if (ret)
 		return ret;
 
@@ -309,11 +323,11 @@ int PipelineHandlerRPi::start(Camera *camera)
 		return ret;
 	}
 
-	ret = data->isp_->output()->streamOn();
+	ret = data->isp_.output_->streamOn();
 	if (ret)
 		return ret;
 
-	ret = data->isp_->capture()->streamOn();
+	ret = data->isp_.capture0_->streamOn();
 	if (ret)
 		goto output_streamoff;
 
@@ -324,9 +338,9 @@ int PipelineHandlerRPi::start(Camera *camera)
 	return 0;
 
 capture_streamoff:
-	data->isp_->capture()->streamOff();
+	data->isp_.capture0_->streamOff();
 output_streamoff:
-	data->isp_->output()->streamOff();
+	data->isp_.output_->streamOff();
 
 	return ret;
 }
@@ -335,8 +349,8 @@ void PipelineHandlerRPi::stop(Camera *camera)
 {
 	RPiCameraData *data = cameraData(camera);
 
-	data->isp_->capture()->streamOff();
-	data->isp_->output()->streamOff();
+	data->isp_.capture0_->streamOff();
+	data->isp_.output_->streamOff();
 	data->unicam_->streamOff();
 
 	data->rawBuffers_.clear();
@@ -354,7 +368,7 @@ int PipelineHandlerRPi::queueRequest(Camera *camera, Request *request)
 		return -ENOENT;
 	}
 
-	int ret = data->isp_->capture()->queueBuffer(buffer);
+	int ret = data->isp_.capture0_->queueBuffer(buffer);
 	if (ret < 0)
 		return ret;
 
@@ -366,24 +380,26 @@ int PipelineHandlerRPi::queueRequest(Camera *camera, Request *request)
 bool PipelineHandlerRPi::match(DeviceEnumerator *enumerator)
 {
 	DeviceMatch unicam("unicam");
-	DeviceMatch codec("bcm2835-codec");
+	DeviceMatch isp("bcm2835-isp");
 
 	/* The video node is also named unicam. */
 	unicam.add("unicam");
 
-	/* We explicitly need the ISP device from the MMAL codec driver. */
-	codec.add("bcm2835-codec-isp-source");
+	isp.add("bcm2835-isp0-output0");
+	isp.add("bcm2835-isp0-capture1"); /* Full */
+	isp.add("bcm2835-isp0-capture2"); /* ViewFinder */
+	isp.add("bcm2835-isp0-capture3"); /* Stats */
 
 	unicam_ = enumerator->search(unicam);
 	if (!unicam_)
 		return false;
 
-	codec_ = enumerator->search(codec);
-	if (!codec_)
+	isp_ = enumerator->search(isp);
+	if (!isp_)
 		return false;
 
 	unicam_->acquire();
-	codec_->acquire();
+	isp_->acquire();
 
 	std::unique_ptr<RPiCameraData> data = utils::make_unique<RPiCameraData>(this);
 
@@ -392,22 +408,29 @@ bool PipelineHandlerRPi::match(DeviceEnumerator *enumerator)
 	if (data->unicam_->open())
 		return false;
 
-	/* Locate the ISP M2M node */
-	MediaEntity *isp = codec_->getEntityByName("bcm2835-codec-isp-source");
-	if (!isp) {
-		LOG(RPI, Error) << "Could not identify the ISP";
+	/* Open the ISP video nodes. */
+	data->isp_.output_ = new V4L2VideoDevice(isp_->getEntityByName("bcm2835-isp0-output0"));
+	if (data->isp_.output_->open())
 		return false;
-	}
 
-	data->isp_ = new V4L2M2MDevice(isp->deviceNode());
-	if (data->isp_->open()) {
-		LOG(RPI, Error) << "Could not open the ISP device";
+	data->isp_.capture0_ = new V4L2VideoDevice(isp_->getEntityByName("bcm2835-isp0-capture1"));
+	if (data->isp_.capture0_->open())
 		return false;
-	}
 
+	data->isp_.capture1_ = new V4L2VideoDevice(isp_->getEntityByName("bcm2835-isp0-capture2"));
+	if (data->isp_.capture1_->open())
+		return false;
+
+	data->isp_.stats_ = new V4L2VideoDevice(isp_->getEntityByName("bcm2835-isp0-capture3"));
+	if (data->isp_.stats_->open())
+		return false;
+
+	/* Wire up all the buffer connections */
 	data->unicam_->bufferReady.connect(data.get(), &RPiCameraData::sensorReady);
-	data->isp_->output()->bufferReady.connect(data.get(), &RPiCameraData::ispOutputReady);
-	data->isp_->capture()->bufferReady.connect(data.get(), &RPiCameraData::ispCaptureReady);
+	data->isp_.output_->bufferReady.connect(data.get(), &RPiCameraData::ispOutputReady);
+	data->isp_.capture0_->bufferReady.connect(data.get(), &RPiCameraData::ispCaptureReady);
+	data->isp_.capture1_->bufferReady.connect(data.get(), &RPiCameraData::ispViewFinderReady);
+	data->isp_.stats_->bufferReady.connect(data.get(), &RPiCameraData::ispStatsReady);
 
 	/* Identify the sensor */
 	for (MediaEntity *entity : unicam_->entities()) {
@@ -444,7 +467,7 @@ void RPiCameraData::sensorReady(Buffer *buffer)
 		return;
 
 	/* Deliver the frame from the sensor to the ISP. */
-	isp_->output()->queueBuffer(buffer);
+	isp_.output_->queueBuffer(buffer);
 }
 
 void RPiCameraData::ispOutputReady(Buffer *buffer)
@@ -463,6 +486,18 @@ void RPiCameraData::ispCaptureReady(Buffer *buffer)
 
 	pipe_->completeBuffer(camera_, request, buffer);
 	pipe_->completeRequest(camera_, request);
+}
+
+void RPiCameraData::ispViewFinderReady(Buffer *buffer)
+{
+	/* Simply requeue buffer for now */
+	isp_.capture1_->queueBuffer(buffer);
+}
+
+void RPiCameraData::ispStatsReady(Buffer *buffer)
+{
+	/* Simply requeue buffer for now */
+	isp_.stats_->queueBuffer(buffer);
 }
 
 int RPiCameraData::loadIPA()
