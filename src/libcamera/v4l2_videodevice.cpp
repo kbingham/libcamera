@@ -273,7 +273,7 @@ const std::string V4L2DeviceFormat::toString() const
  */
 V4L2VideoDevice::V4L2VideoDevice(const std::string &deviceNode)
 	: V4L2Device(deviceNode), multiPlanar_(false), bufferPool_(nullptr),
-	  fdEvent_(nullptr)
+	  fdEvent_(nullptr), streaming_(false)
 {
 	/*
 	 * We default to an MMAP based CAPTURE video device, however this will
@@ -1197,6 +1197,8 @@ int V4L2VideoDevice::streamOn()
 		return ret;
 	}
 
+	streaming_ = true;
+
 	return 0;
 }
 
@@ -1213,6 +1215,9 @@ int V4L2VideoDevice::streamOn()
 int V4L2VideoDevice::streamOff()
 {
 	int ret;
+
+	if (!streaming_)
+		return 0;
 
 	ret = ioctl(VIDIOC_STREAMOFF, &bufferType_);
 	if (ret < 0) {
@@ -1233,6 +1238,8 @@ int V4L2VideoDevice::streamOff()
 
 	queuedBuffers_.clear();
 	fdEvent_->setEnabled(false);
+
+	streaming_ = false;
 
 	return 0;
 }

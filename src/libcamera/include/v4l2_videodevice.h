@@ -188,6 +188,8 @@ private:
 	std::map<unsigned int, Buffer *> queuedBuffers_;
 
 	EventNotifier *fdEvent_;
+
+	bool streaming_;
 };
 
 class V4L2M2MDevice
