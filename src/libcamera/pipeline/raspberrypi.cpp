@@ -5,12 +5,15 @@
  * raspberrypi.cpp - Pipeline handler for Raspberry Pi devices
  */
 
+#include <ipa/raspberrypi.h>
+
 #include <libcamera/camera.h>
 #include <libcamera/request.h>
 #include <libcamera/stream.h>
 
 #include "camera_sensor.h"
 #include "device_enumerator.h"
+#include "ipa_manager.h"
 #include "log.h"
 #include "media_device.h"
 #include "pipeline_handler.h"
@@ -42,6 +45,12 @@ public:
 	void sensorReady(Buffer *buffer);
 	void ispOutputReady(Buffer *buffer);
 	void ispCaptureReady(Buffer *buffer);
+
+	int loadIPA();
+	void queueFrameAction(unsigned int frame,
+			      const IPAOperationData &action);
+
+	void metadataReady(unsigned int frame, const ControlList &metadata);
 
 	CameraSensor *sensor_;
 	V4L2VideoDevice *unicam_;
@@ -414,6 +423,11 @@ bool PipelineHandlerRPi::match(DeviceEnumerator *enumerator)
 	if (data->sensor_->init())
 		return false;
 
+	if (data->loadIPA()) {
+		LOG(RPI, Error) << "Failed to load a suitable IPA library";
+		return false;
+	}
+
 	/* Create and register the camera. */
 	std::set<Stream *> streams{ &data->stream_ };
 	std::shared_ptr<Camera> camera =
@@ -449,6 +463,66 @@ void RPiCameraData::ispCaptureReady(Buffer *buffer)
 
 	pipe_->completeBuffer(camera_, request, buffer);
 	pipe_->completeRequest(camera_, request);
+}
+
+int RPiCameraData::loadIPA()
+{
+	ipa_ = IPAManager::instance()->createIPA(pipe_, 1, 1);
+	if (!ipa_)
+		return -ENOENT;
+
+	ipa_->queueFrameAction.connect(this,
+				       &RPiCameraData::queueFrameAction);
+
+	return 0;
+}
+
+void RPiCameraData::queueFrameAction(unsigned int frame,
+				     const IPAOperationData &action)
+{
+	switch (action.operation) {
+	case RPI_IPA_ACTION_V4L2_SET: {
+#if 0 // disabled cargo-cult from RkISP1
+		const ControlList &controls = action.controls[0];
+		timeline_.scheduleAction(utils::make_unique<RkISP1ActionSetSensor>(frame,
+										   sensor_,
+										   controls));
+#endif
+		break;
+	}
+	case RPI_IPA_ACTION_PARAM_FILLED: {
+#if 0 // disabled cargo-cult from RkISP1
+		RPIFrameInfo *info = frameInfo_.find(frame);
+		if (info)
+			info->paramFilled = true;
+#endif
+		break;
+	}
+	case RPI_IPA_ACTION_METADATA:
+		metadataReady(frame, action.controls[0]);
+		break;
+	default:
+		LOG(RPI, Error) << "Unknown action " << action.operation;
+		break;
+	}
+}
+
+void RPiCameraData::metadataReady(unsigned int frame, const ControlList &metadata)
+{
+	LOG(RPI, Debug) << "Received some MetaData, but nothing I can do yet..";
+
+#if 0 // disabled cargo-cult from RkISP1
+	PipelineHandlerRPi *pipe = static_cast<PipelineHandlerRPi *>(pipe_);
+
+	RkISP1FrameInfo *info = frameInfo_.find(frame);
+	if (!info)
+		return;
+
+	info->request->metadata() = metadata;
+	info->metadataProcessed = true;
+
+	pipe->tryCompleteRequest(info->request);
+#endif
 }
 
 REGISTER_PIPELINE_HANDLER(PipelineHandlerRPi);
