@@ -102,6 +102,18 @@ IPAManager::IPAManager()
 	if (ret > 0)
 		ipaCount += ret;
 
+	/*
+	 * Append the current binary directory to the MODULE_PATH to find IPA's
+	 * when running from the build directory.
+	 */
+	std::string rpi_ipa_path = utils::dirname(utils::readlink("/proc/self/exe"));
+	rpi_ipa_path += "/../ipa/rpi";
+	LOG(IPAManager, Warning) << "Extra search path: " << rpi_ipa_path;
+
+	ret = addDir(rpi_ipa_path.c_str());
+	if (ret > 0)
+		ipaCount += ret;
+
 	const char *modulePaths = utils::secure_getenv("LIBCAMERA_IPA_MODULE_PATH");
 	if (!modulePaths) {
 		if (!ipaCount)
