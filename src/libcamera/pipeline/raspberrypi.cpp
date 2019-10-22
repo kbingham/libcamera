@@ -191,7 +191,18 @@ int PipelineHandlerRPi::configure(Camera *camera, CameraConfiguration *config)
 	int ret;
 
 	Size sensorSize = { 1920, 1080 };
-	Size outputSize = { 1920, 1088 };
+	/*
+	 * Output size failed when it was set to 1088, should ISP accept this,
+	 * (even though, 1080 is what we actually want)? It depends on who
+	 * allocates the buffers I guess...
+	 *
+	 * Who ever has a bigger size should allocate the buffers...
+	 * All that said, this was a work around for the codec-isp for a bug
+	 * which is fixed, so we need to rework this anyway. The only exception
+	 * is we need to work out how to configure the FoV by using different
+	 * sizes available on the sensor to produce different sizes at the end..
+	 */
+	Size outputSize = { 1920, 1080 };
 
 	V4L2DeviceFormat format = {};
 	format.size = sensorSize;
