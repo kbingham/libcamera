@@ -13,6 +13,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <linux/limits.h>
+
 /**
  * \file utils.h
  * \brief Miscellaneous utility functions
@@ -68,6 +70,26 @@ char *secure_getenv(const char *name)
 
 	return getenv(name);
 #endif
+}
+
+/**
+ * \brief Read a symlink into a std::string
+ * \param[in] path The path of the symlink to read
+ *
+ * \returns A string showing the contents of the link, or an empty string on
+ * error
+ */
+std::string readlink(const char *path)
+{
+	char buffer[PATH_MAX];
+
+	ssize_t len = ::readlink(path, buffer, sizeof(buffer) - 1);
+	if (len != -1) {
+		buffer[len] = '\0';
+		return std::string(buffer);
+	}
+
+	return "";
 }
 
 /**
