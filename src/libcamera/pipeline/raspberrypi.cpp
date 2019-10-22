@@ -21,6 +21,9 @@
 #include "v4l2_controls.h"
 #include "v4l2_videodevice.h"
 
+/* RPi Definition, not yet in UAPI */
+#define V4L2_META_FMT_STATS v4l2_fourcc('S', 'T', 'A', 'T')
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(RPI)
@@ -70,8 +73,17 @@ public:
 
 	Stream stream_;
 
+	/* Sensor Capture buffers */
 	BufferPool bayerBuffers_;
 	std::vector<std::unique_ptr<Buffer>> rawBuffers_;
+
+	/* View-finder buffers */
+	BufferPool vfPool_;
+	std::vector<std::unique_ptr<Buffer>> vfBuffers_;
+
+	/* ISP statistics buffers */
+	BufferPool statsPool_;
+	std::vector<std::unique_ptr<Buffer>> statsBuffers_;
 };
 
 class RPiCameraConfiguration : public CameraConfiguration
@@ -250,6 +262,35 @@ int PipelineHandlerRPi::configure(Camera *camera, CameraConfiguration *config)
 
 	cfg.setStream(&data->stream_);
 
+	/* Configure the ViewFinder ISP stream. */
+
+	/* We must configure the viewfinder ISP channel even though we don't
+	 * yet support multiple streams.
+	 */
+
+	/* Fixed (small) viewfinder stream for small buffers initially */
+	format.size = { 320, 240 };
+	format.fourcc = cfg.pixelFormat;
+
+	ret = data->isp_.capture1_->setFormat(&format);
+	if (ret) {
+		LOG(RPI, Error)
+			<< "Failed to set format on viewfinder ISP: "
+			<< format.toString();
+		return ret;
+	}
+
+	/* Configure the Stats buffer format */
+	format.fourcc = V4L2_META_FMT_STATS;
+
+	ret = data->isp_.stats_->setFormat(&format);
+	if (ret) {
+		LOG(RPI, Error)
+			<< "Failed to set format on ISP stats node: "
+			<< format.toString();
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -278,6 +319,22 @@ int PipelineHandlerRPi::allocateBuffers(Camera *camera,
 	ret = data->isp_.output_->importBuffers(&data->bayerBuffers_);
 	if (ret)
 		return ret;
+
+	/* Create temporary internal buffers for the viewfinder stream */
+	data->vfPool_.createBuffers(cfg.bufferCount);
+	ret = data->isp_.capture1_->exportBuffers(&data->vfPool_);
+	if (ret) {
+		LOG(RPI, Error) << "Failed to create Viewfinder buffers";
+		return ret;
+	}
+
+	/* Create internal buffers for the statistics stream */
+	data->statsPool_.createBuffers(cfg.bufferCount);
+	ret = data->isp_.stats_->exportBuffers(&data->statsPool_);
+	if (ret) {
+		LOG(RPI, Error) << "Failed to create Statistics buffers";
+		return ret;
+	}
 
 	/* Tie the stream buffers to the capture device of the ISP. */
 	if (stream->memoryType() == InternalMemory)
@@ -314,6 +371,7 @@ int PipelineHandlerRPi::freeBuffers(Camera *camera,
 int PipelineHandlerRPi::start(Camera *camera)
 {
 	RPiCameraData *data = cameraData(camera);
+	ControlList controls(data->sensor_->controls());
 	int ret;
 
 	data->rawBuffers_ = data->unicam_->queueAllBuffers();
@@ -322,36 +380,58 @@ int PipelineHandlerRPi::start(Camera *camera)
 		return -EINVAL;
 	}
 
-	LOG(RPI, Warning) << "Using hard-coded exposure/gain defaults";
+	/* Queue internal viewfinder buffers. */
+	data->vfBuffers_ = data->isp_.capture1_->queueAllBuffers();
+	if (data->rawBuffers_.empty()) {
+		LOG(RPI, Debug) << "Failed to queue viewfinder buffers";
+		ret = -EINVAL;
+		goto err;
+	}
 
-	ControlList controls(data->sensor_->controls());
+	/* Queue internal ISP buffers. */
+	data->statsBuffers_ = data->isp_.stats_->queueAllBuffers();
+	if (data->statsBuffers_.empty()) {
+		LOG(RPI, Debug) << "Failed to queue internal ISP buffers";
+		ret = -EINVAL;
+		goto err;
+	}
+
+	LOG(RPI, Warning) << "Using hard-coded exposure/gain defaults";
 
 	controls.set(V4L2_CID_EXPOSURE, 1700);
 	controls.set(V4L2_CID_ANALOGUE_GAIN, 180);
 	ret = data->sensor_->setControls(&controls);
 	if (ret) {
 		LOG(RPI, Error) << "Failed to set controls";
-		return ret;
+		goto err;
 	}
+
+	/* A clean (reduced line count) implementation below would be nice. */
 
 	ret = data->isp_.output_->streamOn();
 	if (ret)
-		return ret;
+		goto err;
 
 	ret = data->isp_.capture0_->streamOn();
 	if (ret)
-		goto output_streamoff;
+		goto err;
+
+	ret = data->isp_.capture1_->streamOn();
+	if (ret)
+		goto err;
+
+	ret = data->isp_.stats_->streamOn();
+	if (ret)
+		goto err;
 
 	ret = data->unicam_->streamOn();
 	if (ret)
-		goto capture_streamoff;
+		goto err;
 
 	return 0;
 
-capture_streamoff:
-	data->isp_.capture0_->streamOff();
-output_streamoff:
-	data->isp_.output_->streamOff();
+err:
+	stop(camera);
 
 	return ret;
 }
@@ -360,6 +440,8 @@ void PipelineHandlerRPi::stop(Camera *camera)
 {
 	RPiCameraData *data = cameraData(camera);
 
+	data->isp_.stats_->streamOff();
+	data->isp_.capture1_->streamOff();
 	data->isp_.capture0_->streamOff();
 	data->isp_.output_->streamOff();
 	data->unicam_->streamOff();
