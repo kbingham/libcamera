@@ -93,6 +93,23 @@ std::string readlink(const char *path)
 }
 
 /**
+ * \brief identify the dirname portion of a path
+ * \param[in] path The full path to parse
+ *
+ * \returns A string of the directory component of the path
+ */
+std::string dirname(const std::string &path)
+{
+	size_t pos = path.rfind('/', path.length());
+
+	if (pos != std::string::npos) {
+		return (path.substr(0, pos));
+	}
+
+	return path;
+}
+
+/**
  * \fn libcamera::utils::make_unique(Args &&... args)
  * \brief Constructs an object of type T and wraps it in a std::unique_ptr.
  */
