@@ -47,6 +47,8 @@ struct ipa_context_ops {
 	void (*process_event)(struct ipa_context *ctx);
 };
 
+struct ipa_context *ipaCreate();
+
 #ifdef __cplusplus
 }
 

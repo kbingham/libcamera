@@ -23,6 +23,8 @@
 #include "log.h"
 #include "utils.h"
 
+#include "../libipa/ipa_interface_wrapper.h"
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPARkISP1)
@@ -247,9 +249,9 @@ const struct IPAModuleInfo ipaModuleInfo = {
 	"LGPL-2.1-or-later",
 };
 
-IPAInterface *ipaCreate()
+struct ipa_context *ipaCreate()
 {
-	return new IPARkISP1();
+	return new IPAInterfaceWrapper(new IPARkISP1());
 }
 };
 
