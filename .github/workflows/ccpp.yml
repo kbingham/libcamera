@@ -1,0 +1,58 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+  checkstyle:
+    runs-on: ubuntu-latest
+    container:
+      image: git.uk.ideasonboard.com/camera/containers:ubuntu-20.04-gcc-10
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: check-patches
+      run: ./utils/checkstyle.py `git merge-base origin/master HEAD`..HEAD
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container: ["ubuntu-20.04-gcc-8",
+                    "ubuntu-20.04-gcc-9",
+                    "ubuntu-20.04-gcc-10",
+                    "ubuntu-20.04-clang-10",
+                    "ubuntu-20.04-clang-11",
+                    "ubuntu-20.04-clang-12"]
+    container:
+      image: git.uk.ideasonboard.com/camera/containers:${{matrix.container}}
+    steps:
+    - uses: actions/checkout@v3
+    - name: configure
+      run: >
+        meson setup build \
+          -Dprefix=/usr \
+          -Ddocumentation=disabled \
+          -Dgstreamer=enabled
+    - name: ninja
+      run: ninja -C build
+
+  arm64:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container: ["debian-bookworm-cross-arm64",
+                    "debian-bullseye-cross-arm64"]
+    container:
+      image: git.uk.ideasonboard.com/camera/containers:${{matrix.container}}
+    steps:
+    - uses: actions/checkout@v3
+    - name: configure
+      run: >
+        meson setup build \
+          --cross-file /usr/share/meson/arm64-cross \
+          -Dprefix=/usr \
+          -Ddocumentation=disabled \
+          -Dgstreamer=enabled
+    - name: ninja
+      run: ninja -C build
