@@ -18,6 +18,7 @@ if libdrm.found()
 cam_cpp_args += [ '-DHAVE_KMS' ]
 cam_sources += files([
     'drm.cpp',
+    'kms_sink.cpp'
 ])
 endif
 
