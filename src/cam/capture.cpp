@@ -13,6 +13,9 @@
 
 #include "capture.h"
 #include "file_sink.h"
+#ifdef HAVE_KMS
+#include "kms_sink.h"
+#endif
 #include "main.h"
 
 using namespace libcamera;
@@ -45,6 +48,24 @@ int Capture::run(EventLoop *loop, const OptionsParser::Options &options)
 	}
 
 	camera_->requestCompleted.connect(this, &Capture::requestComplete);
+
+#ifdef HAVE_KMS
+	if (options.isSet(OptDisplay)) {
+		if (config_->size() != 1) {
+			std::cout << "Display doesn't support multiple streams"
+				  << std::endl;
+			return -EINVAL;
+		}
+
+		if (roles_[0] != StreamRole::Viewfinder) {
+			std::cout << "Display requires a viewfinder stream"
+				  << std::endl;
+			return -EINVAL;
+		}
+
+		sink_ = new KMSSink(options[OptDisplay].toString());
+	}
+#endif
 
 	if (options.isSet(OptFile)) {
 		if (!options[OptFile].toString().empty())
