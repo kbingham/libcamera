@@ -16,8 +16,9 @@
 
 using namespace libcamera;
 
-Capture::Capture(std::shared_ptr<Camera> camera, CameraConfiguration *config)
-	: camera_(camera), config_(config), writer_(nullptr)
+Capture::Capture(std::shared_ptr<Camera> camera, CameraConfiguration *config,
+		 const StreamRoles &roles)
+	: camera_(camera), config_(config), roles_(roles), writer_(nullptr)
 {
 }
 

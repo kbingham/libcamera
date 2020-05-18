@@ -47,6 +47,7 @@ private:
 	OptionsParser::Options options_;
 	CameraManager *cm_;
 	std::shared_ptr<Camera> camera_;
+	StreamRoles roles_;
 	std::unique_ptr<libcamera::CameraConfiguration> config_;
 	EventLoop *loop_;
 };
@@ -194,10 +195,10 @@ int CamApp::parseOptions(int argc, char *argv[])
 
 int CamApp::prepareConfig()
 {
-	StreamRoles roles = StreamKeyValueParser::roles(options_[OptStream]);
+	roles_ = StreamKeyValueParser::roles(options_[OptStream]);
 
-	config_ = camera_->generateConfiguration(roles);
-	if (!config_ || config_->size() != roles.size()) {
+	config_ = camera_->generateConfiguration(roles_);
+	if (!config_ || config_->size() != roles_.size()) {
 		std::cerr << "Failed to get default stream configuration"
 			  << std::endl;
 		return -EINVAL;
@@ -326,7 +327,7 @@ int CamApp::run()
 	}
 
 	if (options_.isSet(OptCapture)) {
-		Capture capture(camera_, config_.get());
+		Capture capture(camera_, config_.get(), roles_);
 		return capture.run(loop_, options_);
 	}
 

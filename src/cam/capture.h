@@ -24,7 +24,8 @@ class Capture
 {
 public:
 	Capture(std::shared_ptr<libcamera::Camera> camera,
-		libcamera::CameraConfiguration *config);
+		libcamera::CameraConfiguration *config,
+		const libcamera::StreamRoles &roles);
 
 	int run(EventLoop *loop, const OptionsParser::Options &options);
 private:
@@ -35,6 +36,7 @@ private:
 
 	std::shared_ptr<libcamera::Camera> camera_;
 	libcamera::CameraConfiguration *config_;
+	libcamera::StreamRoles roles_;
 
 	std::map<libcamera::Stream *, std::string> streamName_;
 	BufferWriter *writer_;
