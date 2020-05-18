@@ -16,9 +16,10 @@
 #include <libcamera/request.h>
 #include <libcamera/stream.h>
 
-#include "buffer_writer.h"
 #include "event_loop.h"
 #include "options.h"
+
+class FrameSink;
 
 class Capture
 {
@@ -33,13 +34,14 @@ private:
 		    libcamera::FrameBufferAllocator *allocator);
 
 	void requestComplete(libcamera::Request *request);
+	void sinkRelease(libcamera::FrameBuffer *buffer);
 
 	std::shared_ptr<libcamera::Camera> camera_;
 	libcamera::CameraConfiguration *config_;
 	libcamera::StreamRoles roles_;
 
 	std::map<libcamera::Stream *, std::string> streamName_;
-	BufferWriter *writer_;
+	FrameSink *sink_;
 	std::chrono::steady_clock::time_point last_;
 };
 
