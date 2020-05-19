@@ -554,7 +554,7 @@ int SimplePipelineHandler::configure(Camera *camera, CameraConfiguration *c)
 
 	if (useConverter_) {
 		int ret = converter_->configure(pipeConfig.pixelFormat,
-						cfg.pixelFormat, cfg.size);
+						cfg.size, &cfg);
 		if (ret < 0) {
 			LOG(SimplePipeline, Error)
 				<< "Unable to configure converter";
