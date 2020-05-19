@@ -11,8 +11,8 @@
 #include <limits.h>
 #include <sstream>
 
-#include "buffer_writer.h"
 #include "capture.h"
+#include "file_sink.h"
 #include "main.h"
 
 using namespace libcamera;
@@ -48,9 +48,9 @@ int Capture::run(EventLoop *loop, const OptionsParser::Options &options)
 
 	if (options.isSet(OptFile)) {
 		if (!options[OptFile].toString().empty())
-			sink_ = new BufferWriter(options[OptFile]);
+			sink_ = new FileSink(options[OptFile]);
 		else
-			sink_ = new BufferWriter();
+			sink_ = new FileSink();
 	}
 
 	if (sink_) {

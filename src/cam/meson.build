@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: CC0-1.0
 
 cam_sources = files([
-    'buffer_writer.cpp',
     'capture.cpp',
     'event_loop.cpp',
+    'file_sink.cpp',
     'frame_sink.cpp',
     'main.cpp',
     'options.cpp',
