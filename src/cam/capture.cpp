@@ -13,6 +13,7 @@
 
 #include "capture.h"
 #include "file_sink.h"
+#include "file_sink_turbojpeg.h"
 #ifdef HAVE_KMS
 #include "kms_sink.h"
 #endif
@@ -69,9 +70,9 @@ int Capture::run(EventLoop *loop, const OptionsParser::Options &options)
 
 	if (options.isSet(OptFile)) {
 		if (!options[OptFile].toString().empty())
-			sink_ = new FileSink(options[OptFile]);
+			sink_ = new FileSinkTurboJPEG(options[OptFile]);
 		else
-			sink_ = new FileSink();
+			sink_ = new FileSinkTurboJPEG();
 	}
 
 	if (sink_) {
