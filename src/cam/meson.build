@@ -8,6 +8,7 @@ cam_sources = files([
     'main.cpp',
     'options.cpp',
     'stream_options.cpp',
+    'turbojpeg_compressor.cpp',
 ])
 
 cam_cpp_args = []
@@ -22,7 +23,16 @@ cam_sources += files([
 ])
 endif
 
+libjpeg = dependency('libturbojpeg')
+
+cam_dependencies = [
+  libatomic,
+  libcamera_dep,
+  libdrm,
+  libjpeg
+]
+
 cam  = executable('cam', cam_sources,
-                  dependencies : [ libatomic, libcamera_dep, libdrm ],
+                  dependencies : cam_dependencies,
                   cpp_args : cam_cpp_args,
                   install : true)
