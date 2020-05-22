@@ -43,15 +43,43 @@ int TurboJPEGCompressor::configure(const StreamConfiguration &cfg)
 	stride_ = cfg.stride;
 	height_ = cfg.size.height;
 
+	/* Use a format supported by the viewfinder if available. */
+	std::vector<PixelFormat> formats = cfg.formats().pixelformats();
+	std::cout << "StreamConfiguration supports " << formats.size() << " formats:" << std::endl;
+	for (const PixelFormat &format : formats)
+	{
+		std::cout << " - " << format.toString() << std::endl;
+	}
+
 	switch (cfg.pixelFormat.fourcc()) {
-	// TJSAMP_GRAY, TJSAMP_444, TJSAMP_422, TJSAMP_420
 	case DRM_FORMAT_YUYV:
 		std::cerr << "Input format is YUYV" << std::endl;
-		subSampling_ = TJSAMP_420;
+		subSampling_ = TJSAMP_422;
 		isYUV_ = true;
 		break;
+
+	case DRM_FORMAT_BGRA8888:
+		std::cerr << "Input format is BGRA8888" << std::endl;
+		pixelFormat_ = TJPF_RGBX;
+		subSampling_ = TJSAMP_444;
+		isYUV_ = false;
+		break;
 	case DRM_FORMAT_ARGB8888:
-		pixelFormat_ = TJPF_ARGB;
+		std::cerr << "Input format is ARGB8888" << std::endl;
+		pixelFormat_ = TJPF_RGBX;
+		subSampling_ = TJSAMP_444;
+		isYUV_ = false;
+		break;
+
+	case DRM_FORMAT_RGB888:
+		std::cerr << "Input format is RGB888" << std::endl;
+		pixelFormat_ = TJPF_RGB;
+		subSampling_ = TJSAMP_444;
+		isYUV_ = false;
+		break;
+	case DRM_FORMAT_BGR888:
+		std::cerr << "Input format is BGR888" << std::endl;
+		pixelFormat_ = TJPF_BGR;
 		subSampling_ = TJSAMP_444;
 		isYUV_ = false;
 		break;
@@ -88,18 +116,29 @@ int TurboJPEGCompressor::compress(Frame *frame, TJJPEGImage *jpeg)
 
 	/* RGB compression */
 	if (!isYUV_) {
+		std::cout << "Width: " << width_ << " height: " << height_ << " stride: " << stride_ << std::endl;
+		std::cout << "width * tjPixelSize[pixelformat] = " << width_ * tjPixelSize[pixelFormat_] << std::endl;
+
 		ret = tjCompress2(compressor_, frame->memory[0].data,
-				  width_, stride_, height_,
+				  width_, 0 /*stride_*/, height_,
 				  pixelFormat_, &data, &length, jpegSubSampling_, quality_, flags);
-	} else {
-		/* int tjCompressFromYUV(tjhandle handle, const unsigned char *srcBuf, int width,
-			 int pad, int height, int subsamp, unsigned char **jpegBuf,
-			 unsigned long *jpegSize, int jpegQual, int flags) */
-		int pad = stride_; // Validate this is the right parameter
-		ret = tjCompressFromYUV(compressor_, frame->memory[0].data,
-					width_, pad, height_, subSampling_,
-					&data, &length, quality_, flags);
+
+		jpeg->data = data;
+		jpeg->length = length;
+
+		return ret;
 	}
+
+
+	/* int tjCompressFromYUV(tjhandle handle, const unsigned char *srcBuf, int width,
+		int pad, int height, int subsamp, unsigned char **jpegBuf,
+		unsigned long *jpegSize, int jpegQual, int flags) */
+
+	int pad = stride_; // Validate this is the right parameter
+	ret = tjCompressFromYUV(compressor_, frame->memory[0].data,
+				width_, pad, height_, subSampling_,
+				&data, &length, quality_, flags);
+
 
 	if (ret != 0) {
 		std::cerr << "TurbJPEG failed to compress frame: ("
