@@ -4,6 +4,7 @@ cam_sources = files([
     'capture.cpp',
     'event_loop.cpp',
     'file_sink.cpp',
+    'file_sink_turbojpeg.cpp',
     'frame_sink.cpp',
     'main.cpp',
     'options.cpp',
