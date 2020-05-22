@@ -71,15 +71,16 @@ int TurboJPEGCompressor::configure(const StreamConfiguration &cfg)
 		isYUV_ = false;
 		break;
 
+	/* Isn't it great the way DRM formats are 'the wrong way' ? */
 	case DRM_FORMAT_RGB888:
 		std::cerr << "Input format is RGB888" << std::endl;
-		pixelFormat_ = TJPF_RGB;
+		pixelFormat_ = TJPF_BGR;
 		subSampling_ = TJSAMP_444;
 		isYUV_ = false;
 		break;
 	case DRM_FORMAT_BGR888:
 		std::cerr << "Input format is BGR888" << std::endl;
-		pixelFormat_ = TJPF_BGR;
+		pixelFormat_ = TJPF_RGB; // Need to validate this and the kernel! - This matches vimc-valid?
 		subSampling_ = TJSAMP_444;
 		isYUV_ = false;
 		break;
