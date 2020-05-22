@@ -17,7 +17,12 @@ enum {
 	OptList = 'l',
 	OptListProperties = 'p',
 	OptStream = 's',
-	OptListControls = 256,
+
+	/* Following enums are to be above 256 */
+	OptListLongOnlyArguments = 256,
+	OptListControls,
+	OptListFormats,
+
 };
 
 #endif /* __CAM_MAIN_H__ */

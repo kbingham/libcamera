@@ -189,6 +189,8 @@ int CamApp::parseOptions(int argc, char *argv[])
 	parser.addOption(OptList, OptionNone, "List all cameras", "list");
 	parser.addOption(OptListControls, OptionNone, "List cameras controls",
 			 "list-controls");
+	parser.addOption(OptListFormats, OptionNone, "List camera formats",
+			 "list-formats");
 	parser.addOption(OptListProperties, OptionNone, "List cameras properties",
 			 "list-properties");
 
