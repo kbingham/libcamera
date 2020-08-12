@@ -52,6 +52,9 @@ if sphinx.found()
         'contributing.rst',
         'docs.rst',
         'index.rst',
+        'guides/introduction.rst',
+        'guides/pipeline-handler.rst',
+        'guides/application-developer.rst',
     ]
 
     release = 'release=v' + libcamera_git_version
