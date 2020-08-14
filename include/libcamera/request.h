@@ -49,6 +49,7 @@ public:
 	~Request();
 
 	void reuse(ReuseFlag flags = Default);
+	//Camera *camera() const { return camera_; }
 
 	ControlList &controls() { return *controls_; }
 	ControlList &metadata() { return *metadata_; }

@@ -402,6 +402,13 @@ void Request::reuse(ReuseFlag flags)
 }
 
 /**
+ * \fn Request::camera()
+ * \brief Retrieve the camera that created the request
+ *
+ * \return A pointer to the camera associated with the request
+ */
+
+/**
  * \fn Request::controls()
  * \brief Retrieve the request's ControlList
  *
