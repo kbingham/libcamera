@@ -19,7 +19,7 @@ and the product integration of the target platform.
 
 System components can be classified in three macro-categories:
 
-- Input ports: interfaces to external devices, usually image sensors,
+- Input ports: Interfaces to external devices, usually image sensors,
   which transfer data from the physical bus to locations accessible by other
   system peripherals. An input port needs to be configured according to the
   input image format and size and could optionally apply basic transformations
@@ -43,13 +43,13 @@ System components can be classified in three macro-categories:
   image streams along with the metadata describing the processing steps which
   have been applied to generate the output frames.
 
-- Camera Sensor: digital component that integrates an image sensor with control
+- Camera Sensor: Digital components that integrate an image sensor with control
   electronics and usually a lens. It interfaces to the SoC image receiver ports
   and is programmed to produce images in a format and size suitable for the
   current system configuration. Complex camera modules can integrate on-board
   ISP or DSP chips and process images before delivering them to the system. Most
-  systems with a dedicated ISP processor usually integrate camera sensors which
-  produce images in Raw Bayer format and defer processing to it.
+  systems with a dedicated ISP processor will usually integrate camera sensors
+  which produce images in Raw Bayer format and defer processing to it.
 
 It is responsibility of the pipeline handler to interface with these (and
 possibly other) components of the system and implement the following
