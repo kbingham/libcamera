@@ -31,17 +31,17 @@ System components can be classified in three macro-categories:
   and BT.656 parallel protocols.
   .. TODO: Insert references to the open CSI-2 (and other) specification.
 
-- Image Signal Processor (ISP): specialized media processor which applies
-  digital transformation on image streams. ISP can be integrated as part of the
-  SoC as memory interfaced system peripherals or packaged as stand-alone chips
-  connected to the application processor through a bus. Libcamera mostly target
-  in-system ISP designs but can equally support external ISP chips or be
-  instrumented to use other system provided resources, such as  GPU or an FPGA
-  IP block. ISPs expose a software programming interface that allows the
-  configuration of the several processing blocks which realize an "Image
-  Transformation Pipeline". An ISP usually produces 'processed' images streams
-  and the metadata describing the processing steps applied to the produced
-  frames.
+- Image Signal Processor (ISP): A specialized media processor which applies
+  digital transformations on image streams. ISPs can be integrated as part of
+  the SoC as a memory interfaced system peripheral or packaged as stand-alone
+  chips connected to the application processor through a bus. Most hardware used
+  by libcamera makes use of in-system ISP designs but pipelines can equally
+  support external ISP chips or be instrumented to use other system resources
+  such as a GPU or an FPGA IP block. ISPs expose a software programming
+  interface that allows the configuration of multiple processing blocks which
+  form an "Image Transformation Pipeline". An ISP usually produces 'processed'
+  image streams along with the metadata describing the processing steps which
+  have been applied to generate the output frames.
 
 - Camera Sensor: digital component that integrates an image sensor with control
   electronics and usually a lens. It interfaces to the SoC image receiver ports
