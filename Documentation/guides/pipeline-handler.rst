@@ -406,21 +406,26 @@ it can proceed to initialization, by creating all the required instances of the
 classes. If the Pipeline handler supports an ISP, it can then also Initialise
 the IPA module before proceeding to the creation of the Camera devices.
 
-To each registered camera a set of image streams has to be associated. An image
-``Stream`` represents a sequence of images and data of known size and format,
-stored in application-accessible memory locations. Typical examples of streams
-are the ISP processed outputs and the raw images captured at the receivers port
-output.
+An image ``Stream`` represents a sequence of images and data of known size and
+format, stored in application-accessible memory locations. Typical examples of
+streams are the ISP processed outputs and the raw images captured at the
+receivers port output.
 
-Each Camera has instance-specific data represented by using the `CameraData`_
-class, which you extend for the specific needs of the pipeline handler.
+The Pipeline Handler is responsible for defining the set of Streams associated
+with the Camera.
+
+Each Camera has instance-specific data represented using the `CameraData`_
+class, which can be extended for the specific needs of the pipeline handler.
 
 .. _CameraData: http://libcamera.org/api-html/classlibcamera_1_1CameraData.html
 
-Define a ``CameraData`` derived class ``VividCameraData()`` and initialize the
-base ``CameraData`` class using the base ``PipelineHandler`` pointer.
 
-Add the following code after the ``LOG_DEFINE_CATEGORY(VIVID)`` line:
+To support the Camera we will later register, we need to create a CameraData
+class that we can implement for our specific Pipeline Handler.
+
+Define a new ``VividCameraData()`` class derived from ``CameraData`` by adding
+the following code before the PipelineHandlerVivid class definition where it
+will be used:
 
 .. code-block:: cpp
 
@@ -446,26 +451,29 @@ Add the following code after the ``LOG_DEFINE_CATEGORY(VIVID)`` line:
    };
 
 This example pipeline handler handles a single video device and supports a
-single stream, represented by the ``VividCameraData`` class members. More complex
-pipeline handlers might register cameras composed of several video devices and
-sub-devices, or multiple streams per camera that represent the several
-components of the image capture pipeline. You should represent all these
-components in the ``CameraData`` derived class.
+single stream, represented by the ``VividCameraData`` class members. More
+complex pipeline handlers might register cameras composed of several video
+devices and sub-devices, or multiple streams per camera that represent the
+several components of the image capture pipeline. You should represent all these
+components in the ``CameraData`` derived class when developing a custom
+PipelineHandler.
 
-The camera instance specific data can be initialized with an optional ``init()``
-method. The base ``CameraData`` class doesn’t define an ``init()`` function to
-overload, it’s then up to pipeline handlers to define how they initialize the
-camera and camera data. This method is one of the more device-specific methods
-for a pipeline handler, and defines the context of the camera, and how libcamera
-should communicate with the camera and store the data it generates. For real
-hardware, this includes tasks such as opening the ISP, or creating a sensor
-device.
+In our example VividCameraData we implement an ``init()`` function to prepare
+the object from our PipelineHandler, however the CameraData class does not
+specify the interface for initialisation and PipelineHandlers can manage this
+based on their own needs. Derived CameraData classes are used only by their
+respective pipeline handlers.
 
-For this example, create an ``init`` method after the ``VividCameraData`` class
-that creates a new V4L2 video device by matching the media entity name of a
-device using the `MediaDevice::getEntityByName
-<http://libcamera.org/api-html/classlibcamera_1_1MediaDevice.html#ad5d9279329ef4987ceece2694b33e230>`_
-helper.
+The CameraData class stores the context required for each camera instance and
+is usually responsible for opening all Devices used in the capture pipeline.
+
+We can now implement the ``init`` method for our example Pipeline Handler to
+create a new V4L2 video device from the media entity, which we can specify using
+the `MediaDevice::getEntityByName`_ method from the MediaDevice. As our example
+is based upon the simplistic Vivid test device, we only need to open a single
+capture device.
+
+.. _MediaDevice::getEntityByName: http://libcamera.org/api-html/classlibcamera_1_1MediaDevice.html#ad5d9279329ef4987ceece2694b33e230
 
 .. code-block:: cpp
 
@@ -478,16 +486,14 @@ helper.
           return 0;
    }
 
-Return to the ``match`` method, and remove ``LOG(VIVID, Debug) << "Obtained
-Vivid Device";`` and ``return false; // Prevent infinite loops for now``,
-replacing it with the following code.
-
-After a successful device match, the code below creates a new instance of the
-device-specific ``CameraData`` class, using a unique pointer to manage the
-lifetime of the instance.
+The CameraData should be created and initialised before we move on to register a
+new Camera device so we need to construct and initialise our
+VividCameraData after we have identified our device within
+PipelineHandlerVivid::match(). The VividCameraData is wrapped by a
+std::unique_ptr to help manage the lifetime of our CameraData instance.
 
 If the camera data initialization fails, return ``false`` to indicate the
-failure to the ``match()`` method and prevent retiring of the pipeline handler.
+failure to the ``match()`` method and prevent retrying of the pipeline handler.
 
 .. code-block:: cpp
 
@@ -496,19 +502,19 @@ failure to the ``match()`` method and prevent retiring of the pipeline handler.
    if (data->init())
            return false;
 
+
 Once the camera data has been initialized, the Camera device instances and the
 associated streams have to be registered. Create a set of streams for the
 camera, which for this device is only one. You create a camera using the static
-`Camera::create
-<http://libcamera.org/api-html/classlibcamera_1_1Camera.html#a453740e0d2a2f495048ae307a85a2574>`_
-method, passing the pipeline handler, the name of the camera, and the streams
-available. Then register the camera and its data with the camera manager using
-`registerCamera
-<http://libcamera.org/api-html/classlibcamera_1_1PipelineHandler.html#adf02a7f1bbd87aca73c0e8d8e0e6c98b>`_.
-At the end of the method, return ``true`` to express that a camera was created
-successfully.
+`Camera::create`_ method, passing the pipeline handler, the id of the camera,
+and the streams available. Then register the camera and its data with the
+pipeline handler and camera manager using `registerCamera`_.
 
-Add the following below the code added above:
+Finally with a successful construction, we return 'true' indicating that the
+PipelineHandler successfully matched and constructed a device.
+
+.. _Camera::create: http://libcamera.org/api-html/classlibcamera_1_1Camera.html#a453740e0d2a2f495048ae307a85a2574
+.. _registerCamera: http://libcamera.org/api-html/classlibcamera_1_1PipelineHandler.html#adf02a7f1bbd87aca73c0e8d8e0e6c98b
 
 .. code-block:: cpp
 
@@ -518,11 +524,37 @@ Add the following below the code added above:
 
    return true;
 
-Add a private ``cameraData`` helper to the ``PipelineHandlerVivid`` class which
-obtains the camera data, and does the necessary casting to convert it to the
-pipeline-specific ``VividCameraData``. This simplifies the process of obtaining
-the custom camera data, which you need throughout the code for the pipeline
-handler.
+
+Our match function should now look like the following:
+
+.. code-block:: cpp
+
+   bool PipelineHandlerVivid::match(DeviceEnumerator *enumerator)
+   {
+   	DeviceMatch dm("vivid");
+   	dm.add("vivid-000-vid-cap");
+
+   	MediaDevice *media = acquireMediaDevice(enumerator, dm);
+   	if (!media)
+   		return false;
+
+   	std::unique_ptr<VividCameraData> data = std::make_unique<VividCameraData>(this, media);
+
+   	/* Locate and open the capture video node. */
+   	if (data->init())
+   		return false;
+
+   	/* Create and register the camera. */
+   	std::set<Stream *> streams{ &data->stream_ };
+   	std::shared_ptr<Camera> camera = Camera::create(this, data->video_->deviceName(), streams);
+   	registerCamera(std::move(camera), std::move(data));
+
+   	return true;
+   }
+
+We will need to use our custom CameraData class frequently throughout the
+pipeline handler, so we add a private convenience helper to our Pipeline handler
+to obtain and cast the custom CameraData instance from a Camera instance.
 
 .. code-block:: cpp
 
