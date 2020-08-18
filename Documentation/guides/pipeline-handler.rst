@@ -320,24 +320,24 @@ system configuration, by matching a ``DeviceMatch`` with the system
 have been registered in the system and allows the pipeline handler to be
 initialized.
 
-The main entry point of a pipeline handler is the `match
-<http://libcamera.org/api-html/classlibcamera_1_1DeviceMatch.html>`_
-class member function. When the ``CameraManager`` is started (using the `start
-<http://libcamera.org/api-html/classlibcamera_1_1CameraManager.html#a49e322880a2a26013bb0076788b298c5>`_
-method), all the registered pipeline handlers are iterated and their ``match``
-function called with an enumerator of all devices it found on a system.
+The main entry point of a pipeline handler is the `match()`_ class member
+function. When the ``CameraManager`` is started (using the `start()`_ method),
+all the registered pipeline handlers are iterated and their ``match`` function
+called with an enumerator of all devices it found on a system.
 
 The match method should identify if there are suitable devices available in the
 ``DeviceEnumerator`` which the pipeline supports, returning ``true`` if it
-matches a device, and ``false`` if it does not. To do this, construct the
-`DeviceMatch
-<http://libcamera.org/api-html/classlibcamera_1_1DeviceMatch.html>`_ class with
-the name of the ``MediaController`` device to match. You can specify the search
-further by adding specific media entities to the search using the ``.add()``
-method on the DeviceMatch.
+matches a device, and ``false`` if it does not. To do this, construct a
+`DeviceMatch`_ class with the name of the ``MediaController`` device to match.
+You can specify the search further by adding specific media entities to the
+search using the ``.add()`` method on the DeviceMatch.
 
-This example uses search patterns that match vivid, but you should change this
-value to suit your device identifier.
+.. _match(): https://www.libcamera.org/api-html/classlibcamera_1_1PipelineHandler.html#a7cd5b652a2414b543ec20ba9dabf61b6
+.. _start(): http://libcamera.org/api-html/classlibcamera_1_1CameraManager.html#a49e322880a2a26013bb0076788b298c5
+.. _DeviceMatch: http://libcamera.org/api-html/classlibcamera_1_1DeviceMatch.html
+
+This example uses search patterns that match vivid, but when developing a new
+pipeline handler, you should change this value to suit your device identifier.
 
 Replace the contents of the ``PipelineHandlerVivid::match`` method with the
 following:
@@ -349,10 +349,11 @@ following:
    return false; // Prevent infinite loops for now
 
 With the device matching criteria defined, attempt to acquire exclusive access
-to the matching media controller device with the `acquireMediaDevice
-<http://libcamera.org/api-html/classlibcamera_1_1PipelineHandler.html#a77e424fe704e7b26094164b9189e0f84>`_
-method. If the method attempts to acquire a device it has already matched, it
-returns ``false``.
+to the matching media controller device with the `acquireMediaDevice`_ method.
+If the method attempts to acquire a device it has already matched, it returns
+``false``.
+
+.. _acquireMediaDevice: http://libcamera.org/api-html/classlibcamera_1_1PipelineHandler.html#a77e424fe704e7b26094164b9189e0f84
 
 Add the following below ``dm.add("vivid-000-vid-cap");``:
 
@@ -373,11 +374,15 @@ At this stage, you should test that the pipeline handler can successfully match
 the devices, but have not yet added any code to create a Camera which libcamera
 reports to applications.
 
-As a temporary validation step, add a debug print with ``LOG(VIVID, Debug) <<
-"Vivid Device Identified";`` before the closing ``return false; // Prevent
-infinite loops for now`` in the ``PipelineHandlerVivid::match`` method for when
-when the pipeline handler successfully matches the ``MediaDevice`` and
-``MediaEntity`` names.
+As a temporary validation step, add a debug print with
+
+.. code-block:: cpp
+
+   LOG(VIVID, Debug) << "Vivid Device Identified";
+
+before the final closing return statement in the ``PipelineHandlerVivid::match``
+method for when when the pipeline handler successfully matches the
+``MediaDevice`` and ``MediaEntity`` names.
 
 Test that the pipeline handler matches and finds a device by rebuilding, and
 running
