@@ -187,8 +187,8 @@ to the libcamera build options in the top level _meson_options.txt_.
            description : 'Select which pipeline handlers to include')
 
 
-In *vivid.cpp* add the pipeline handler to the ``libcamera`` namespace, define a
-`PipelineHandler`_ derived class named PipelineHandlerVivid, and add stub
+In *vivid.cpp* add the pipeline handler to the ``libcamera`` namespace, defining
+a `PipelineHandler`_ derived class named PipelineHandlerVivid, and add stub
 methods for the overridden class members.
 
 .. _PipelineHandler: http://libcamera.org/api-html/classlibcamera_1_1PipelineHandler.html
@@ -196,6 +196,7 @@ methods for the overridden class members.
 .. code-block:: cpp
 
    namespace libcamera {
+
    class PipelineHandlerVivid : public PipelineHandler
    {
    public:
@@ -256,19 +257,17 @@ methods for the overridden class members.
    {
           return false;
    }
+
+   REGISTER_PIPELINE_HANDLER(PipelineHandlerVivid);
+
    } /* namespace libcamera */
 
-You must register the ``PipelineHandler`` subclass with the pipeline handler
-factory using the `REGISTER_PIPELINE_HANDLER
-<http://libcamera.org/api-html/pipeline__handler_8h.html>`_ macro which
+Note that you must register the ``PipelineHandler`` subclass with the pipeline
+handler factory using the `REGISTER_PIPELINE_HANDLER`_ macro which
 registers it and creates a global symbol to reference the class and make it
 available to try and match devices.
 
-Add the following before the closing curly bracket of the namespace declaration:
-
-.. code-block:: cpp
-
-   REGISTER_PIPELINE_HANDLER(PipelineHandlerVivid);
+.. _REGISTER_PIPELINE_HANDLER: http://libcamera.org/api-html/pipeline__handler_8h.html
 
 For debugging and testing a pipeline handler during development, you can define
 a log message category for the pipeline handler. The ``LOG_DEFINE_CATEGORY``
