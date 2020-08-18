@@ -271,10 +271,11 @@ available to try and match devices.
 
 For debugging and testing a pipeline handler during development, you can define
 a log message category for the pipeline handler. The ``LOG_DEFINE_CATEGORY``
-macro and ``LIBCAMERA_LOG_LEVELS`` environment variable help you use the
-`inbuilt libcamera logging infrastructure
-<http://libcamera.org/api-html/log_8h.html>`_ that allow for the inspection of
-internal operations in a user-configurable way.
+macro and ``LIBCAMERA_LOG_LEVELS`` environment variable help you use the inbuilt
+libcamera `logging infrastructure`_ that allow for the inspection of internal
+operations in a user-configurable way.
+
+.. _logging infrastructure: http://libcamera.org/api-html/log_8h.html
 
 Add the following before the ``PipelineHandlerVivid`` class declaration:
 
@@ -290,13 +291,12 @@ features:
    #include "libcamera/internal/log.h"
    #include "libcamera/internal/pipeline_handler.h"
 
-Run:
+Run the following commands:
 
 .. code-block:: shell
 
    meson build
    ninja -C build install
-
 
 To build the libcamera code base, and confirm that the build system found the
 new pipeline handler by running:
