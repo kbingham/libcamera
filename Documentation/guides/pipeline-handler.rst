@@ -134,11 +134,12 @@ Creating a PipelineHandler
 --------------------------
 
 This guide walks through the steps to create a simple pipeline handler
-called “Vivid” that supports the `V4L2 Virtual Video Test Driver
-(vivid) <https://www.kernel.org/doc/html/latest/admin-guide/media/vivid.html>`_.
+called “Vivid” that supports the `V4L2 Virtual Video Test Driver`_ (vivid).
 
 To use the vivid test driver, you first need to check that the vivid kernel
 module is loaded, for example with the ``modprobe vivid`` command.
+
+.. _V4L2 Virtual Video Test Driver: https://www.kernel.org/doc/html/latest/admin-guide/media/vivid.html
 
 Create the skeleton file structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,9 +171,10 @@ a comma separated list with ``-Dpipelines`` when generating a build directory:
 
     meson build -Dpipelines=ipu3,uvcvideo,vivid
 
-`Read the Meson build configuration documentation
-<https://mesonbuild.com/Configuring-a-build-directory.html>`_ for more
-information.
+Read the `Meson build configuration`_ documentation for more information on
+configuring a build directory.
+
+.. _Meson build configuration: https://mesonbuild.com/Configuring-a-build-directory.html
 
 To add the new pipeline handler to this list of options, add its directory name
 to the libcamera build options in the top level _meson_options.txt_.
@@ -186,10 +188,10 @@ to the libcamera build options in the top level _meson_options.txt_.
 
 
 In *vivid.cpp* add the pipeline handler to the ``libcamera`` namespace, define a
-`PipelineHandler
-<http://libcamera.org/api-html/classlibcamera_1_1PipelineHandler.html>`_ derived
-class named PipelineHandlerVivid, and add stub methods for the overridden class
-member.
+`PipelineHandler`_ derived class named PipelineHandlerVivid, and add stub
+methods for the overridden class members.
+
+.. _PipelineHandler: http://libcamera.org/api-html/classlibcamera_1_1PipelineHandler.html
 
 .. code-block:: cpp
 
