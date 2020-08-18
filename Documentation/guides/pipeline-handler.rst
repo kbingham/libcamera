@@ -577,39 +577,45 @@ interface, and device interaction interfaces.
 Registering controls and properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The libcamera `controls framework
-<http://libcamera.org/api-html/controls_8h.html>`_ allows application to
-configure the streams capture parameters on a per-frame basis and is also used
-to advertise to application the ``Camera`` device immutable properties. The
-currently growing list of libcamera defined controls and camera properties is
-available in the `control_ids.yaml
-<http://libcamera.org/api-html/control__ids_8h.html>`_ and in the
-`properties_ids.yaml <http://libcamera.org/api-html/property__ids_8h.html>`_
-files.
+The libcamera `controls framework`_ allows an application to configure the
+streams capture parameters on a per-frame basis and is also used to advertise
+immutable properties of the ``Camera`` device.
+
+The libcamera controls and properties are defined in YAML form which is
+processed to automatically generate documentation and interfaces. Controls are
+defined by the src/libcamera/`control_ids.yaml`_ file and camera properties
+are defined by src/libcamera/`properties_ids.yaml`_.
+
+.. _controls framework: http://libcamera.org/api-html/controls_8h.html
+.. _control_ids.yaml: http://libcamera.org/api-html/control__ids_8h.html
+.. _properties_ids.yaml: http://libcamera.org/api-html/property__ids_8h.html
 
 Pipeline handlers can optionally register the list of controls an application
 can set as well as a list of immutable camera properties. Being both
 Camera-specific values, they are represented in the ``CameraData`` base class,
-which provides two members for this purpose: the `CameraData::controlInfo_
-<http://libcamera.org/api-html/classlibcamera_1_1CameraData.html#ab9fecd05c655df6084a2233872144a52>`_
-and the `CameraData::properties_
-<http://libcamera.org/api-html/classlibcamera_1_1CameraData.html#a84002c29f45bd35566c172bb65e7ec0b>`_
-fields.
+which provides two members for this purpose: the `CameraData::controlInfo_`_ and
+the `CameraData::properties_`_ fields.
+
+.. _CameraData::controlInfo_: http://libcamera.org/api-html/classlibcamera_1_1CameraData.html#ab9fecd05c655df6084a2233872144a52
+.. _CameraData::properties_: http://libcamera.org/api-html/classlibcamera_1_1CameraData.html#a84002c29f45bd35566c172bb65e7ec0b
 
 The ``controlInfo_`` field represents a map of ``ControlId`` instances
 associated with the limits of valid values supported for the control. More
-information can be found in the `ControlnfoMap
-<http://libcamera.org/api-html/classlibcamera_1_1ControlInfoMap.html>`_ class
-documentation.
+information can be found in the `ControlnfoMap`_ class documentation.
 
-Pipeline handlers register controls to expose to applications the video devices
-tunable parameters controlled using v4l2-ctrls framework, and parameters of
-the image processing algorithms. The example pipeline handler only expose
-trivial controls of the video device, by registering a ``ControlId`` instance
-with associated values for each supported V4L2 control.
+.. _ControlInfoMap: http://libcamera.org/api-html/classlibcamera_1_1ControlInfoMap.html
+
+Pipeline handlers register controls to expose the tunable device and IPA
+parameters to applications. Our example pipeline handler only exposes trivial
+controls of the video device, by registering a ``ControlId`` instance with
+associated values for each supported V4L2 control but demonstrates the mapping
+of V4L2 Controls to libcamera ControlIDs.
 
 Complete the initialization of the ``VividCameraData`` class by adding the
-following code to the ``VividCameraData::init()`` method:
+following code to the ``VividCameraData::init()`` method to initialise the
+controls. For more complex control configurations, this could of course be
+broken out to a separate function, but for now we just initialise the small set
+inline in our CameraData init:
 
 .. code-block:: cpp
 
@@ -643,17 +649,19 @@ following code to the ``VividCameraData::init()`` method:
 
    controlInfo_ = std::move(ctrls);
 
-The ``properties_`` field is instead a list of ``ControlId`` instances
-associated with immutable values, which represent static characteristics the
-applications can use to identify camera devices in the system. Properties can be
-registered inspecting the values of V4L2 controls from the video devices and
-camera sensor (in example to retrieve the position and orientation of a camera)
+The ``properties_`` field is  a list of ``ControlId`` instances
+associated with immutable values, which represent static characteristics that can
+be used by applications to identify camera devices in the system. Properties can be
+registered by inspecting the values of V4L2 controls from the video devices and
+camera sensor (for example to retrieve the position and orientation of a camera)
 or to express other immutable characteristics. The example pipeline handler does
 not register any property, but examples are available in the libcamera code
 base.
 
+.. TODO: Add a property example to the pipeline handler. At least the model.
+
 At this point you need to add the following includes to the top of the file for
-controls handling:
+handling controls:
 
 .. code-block:: cpp
 
