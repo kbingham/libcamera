@@ -73,8 +73,8 @@ functionalities:
 Prerequisite knowledge: libcamera architecture
 ----------------------------------------------
 
-A pipeline handler uses most of the following libcamera classes to realize the
-above described functionalities. Below is a brief overview of each of those:
+A pipeline handler makes use of the following libcamera classes to realize the
+functionalities descibed above. Below is a brief overview of each of those:
 
 .. TODO: Convert to sphinx refs
 
@@ -87,7 +87,7 @@ above described functionalities. Below is a brief overview of each of those:
 -  `DeviceEnumerator <http://libcamera.org/api-html/classlibcamera_1_1DeviceEnumerator.html>`_:
    Enumerates all media devices attached to the system and the media entities
    registered with it, by creating instances of the ``MediaDevice`` class and
-   by storing them.
+   storing them.
 
 -  `DeviceMatch <http://libcamera.org/api-html/classlibcamera_1_1DeviceMatch.html>`_:
    Describes a media device search pattern using entity names, or other
@@ -106,7 +106,7 @@ above described functionalities. Below is a brief overview of each of those:
    kernel API and caching sensor information.
 
 -  `CameraData <http://libcamera.org/api-html/classlibcamera_1_1CameraData.html>`_:
-   Represents device-specific data a pipeline handler associates to a Camera
+   Represents device-specific data a pipeline handler associates to each Camera
    instance.
 
 -  `StreamConfiguration <http://libcamera.org/api-html/structlibcamera_1_1StreamConfiguration.html>`_:
@@ -128,7 +128,7 @@ above described functionalities. Below is a brief overview of each of those:
    which contains values used by application and IPA to change parameters of
    image streams, used to return to applications and share with IPA the metadata
    associated with the captured images, and to advertise the immutable camera
-   characteristic enumerated at system initialization time.
+   characteristics enumerated at system initialization time.
 
 Creating a PipelineHandler
 --------------------------
