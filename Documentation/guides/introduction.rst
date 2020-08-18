@@ -38,7 +38,7 @@ provides a tutorial of the key APIs exposed by libcamera.
 .. _Pipeline Handler Writers Guide: pipeline-handler.html
 .. _Application Writers Guide: application-developer.html
 
-.. todo Correctly link to the other articles of the guide
+.. TODO: Correctly link to the other articles of the guide
 
 Camera Stack
 ------------
