@@ -51,7 +51,7 @@ System components can be classified in three macro-categories:
   systems with a dedicated ISP processor will usually integrate camera sensors
   which produce images in Raw Bayer format and defer processing to it.
 
-It is responsibility of the pipeline handler to interface with these (and
+It is the responsibility of the pipeline handler to interface with these (and
 possibly other) components of the system and implement the following
 functionalities:
 
@@ -59,16 +59,16 @@ functionalities:
   set of image streams.
 
 - Configure the image acquisition and processing pipeline by assigning the
-  system resources (memory, shared components, etc.) to satisfy the application
-  requested configuration.
+  system resources (memory, shared components, etc.) to satisfy the
+  configuration requested by the application.
 
 - Start and the stop the image acquisition and processing sessions.
 
-- Apply to the hardware devices the configuration settings computed by
-  applications and image processing algorithms integrated in libcamera.
+- Apply configuration settings requested by applications and computed by image
+  processing algorithms integrated in libcamera to the hardware devices.
 
-- Notify the availability of new images to applications and deliver them in the
-  in the correct locations.
+- Notify applications of the availability of new images and deliver them to the
+  correct locations.
 
 Prerequisite knowledge: libcamera architecture
 ----------------------------------------------
