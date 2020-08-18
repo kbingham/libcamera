@@ -19,6 +19,8 @@ and the product integration of the target platform.
 
 System components can be classified in three macro-categories:
 
+.. TODO: Insert references to the open CSI-2 (and other) specification.
+
 - Input ports: Interfaces to external devices, usually image sensors,
   which transfer data from the physical bus to locations accessible by other
   system peripherals. An input port needs to be configured according to the
@@ -29,7 +31,6 @@ System components can be classified in three macro-categories:
   implemented on a compatible physical layer such as MIPI D-PHY or MIPI C-PHY.
   Other design are possible but less common, such as LVDS or the legacy BT.601
   and BT.656 parallel protocols.
-  .. TODO: Insert references to the open CSI-2 (and other) specification.
 
 - Image Signal Processor (ISP): A specialized media processor which applies
   digital transformations on image streams. ISPs can be integrated as part of
@@ -76,13 +77,13 @@ Prerequisite knowledge: libcamera architecture
 A pipeline handler makes use of the following libcamera classes to realize the
 functionalities descibed above. Below is a brief overview of each of those:
 
-.. TODO: Convert to sphinx refs
+.. TODO: (All) Convert to sphinx refs
+.. TODO: (MediaDevice) Reference to the Media Device API (possibly with versioning requirements)
+.. TODO: (IPAInterface) refer to the IPA guide
 
 -  `MediaDevice <http://libcamera.org/api-html/classlibcamera_1_1MediaDevice.html>`_:
    Instances of this class are associated with a kernel media controller
    device and its connected objects.
-
-   .. TODO: Reference to the Media Device API (possibly with versioning requirements)
 
 -  `DeviceEnumerator <http://libcamera.org/api-html/classlibcamera_1_1DeviceEnumerator.html>`_:
    Enumerates all media devices attached to the system and the media entities
@@ -121,7 +122,6 @@ functionalities descibed above. Below is a brief overview of each of those:
 -  `IPAInterface <http://libcamera.org/api-html/classlibcamera_1_1IPAInterface.html>`_:
    The interface to the Image Processing Algorithm (IPA) module which performs
    the computation of the image processing pipeline tuning parameters.
-   .. TODO: refer to the IPA guide
 
 -  `ControlList <http://libcamera.org/api-html/classlibcamera_1_1ControlList.html>`_:
    A list of control items, indexed by Control<> instances or by numerical index
@@ -1366,6 +1366,4 @@ Running the command above outputs (a lot of) information about pixel formats,
 and then starts capturing frame data.
 
 
-
 .. TODO: LIBCAMERA_LOG_LEVELS=Pipeline,VIVID:0 sudo ./build/src/qcam/qcam -c vivid
-
