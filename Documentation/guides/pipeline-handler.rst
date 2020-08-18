@@ -412,9 +412,10 @@ stored in application-accessible memory locations. Typical examples of streams
 are the ISP processed outputs and the raw images captured at the receivers port
 output.
 
-Each Camera has instance-specific data represented by using the `CameraData
-<http://libcamera.org/api-html/classlibcamera_1_1CameraData.html>`_ class, which
-you extend for the specific needs of the pipeline handler.
+Each Camera has instance-specific data represented by using the `CameraData`_
+class, which you extend for the specific needs of the pipeline handler.
+
+.. _CameraData: http://libcamera.org/api-html/classlibcamera_1_1CameraData.html
 
 Define a ``CameraData`` derived class ``VividCameraData()`` and initialize the
 base ``CameraData`` class using the base ``PipelineHandler`` pointer.
