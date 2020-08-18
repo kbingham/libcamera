@@ -403,8 +403,8 @@ Creating camera devices
 If the pipeline handler successfully matches with the system it is running on,
 it can proceed to initialization, by creating all the required instances of the
 ``V4L2VideoDevice``, ``V4L2Subdevice`` and ``CameraSensor`` hardware abstraction
-classes, optionally initialize the IPA module and then proceed to the creation
-of the Camera devices.
+classes. If the Pipeline handler supports an ISP, it can then also Initialise
+the IPA module before proceeding to the creation of the Camera devices.
 
 To each registered camera a set of image streams has to be associated. An image
 ``Stream`` represents a sequence of images and data of known size and format,
