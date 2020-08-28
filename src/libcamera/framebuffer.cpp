@@ -90,7 +90,13 @@ LOG_DEFINE_CATEGORY(Buffer)
  * The timestamp is expressed as a number of nanoseconds relative to the system
  * clock since an unspecified time point.
  *
- * \todo Be more precise on what timestamps refer to.
+ * This timestamp is monotonic and not affected by changes in system time,
+ * however it is still susceptible to small adjustments made by NTP.
+ *
+ * This clock has no specification on its time base, so can not be directly be
+ * converted to a 'real' wall clock time without a comparable reference point.
+ * However, continued conversions from the reference point, may bring in
+ * inaccuracies due to changes on the real time clock which must be considered.
  */
 
 /**
