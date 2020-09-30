@@ -17,4 +17,3 @@ foreach script : cam_tests
         is_parallel : false,
         timeout : 60)
 endforeach
-
