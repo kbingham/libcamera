@@ -25,6 +25,7 @@ endif
 
 subdir('libtest')
 
+subdir('cam')
 subdir('camera')
 subdir('controls')
 subdir('gstreamer')
