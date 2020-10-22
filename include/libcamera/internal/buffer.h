@@ -10,6 +10,7 @@
 #include <sys/mman.h>
 #include <vector>
 
+#include <libcamera/class.h>
 #include <libcamera/buffer.h>
 #include <libcamera/span.h>
 
@@ -34,6 +35,9 @@ protected:
 
 	int error_;
 	std::vector<Plane> maps_;
+
+private:
+	DELETE_COPY_AND_ASSIGN(MappedBuffer);
 };
 
 class MappedFrameBuffer : public MappedBuffer
