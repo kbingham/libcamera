@@ -5,6 +5,9 @@ libcamera_datadir = get_option('datadir') / 'libcamera'
 libcamera_libdir = get_option('libdir') / 'libcamera'
 libcamera_sysconfdir = get_option('sysconfdir') / 'libcamera'
 
+config_h.set('LIBCAMERA_DATA_DIR', '"' + get_option('prefix') / libcamera_datadir + '"')
+config_h.set('LIBCAMERA_SYSCONF_DIR', '"' + get_option('prefix') / libcamera_sysconfdir + '"')
+
 # Module Signing
 openssl = find_program('openssl', required : true)
 if openssl.found()
