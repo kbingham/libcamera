@@ -494,6 +494,37 @@ int CameraSensor::setControls(ControlList *ctrls)
 }
 
 /**
+ * \brief Get the sensors delayed controls interface
+ *
+ * Access the sensors delayed controls interface. This interface aids pipelines
+ * keeping tack of controls that needs time to take effect. The interface is
+ * optional to use and does not interact with setControls() and getControls()
+ * that operates directly on the sensor device.
+ *
+ * \sa DelayedControls
+ * \return The delayed controls interface
+ */
+DelayedControls *CameraSensor::delayedContols()
+{
+	if (!delayedControls_) {
+		/*
+		 * \todo Read dealy values from the sensor itself or from a
+		 * a sensor database. For now use generic values taken from
+		 * the Raspberry Pi and listed as generic values.
+		 */
+		std::unordered_map<uint32_t, unsigned int> delays = {
+			{ V4L2_CID_ANALOGUE_GAIN, 1 },
+			{ V4L2_CID_EXPOSURE, 2 },
+		};
+
+		delayedControls_ =
+			std::make_unique<DelayedControls>(subdev_.get(), delays);
+	}
+
+	return delayedControls_.get();
+}
+
+/**
  * \brief Assemble and return the camera sensor info
  * \param[out] info The camera sensor info
  *

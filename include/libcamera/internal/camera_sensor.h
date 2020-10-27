@@ -14,6 +14,7 @@
 #include <libcamera/controls.h>
 #include <libcamera/geometry.h>
 
+#include "libcamera/internal/delayed_controls.h"
 #include "libcamera/internal/formats.h"
 #include "libcamera/internal/log.h"
 #include "libcamera/internal/v4l2_subdevice.h"
@@ -61,6 +62,8 @@ public:
 	ControlList getControls(const std::vector<uint32_t> &ids);
 	int setControls(ControlList *ctrls);
 
+	DelayedControls *delayedContols();
+
 	const ControlList &properties() const { return properties_; }
 	int sensorInfo(CameraSensorInfo *info) const;
 
@@ -83,6 +86,8 @@ private:
 	std::vector<Size> sizes_;
 
 	ControlList properties_;
+
+	std::unique_ptr<DelayedControls> delayedControls_;
 };
 
 } /* namespace libcamera */
