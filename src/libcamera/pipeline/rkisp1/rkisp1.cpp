@@ -121,8 +121,9 @@ class RkISP1CameraData : public CameraData
 public:
 	RkISP1CameraData(PipelineHandler *pipe, RkISP1MainPath *mainPath,
 			 RkISP1SelfPath *selfPath)
-		: CameraData(pipe), sensor_(nullptr), frame_(0),
-		  frameInfo_(pipe), mainPath_(mainPath), selfPath_(selfPath)
+		: CameraData(pipe), sensor_(nullptr), delayedCtrls_(nullptr),
+		  frame_(0), frameInfo_(pipe), mainPath_(mainPath),
+		  selfPath_(selfPath)
 	{
 	}
 
@@ -136,6 +137,7 @@ public:
 	Stream mainPathStream_;
 	Stream selfPathStream_;
 	CameraSensor *sensor_;
+	DelayedControls *delayedCtrls_;
 	unsigned int frame_;
 	std::vector<IPABuffer> ipaBuffers_;
 	RkISP1Frames frameInfo_;
@@ -346,23 +348,6 @@ RkISP1FrameInfo *RkISP1Frames::find(Request *request)
 	return nullptr;
 }
 
-class RkISP1ActionSetSensor : public FrameAction
-{
-public:
-	RkISP1ActionSetSensor(unsigned int frame, CameraSensor *sensor, const ControlList &controls)
-		: FrameAction(frame, SetSensor), sensor_(sensor), controls_(controls) {}
-
-protected:
-	void run() override
-	{
-		sensor_->setControls(&controls_);
-	}
-
-private:
-	CameraSensor *sensor_;
-	ControlList controls_;
-};
-
 class RkISP1ActionQueueBuffers : public FrameAction
 {
 public:
@@ -430,9 +415,7 @@ void RkISP1CameraData::queueFrameAction(unsigned int frame,
 	switch (action.operation) {
 	case RKISP1_IPA_ACTION_V4L2_SET: {
 		const ControlList &controls = action.controls[0];
-		timeline_.scheduleAction(std::make_unique<RkISP1ActionSetSensor>(frame,
-										 sensor_,
-										 controls));
+		delayedCtrls_->push(controls);
 		break;
 	}
 	case RKISP1_IPA_ACTION_PARAM_FILLED: {
@@ -896,6 +879,8 @@ int PipelineHandlerRkISP1::start(Camera *camera)
 		};
 	}
 
+	isp_->setFrameStartEnabled(true);
+
 	activeCamera_ = camera;
 
 	/* Inform IPA of stream configuration and sensor controls. */
@@ -922,6 +907,8 @@ void PipelineHandlerRkISP1::stop(Camera *camera)
 {
 	RkISP1CameraData *data = cameraData(camera);
 	int ret;
+
+	isp_->setFrameStartEnabled(false);
 
 	selfPath_.stop();
 	mainPath_.stop();
@@ -1040,6 +1027,10 @@ int PipelineHandlerRkISP1::createCamera(MediaEntity *sensor)
 
 	/* Initialize the camera properties. */
 	data->properties_ = data->sensor_->properties();
+
+	data->delayedCtrls_ = data->sensor_->delayedContols();
+	isp_->frameStart.connect(data->delayedCtrls_,
+				 &DelayedControls::frameStart);
 
 	ret = data->loadIPA();
 	if (ret)
