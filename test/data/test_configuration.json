@@ -1,0 +1,15 @@
+{
+  "device": {
+	"cameraName": "Test Camera Name",
+	"manufacturer": "Test Manufacturer"
+  },
+
+  "/base/soc/i2c0mux/i2c@1/imx219@10": {
+	"properties": {
+		"Rotation" : 0,
+		"Location" : 1
+	}
+  },
+
+  "dummy_key": "Sample test string"
+}

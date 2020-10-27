@@ -1,0 +1,7 @@
+{
+  "\_SB_.PCI0.XHC_.RHUB.HS05-5:1.0-0408:5251": {
+	"properties": {
+		"The ID above is invalidly escaped" : 0,
+		"This will not parse": 1
+	}
+},
