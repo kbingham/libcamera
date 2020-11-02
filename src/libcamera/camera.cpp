@@ -937,7 +937,7 @@ int Camera::queueRequest(Request *request)
 	}
 
 	return d->pipe_->invokeMethod(&PipelineHandler::queueRequest,
-				      ConnectionTypeQueued, this, request);
+				      ConnectionTypeQueued, request);
 }
 
 /**
