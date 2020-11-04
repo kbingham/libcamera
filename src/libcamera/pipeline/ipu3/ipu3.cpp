@@ -14,11 +14,13 @@
 #include <libcamera/camera.h>
 #include <libcamera/control_ids.h>
 #include <libcamera/formats.h>
+#include <libcamera/ipa/ipu3.h>
 #include <libcamera/request.h>
 #include <libcamera/stream.h>
 
 #include "libcamera/internal/camera_sensor.h"
 #include "libcamera/internal/device_enumerator.h"
+#include "libcamera/internal/ipa_manager.h"
 #include "libcamera/internal/log.h"
 #include "libcamera/internal/media_device.h"
 #include "libcamera/internal/pipeline_handler.h"
@@ -49,9 +51,11 @@ class IPU3CameraData : public CameraData
 {
 public:
 	IPU3CameraData(PipelineHandler *pipe)
-		: CameraData(pipe)
+		: CameraData(pipe), delayedCtrls_(nullptr)
 	{
 	}
+
+	int loadIPA();
 
 	void imguOutputBufferReady(FrameBuffer *buffer);
 	void cio2BufferReady(FrameBuffer *buffer);
@@ -62,6 +66,11 @@ public:
 	Stream outStream_;
 	Stream vfStream_;
 	Stream rawStream_;
+
+	DelayedControls *delayedCtrls_;
+
+private:
+	void actOnIpa(unsigned int id, const IPAOperationData &op);
 };
 
 class IPU3CameraConfiguration : public CameraConfiguration
@@ -590,12 +599,22 @@ int PipelineHandlerIPU3::start(Camera *camera)
 	IPU3CameraData *data = cameraData(camera);
 	CIO2Device *cio2 = &data->cio2_;
 	ImgUDevice *imgu = data->imgu_;
+
+	CameraSensorInfo sensorInfo = {};
+	std::map<unsigned int, IPAStream> streamConfig;
+	std::map<unsigned int, const ControlInfoMap &> entityControls;
+	IPAOperationData ipaConfig;
+
 	int ret;
 
 	/* Allocate buffers for internal pipeline usage. */
 	ret = allocateBuffers(camera);
 	if (ret)
 		return ret;
+
+	ret = data->ipa_->start();
+	if (ret)
+		goto error;
 
 	/*
 	 * Start the ImgU video devices, buffers will be queued to the
@@ -612,9 +631,33 @@ int PipelineHandlerIPU3::start(Camera *camera)
 		goto error;
 	}
 
+	/* Inform IPA of stream configuration and sensor controls. */
+	ret = data->cio2_.sensor()->sensorInfo(&sensorInfo);
+	if (ret) {
+		/* \todo Turn to hard failure once sensors info is mandatory. */
+		LOG(IPU3, Warning) << "Camera sensor information not available";
+		sensorInfo = {};
+		ret = 0;
+	}
+
+	streamConfig[0] = {
+		.pixelFormat = data->outStream_.configuration().pixelFormat,
+		.size = data->outStream_.configuration().size,
+	};
+	streamConfig[0] = {
+		.pixelFormat = data->vfStream_.configuration().pixelFormat,
+		.size = data->vfStream_.configuration().size,
+	};
+
+	entityControls.emplace(0, data->cio2_.sensor()->controls());
+
+	data->ipa_->configure(sensorInfo, streamConfig, entityControls,
+			      ipaConfig, nullptr);
+
 	return 0;
 
 error:
+	data->ipa_->stop();
 	freeBuffers(camera);
 	LOG(IPU3, Error) << "Failed to start camera " << camera->id();
 
@@ -630,6 +673,8 @@ void PipelineHandlerIPU3::stop(Camera *camera)
 	ret |= data->cio2_.stop();
 	if (ret)
 		LOG(IPU3, Warning) << "Failed to stop camera " << camera->id();
+
+	data->ipa_->stop();
 
 	freeBuffers(camera);
 }
@@ -762,11 +807,19 @@ int PipelineHandlerIPU3::registerCameras()
 		if (ret)
 			continue;
 
+		ret = data->loadIPA();
+		if (ret)
+			continue;
+
 		/* Initialize the camera properties. */
 		data->properties_ = cio2->sensor()->properties();
 
 		/* Initialze the camera controls. */
 		data->controlInfo_ = IPU3Controls;
+
+		data->delayedCtrls_ = cio2->sensor()->delayedContols();
+		data->cio2_.frameStart().connect(data->delayedCtrls_,
+						 &DelayedControls::frameStart);
 
 		/**
 		 * \todo Dynamically assign ImgU and output devices to each
@@ -809,6 +862,34 @@ int PipelineHandlerIPU3::registerCameras()
 	}
 
 	return numCameras ? 0 : -ENODEV;
+}
+
+int IPU3CameraData::loadIPA()
+{
+	ipa_ = IPAManager::createIPA(pipe_, 1, 1);
+	if (!ipa_)
+		return -ENOENT;
+
+	ipa_->queueFrameAction.connect(this, &IPU3CameraData::actOnIpa);
+
+	ipa_->init(IPASettings{});
+
+	return 0;
+}
+
+void IPU3CameraData::actOnIpa([[maybe_unused]] unsigned int id,
+			      const IPAOperationData &action)
+{
+	switch (action.operation) {
+	case IPU3_IPA_ACTION_SET_SENSOR_CONTROLS: {
+		const ControlList &controls = action.controls[0];
+		delayedCtrls_->push(controls);
+		break;
+	}
+	default:
+		LOG(IPU3, Error) << "Unknown action " << action.operation;
+		break;
+	}
 }
 
 /* -----------------------------------------------------------------------------
