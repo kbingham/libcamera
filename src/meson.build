@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: CC0-1.0
 
-subdir('android')
-
 openssl = find_program('openssl', required : true)
 if openssl.found()
     ipa_priv_key = custom_target('ipa-priv-key',
@@ -13,8 +11,12 @@ else
     ipa_sign_module = false
 endif
 
+# The Android HAL must be built before, and is included in libcamera.
+subdir('android')
+
 subdir('libcamera')
 subdir('ipa')
+
 subdir('cam')
 subdir('qcam')
 
