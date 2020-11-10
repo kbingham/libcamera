@@ -72,8 +72,11 @@ char *secure_getenv(const char *name)
 #if HAVE_SECURE_GETENV
 	return ::secure_getenv(name);
 #else
+
+#if defined(HAVE_ISSETUGID) && defined(ISSETUGID_WORKS)
 	if (issetugid())
 		return NULL;
+#endif
 
 	return getenv(name);
 #endif
