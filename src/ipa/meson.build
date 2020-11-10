@@ -1,19 +1,17 @@
 # SPDX-License-Identifier: CC0-1.0
 
-ipa_install_dir = join_paths(get_option('libdir'), 'libcamera')
-ipa_data_dir = join_paths(get_option('datadir'), 'libcamera', 'ipa')
-ipa_sysconf_dir = join_paths(get_option('sysconfdir'), 'libcamera', 'ipa')
-
 ipa_includes = [
     libcamera_includes,
 ]
 
-config_h.set('IPA_CONFIG_DIR',
-             '"' + join_paths(get_option('prefix'), ipa_sysconf_dir) +
-             ':' + join_paths(get_option('prefix'), ipa_data_dir) + '"')
+ipa_install_dir = libcamera_libdir
+ipa_data_dir = libcamera_datadir / 'ipa'
+ipa_sysconf_dir = libcamera_sysconfdir / 'ipa'
 
-config_h.set('IPA_MODULE_DIR',
-             '"' + join_paths(get_option('prefix'), ipa_install_dir) + '"')
+config_h.set('IPA_CONFIG_DIR', '"' + prefix / ipa_sysconf_dir +
+                               ':' + prefix / ipa_data_dir + '"')
+
+config_h.set('IPA_MODULE_DIR', '"' + prefix / ipa_install_dir + '"')
 
 subdir('libipa')
 
