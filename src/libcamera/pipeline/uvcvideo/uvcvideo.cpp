@@ -18,6 +18,7 @@
 #include <libcamera/request.h>
 #include <libcamera/stream.h>
 
+#include "libcamera/internal/configuration.h"
 #include "libcamera/internal/device_enumerator.h"
 #include "libcamera/internal/log.h"
 #include "libcamera/internal/media_device.h"
@@ -483,6 +484,37 @@ bool PipelineHandlerUVC::match(DeviceEnumerator *enumerator)
 	return true;
 }
 
+static void loadProperties(json props, ControlList &properties)
+{
+	json::iterator it = props.find("/base/soc/i2c0mux/i2c@1/imx219@10");
+	if (it == props.end())
+		return;
+
+	json j  = *it;
+	it = j.find("properties");
+	if (it == j.end())
+		return;
+
+	json deviceProperties = *it;
+
+	for (auto& [key, value] : deviceProperties.items()) {
+		LOG(UVC, Error) << "Key: " << key << " Value: " << value;
+
+		if (!value.is_number()) {
+			LOG(UVC, Error) << "Not a number: " << value;
+			continue;
+		}
+
+		LOG(UVC, Error) << "OK! Lets set " << key << " to " << value;
+
+		if (key == "Rotation")
+			properties.set(properties::Rotation, value);
+
+		if (key == "Location")
+			properties.set(properties::Location, value);
+	}
+}
+
 int UVCCameraData::init(MediaDevice *media)
 {
 	int ret;
@@ -512,6 +544,14 @@ int UVCCameraData::init(MediaDevice *media)
 	 */
 	properties_.set(properties::Location, properties::CameraLocationExternal);
 	properties_.set(properties::Model, utils::toAscii(media->model()));
+
+
+	Configuration props;
+	ret = props.open("configuration.json");
+	ControlList overrides;
+	if (ret == 0) {
+		loadProperties(props.data(), properties_);
+	}
 
 	/* Initialise the supported controls. */
 	ControlInfoMap::Map ctrls;
