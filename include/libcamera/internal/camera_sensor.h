@@ -70,6 +70,7 @@ protected:
 private:
 	int generateId();
 	int initProperties();
+	int parseConfigurationFile();
 
 	const MediaEntity *entity_;
 	std::unique_ptr<V4L2Subdevice> subdev_;

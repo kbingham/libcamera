@@ -18,6 +18,7 @@
 #include <libcamera/property_ids.h>
 
 #include "libcamera/internal/bayer_format.h"
+#include "libcamera/internal/configuration.h"
 #include "libcamera/internal/formats.h"
 #include "libcamera/internal/sysfs.h"
 #include "libcamera/internal/utils.h"
@@ -293,6 +294,12 @@ int CameraSensor::initProperties()
 	ret = subdev_->getSelection(pad_, V4L2_SEL_TGT_CROP_BOUNDS, &bounds);
 	if (!ret)
 		properties_.set(properties::PixelArraySize, bounds.size());
+
+	/*
+	 * Properties are pulled from a configuration file on a best effort.
+	 * If the file doesn't exist, or has no properties there is no failure.
+	 */
+	parseConfigurationFile();
 
 	Rectangle crop;
 	ret = subdev_->getSelection(pad_, V4L2_SEL_TGT_CROP_DEFAULT, &crop);
@@ -648,6 +655,50 @@ int CameraSensor::generateId()
 
 	LOG(CameraSensor, Error) << "Can't generate sensor ID";
 	return -EINVAL;
+}
+
+int CameraSensor::parseConfigurationFile()
+{
+	Configuration c;
+
+	int ret = c.open("camera_sensor.json");
+	if (ret) {
+		LOG(CameraSensor, Debug) << "No configuration file available";
+		return -ENODATA;
+	}
+
+	/* Find properties based on the Camera model_ */
+	/* Todo: Spilt parsing out for multiple paths. */
+#if 0
+	/* Find properties based around the Camera Sensor ID */
+	json::iterator it = c.data().find(id_);
+	if (it == c.data().end())
+		return -ENOENT;
+
+	json j = *it;
+	it = j.find("properties");
+	if (it == j.end())
+		return -ENOENT;
+
+	json deviceProperties = *it;
+
+	for (auto &[key, value] : deviceProperties.items()) {
+		LOG(CameraSensor, Debug) << "Key: " << key << " Value: " << value;
+
+		if (!value.is_number()) {
+			LOG(CameraSensor, Debug) << "Not a number: " << value;
+			continue;
+		}
+
+		if (key == "Rotation")
+			properties_.set(properties::Rotation, value);
+
+		if (key == "Location")
+			properties_.set(properties::Location, value);
+	}
+#endif
+
+	return 0;
 }
 
 } /* namespace libcamera */
