@@ -12,6 +12,7 @@
 
 #include <libcamera/camera.h>
 
+#include "libcamera/internal/configuration.h"
 #include "libcamera/internal/device_enumerator.h"
 #include "libcamera/internal/ipa_manager.h"
 #include "libcamera/internal/log.h"
@@ -59,6 +60,7 @@ protected:
 
 private:
 	int init();
+	void parseConfiguration();
 	void createPipelineHandlers();
 	void cleanup();
 
@@ -123,6 +125,9 @@ void CameraManager::Private::run()
 
 int CameraManager::Private::init()
 {
+	/* Handle any configuration files. */
+	parseConfiguration();
+
 	enumerator_ = DeviceEnumerator::create();
 	if (!enumerator_ || enumerator_->enumerate())
 		return -ENODEV;
@@ -130,6 +135,28 @@ int CameraManager::Private::init()
 	createPipelineHandlers();
 
 	return 0;
+}
+
+void CameraManager::Private::parseConfiguration()
+{
+	Configuration c;
+
+	/* Parse the main configuration file */
+	int ret = c.open("configuration.json");
+	if (ret) {
+		LOG(Camera, Debug) << "Unable to parse configuration.json";
+		return;
+	}
+
+#if 0
+	/* What library level configuration would we like to parse ? */
+	if (c.data().contains("device")) {
+		json j = c.data()["device"];
+
+		LOG(Camera, Info) << "Device Name: " << j["cameraName"];
+		LOG(Camera, Info) << "Manufacturer: " << j["manufacturer"];
+	}
+#endif
 }
 
 void CameraManager::Private::createPipelineHandlers()
