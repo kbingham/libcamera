@@ -515,6 +515,12 @@ ControlList CameraSensor::getControls(const std::vector<uint32_t> &ids)
 }
 
 /**
+ * \fn CameraSensor::device()
+ * \brief Retrieve the camera sensor device
+ * \return The camera sensor device
+ */
+
+/**
  * \fn CameraSensor::properties()
  * \brief Retrieve the camera sensor properties
  * \return The list of camera sensor properties
