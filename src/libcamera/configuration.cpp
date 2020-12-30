@@ -46,6 +46,15 @@ std::string Configuration::findFile(const std::string &filename)
 		LIBCAMERA_DATA_DIR,
 	};
 
+	/*
+	 * Todo: Remove this, and remove path resolution from IPA interfaces
+	 * IPA's already identify the full path. Use that for now.
+	 */
+	if (File::exists(filename))
+		return filename;
+
+	/* Todo: Search environment Variable PATH override. */
+
 	std::string root = utils::libcameraSourcePath();
 	if (!root.empty()) {
 		std::string configurationPath = root + "data/" + filename;
