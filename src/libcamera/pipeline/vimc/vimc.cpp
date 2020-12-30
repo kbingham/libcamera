@@ -420,7 +420,7 @@ bool PipelineHandlerVimc::match(DeviceEnumerator *enumerator)
 
 	data->ipa_ = IPAManager::createIPA(this, 0, 0);
 	if (data->ipa_ != nullptr) {
-		std::string conf = data->ipa_->configurationFile("vimc.conf");
+		std::string conf = data->ipa_->configurationFile("vimc.json");
 		data->ipa_->init(IPASettings{ conf });
 	} else {
 		LOG(VIMC, Warning) << "no matching IPA found";

@@ -19,7 +19,7 @@
 
 #include <libipa/ipa_interface_wrapper.h>
 
-#include "libcamera/internal/file.h"
+#include "libcamera/internal/configuration.h"
 #include "libcamera/internal/log.h"
 
 namespace libcamera {
@@ -74,11 +74,18 @@ int IPAVimc::init(const IPASettings &settings)
 		<< "initializing vimc IPA with configuration file "
 		<< settings.configurationFile;
 
-	File conf(settings.configurationFile);
-	if (!conf.open(File::ReadOnly)) {
+	Configuration c;
+	int ret = c.open(settings.configurationFile);
+	if (ret != 0) {
 		LOG(IPAVimc, Error) << "Failed to open configuration file";
 		return -EINVAL;
 	}
+
+	/*
+	for (auto &[key, value] : c.data().items()) {
+		LOG(IPAVimc, Debug) << "Key: " << key << " Value: " << value;
+	}
+	*/
 
 	return 0;
 }
