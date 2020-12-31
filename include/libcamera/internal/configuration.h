@@ -32,6 +32,39 @@ private:
 	Json *data_;
 };
 
+/*
+class ConfigurationSax {
+	// called when null is parsed
+	bool null();
+
+	// called when a boolean is parsed; value is passed
+	bool boolean(bool val);
+
+	// called when a signed or unsigned integer number is parsed; value is passed
+	bool number_integer(int val);
+	bool number_unsigned(unsigned int val);
+
+	// called when a floating-point number is parsed; value and original string is passed
+	bool number_float(float val, const std::string& s);
+
+	// called when a string is parsed; value is passed and can be safely moved away
+	bool string(std::string& val);
+	// called when a binary value is parsed; value is passed and can be safely moved away
+	bool binary(binary& val);
+
+	// called when an object or array begins or ends, resp. The number of elements is passed (or -1 if not known)
+	bool start_object(std::size_t elements);
+	bool end_object();
+	bool start_array(std::size_t elements);
+	bool end_array();
+	// called when an object key is parsed; value is passed and can be safely moved away
+	bool key(std::string& val);
+
+	// called when a parse error occurs; byte position, the last token, and an exception is passed
+	bool parse_error(std::size_t position, const std::string& last_token, const json::exception& ex);
+}
+*/
+
 } /* namespace libcamera */
 
 #endif /* __LIBCAMERA_INTERNAL_CONFIGURATION_H__ */
