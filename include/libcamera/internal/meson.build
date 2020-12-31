@@ -30,6 +30,7 @@ libcamera_internal_headers = files([
     'ipa_module.h',
     'ipa_proxy.h',
     'ipc_unixsocket.h',
+    'json.h',
     'log.h',
     'media_device.h',
     'media_object.h',
