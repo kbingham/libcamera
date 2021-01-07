@@ -4,6 +4,7 @@ libcamera_ipa_headers = files([
     'ipa_controls.h',
     'ipa_interface.h',
     'ipa_module_info.h',
+    'ipu3.h',
 ])
 
 install_headers(libcamera_ipa_headers,
