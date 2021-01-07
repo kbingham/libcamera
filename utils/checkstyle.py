@@ -771,6 +771,10 @@ def check_style(top_level, commit):
     files = [f for f in commit.files() if len([p for p in patterns if fnmatch.fnmatch(os.path.basename(f), p)])]
 
     for f in files:
+        if f.startswith("include/linux"):
+            print("Skipping imported file ", f)
+            continue
+
         issues += check_file(top_level, commit, f)
 
     if issues == 0:
