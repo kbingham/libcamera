@@ -21,6 +21,10 @@
 #include "libcamera/internal/buffer.h"
 #include "libcamera/internal/log.h"
 
+/* IA AIQ Wrapper API */
+#include "aiq/aiq.h"
+#include "binary_data.h"
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPAIPU3)
@@ -30,10 +34,8 @@ namespace ipa::ipu3 {
 class IPAIPU3 : public IPAIPU3Interface
 {
 public:
-	int init([[maybe_unused]] const IPASettings &settings) override
-	{
-		return 0;
-	}
+	int init(const IPASettings &settings) override;
+
 	int start() override;
 	void stop() override {}
 
@@ -63,7 +65,60 @@ private:
 	uint32_t gain_;
 	uint32_t minGain_;
 	uint32_t maxGain_;
+
+	/* AIQ Instance */
+	aiq::AIQ aiq_;
+	aiq::AiqInputParameters aiqInputParams_;
+	aiq::AiqResults results_;
+
+	BinaryData aiqb_;
+	BinaryData nvm_;
+	BinaryData aiqd_;
 };
+
+int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
+{
+	int ret;
+
+	/*
+	 * Temporary mapping of the sensor name to the AIQB data file.
+	 *
+	 * \todo: This mapping table should be handled more generically
+	 * or through the configuration interfaces perhaps.
+	 */
+	std::map<std::string, std::string> aiqb_paths = {
+		{ "ov13858", "/usr/share/libcamera/ipa/ipu3/00ov13858.aiqb" },
+		{ "ov5670", "/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb" },
+		{ "imx258", "/etc/camera/ipu3/00imx258.aiqb" },
+	};
+
+	LOG(IPAIPU3, Info) << "Initialising IPA IPU3 for "
+			   << settings.sensorModel;
+
+	auto it = aiqb_paths.find(settings.sensorModel);
+	if (it == aiqb_paths.end()) {
+		LOG(IPAIPU3, Error) << "Failed to identify tuning data";
+		return -EINVAL;
+	}
+
+	LOG(IPAIPU3, Info) << "Using tuning file: " << it->second;
+	ret = aiqb_.load(it->second.c_str());
+	if (ret) {
+		LOG(IPAIPU3, Error) << "Failed to load AIQB";
+		return -ENODATA;
+	}
+
+	/*
+	 * Todo: nvm_ and aiqd_ are left as empty nullptrs.
+	 * These need to be identified and loaded as required.
+	 */
+
+	ret = aiq_.init(aiqb_, nvm_, aiqd_);
+	if (ret)
+		return ret;
+
+	return 0;
+}
 
 int IPAIPU3::start()
 {
@@ -99,6 +154,11 @@ void IPAIPU3::configure(const std::map<uint32_t, ControlInfoMap> &entityControls
 	minGain_ = std::max(itGain->second.min().get<int32_t>(), 1);
 	maxGain_ = itGain->second.max().get<int32_t>();
 	gain_ = maxGain_;
+
+	if (aiq_.configure()) {
+		LOG(IPAIPU3, Error) << "Failed to configure the AIQ";
+		return;
+	}
 }
 
 void IPAIPU3::mapBuffers(const std::vector<IPABuffer> &buffers)
@@ -173,7 +233,20 @@ void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 	/* Prepare parameters buffer. */
 	memset(params, 0, sizeof(*params));
 
-	/* \todo Fill in parameters buffer. */
+	/*
+	 * Call into the AIQ object, and set up the library with any requested
+	 * controls or settings from the incoming request.
+	 *
+	 * (statistics are fed into the library as a separate event
+	 *  when available)
+	 *
+	 * - Run algorithms
+	 *
+	 * - Fill params buffer with the results of the algorithms.
+	 */
+
+	/* Run algorithms into/using this context structure */
+	aiq_.run(frame, aiqInputParams_, results_);
 
 	IPU3Action op;
 	op.op = ActionParamFilled;
@@ -188,6 +261,16 @@ void IPAIPU3::parseStatistics(unsigned int frame,
 
 	/* \todo React to statistics and update internal state machine. */
 	/* \todo Add meta-data information to ctrls. */
+
+	/* *stats comes from the IPU3 hardware. We need to give this data into
+	 * the AIQ library
+	 */
+
+	/* todo:  We need to have map at least the timestamp of the buffer
+	 * of the statistics in to allow the library to identify how long
+	 * convergence takes. Without it = the algos will not converge. */
+
+	aiq_.setStatistics(frame, results_, stats);
 
 	IPU3Action op;
 	op.op = ActionMetadataReady;
