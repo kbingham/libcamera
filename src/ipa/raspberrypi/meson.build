@@ -1,5 +1,13 @@
 # SPDX-License-Identifier: CC0-1.0
 
+rpi_ipa_supported = (host_machine.cpu_family() == 'arm' or
+                     host_machine.cpu_family() == 'aarch64')
+
+if not rpi_ipa_supported
+    message('Skipping build of RPi IPA')
+    subdir_done()
+endif
+
 ipa_name = 'ipa_rpi'
 
 rpi_ipa_deps = [
