@@ -24,6 +24,9 @@
 #include "libcamera/internal/buffer.h"
 #include "libcamera/internal/log.h"
 
+/* IA AIQ Wrapper API */
+#include "aiq.h"
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPAIPU3)
@@ -31,10 +34,7 @@ LOG_DEFINE_CATEGORY(IPAIPU3)
 class IPAIPU3 : public IPAInterface
 {
 public:
-	int init([[maybe_unused]] const IPASettings &settings) override
-	{
-		return 0;
-	}
+	int init([[maybe_unused]] const IPASettings &settings) override;
 	int start([[maybe_unused]] const IPAOperationData &data,
 		  [[maybe_unused]] IPAOperationData *result) override { return 0; }
 	void stop() override {}
@@ -67,7 +67,18 @@ private:
 	uint32_t gain_;
 	uint32_t minGain_;
 	uint32_t maxGain_;
+
+	/* AIQ Instance */
+	AIQ aiq_;
 };
+
+int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
+{
+	LOG(IPAIPU3, Warning) << "Initialising IPA IPU3 + AIQ";
+	aiq_.init();
+
+	return 0;
+}
 
 void IPAIPU3::configure([[maybe_unused]] const CameraSensorInfo &info,
 			[[maybe_unused]] const std::map<unsigned int, IPAStream> &streamConfig,

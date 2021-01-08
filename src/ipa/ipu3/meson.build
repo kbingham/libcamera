@@ -2,11 +2,27 @@
 
 ipa_name = 'ipa_ipu3'
 
+ipu3_ipa_deps = [
+    libatomic,
+    libcamera_dep,
+    ia_imaging_dep,
+]
+
+ipu3_ipa_includes = [
+    ipa_includes,
+    libipa_includes,
+]
+
+ipu3_ipa_files = files([
+    'aiq.cpp',
+    'ipu3.cpp',
+])
+
 mod = shared_module(ipa_name,
-                    'ipu3.cpp',
+                    ipu3_ipa_files,
                     name_prefix : '',
-                    include_directories : [ ipa_includes, libipa_includes ],
-                    dependencies : [ libatomic, libcamera_dep ],
+                    include_directories : ipu3_ipa_includes,
+                    dependencies : ipu3_ipa_deps,
                     link_with : libipa,
                     install : true,
                     install_dir : ipa_install_dir)

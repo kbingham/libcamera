@@ -111,6 +111,10 @@ py_modules = []
 # Libraries used by multiple components
 liblttng = cc.find_library('lttng-ust', required : get_option('tracing'))
 
+# IPU3 IPA Image Algorithms
+ia_imaging = subproject('intel')
+ia_imaging_dep = ia_imaging.get_variable('ia_imaging_dep')
+
 # Utilities are parsed first to provide support for other components.
 subdir('utils')
 
