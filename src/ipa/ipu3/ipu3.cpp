@@ -21,6 +21,9 @@
 #include "libcamera/internal/buffer.h"
 #include "libcamera/internal/log.h"
 
+/* IA AIQ Wrapper API */
+#include "aiq/aiq.h"
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPAIPU3)
@@ -32,10 +35,8 @@ namespace ipu3 {
 class IPAIPU3 : public IPAIPU3Interface
 {
 public:
-	int init([[maybe_unused]] const IPASettings &settings) override
-	{
-		return 0;
-	}
+	int init(const IPASettings &settings) override;
+
 	int start() override;
 	void stop() override {}
 
@@ -65,7 +66,18 @@ private:
 	uint32_t gain_;
 	uint32_t minGain_;
 	uint32_t maxGain_;
+
+	/* AIQ Instance */
+	aiq::AIQ aiq_;
+	aiq::AiqInputParameters aiqInputParams_;
+	aiq::AiqResults results_;
 };
+
+int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
+{
+	LOG(IPAIPU3, Info) << "Initialising IPA IPU3 + AIQ";
+	return aiq_.init();
+}
 
 int IPAIPU3::start()
 {
@@ -101,6 +113,11 @@ void IPAIPU3::configure(const std::map<uint32_t, ControlInfoMap> &entityControls
 	minGain_ = std::max(itGain->second.min().get<int32_t>(), 1);
 	maxGain_ = itGain->second.max().get<int32_t>();
 	gain_ = maxGain_;
+
+	if (aiq_.configure()) {
+		LOG(IPAIPU3, Error) << "Failed to configure the AIQ";
+		return;
+	}
 }
 
 void IPAIPU3::mapBuffers(const std::vector<IPABuffer> &buffers)
@@ -175,7 +192,20 @@ void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 	/* Prepare parameters buffer. */
 	memset(params, 0, sizeof(*params));
 
-	/* \todo Fill in parameters buffer. */
+	/*
+	 * Call into the AIQ object, and set up the library with any requested
+	 * controls or settings from the incoming request.
+	 *
+	 * (statistics are fed into the library as a separate event
+	 *  when available)
+	 *
+	 * - Run algorithms
+	 *
+	 * - Fill params buffer with the results of the algorithms.
+	 */
+
+	/* Run algorithms into/using this context structure */
+	aiq_.run(frame, aiqInputParams_, results_);
 
 	IPU3Action op;
 	op.op = ActionParamFilled;
@@ -190,6 +220,16 @@ void IPAIPU3::parseStatistics(unsigned int frame,
 
 	/* \todo React to statistics and update internal state machine. */
 	/* \todo Add meta-data information to ctrls. */
+
+	/* *stats comes from the IPU3 hardware. We need to give this data into
+	 * the AIQ library
+	 */
+
+	/* todo:  We need to have map at least the timestamp of the buffer
+	 * of the statistics in to allow the library to identify how long
+	 * convergence takes. Without it = the algos will not converge. */
+
+	aiq_.setStatistics(frame, stats);
 
 	ipa::ipu3::IPU3Action op;
 	op.op = ipa::ipu3::ActionMetadataReady;
