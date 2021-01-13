@@ -275,8 +275,7 @@ std::unique_ptr<IPAProxy> IPAManager::createIPA(PipelineHandler *pipe,
 	 *
 	 * \todo Implement a better proxy selection
 	 */
-	const char *proxyName = self_->isSignatureValid(m)
-			      ? "IPAProxyThread" : "IPAProxyLinux";
+	const char *proxyName = "IPAProxyThread";
 	IPAProxyFactory *pf = nullptr;
 
 	for (IPAProxyFactory *factory : IPAProxyFactory::factories()) {
