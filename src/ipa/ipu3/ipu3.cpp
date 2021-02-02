@@ -22,6 +22,7 @@
 #include "libcamera/internal/log.h"
 
 /* IA AIQ Wrapper API */
+#include "aic/aic.h"
 #include "aiq/aiq.h"
 #include "binary_data.h"
 
@@ -66,8 +67,10 @@ private:
 	uint32_t minGain_;
 	uint32_t maxGain_;
 
-	/* AIQ Instance */
+	/* Intel Library Instances. */
 	aiq::AIQ aiq_;
+	aic::AIC aic_;
+
 	aiq::AiqInputParameters aiqInputParams_;
 	aiq::AiqResults results_;
 
@@ -114,6 +117,10 @@ int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
 	 */
 
 	ret = aiq_.init(aiqb_, nvm_, aiqd_);
+	if (ret)
+		return ret;
+
+	ret = aic_.init(aiqb_);
 	if (ret)
 		return ret;
 
