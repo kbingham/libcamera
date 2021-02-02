@@ -19,6 +19,7 @@ ipu3_ipa_files = files([
     'ipu3.cpp',
 ])
 
+subdir('aic')
 subdir('aiq')
 
 mod = shared_module(ipa_name,
