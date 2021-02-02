@@ -216,6 +216,16 @@ void IPAIPU3::parseStatistics(unsigned int frame,
 	/* \todo React to statistics and update internal state machine. */
 	/* \todo Add meta-data information to ctrls. */
 
+	/* *stats comes from the IPU3 hardware. We need to give this data into
+	 * the AIQ library
+	 */
+
+	/* todo:  We need to have map at least the timestamp of the buffer
+	 * of the statistics in to allow the library to identify how long
+	 * convergence takes. Without it = the algos will not converge. */
+
+	aiq_.setStatistics(frame, stats);
+
 	IPAOperationData op;
 	op.operation = IPU3_IPA_ACTION_METADATA_READY;
 	op.controls.push_back(ctrls);

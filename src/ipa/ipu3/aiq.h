@@ -14,8 +14,8 @@
  *	...
  */
 
-/* Intel IA AIQ support */
 #include <ia_imaging/ia_aiq.h>
+#include <linux/intel-ipu3.h>
 
 namespace libcamera {
 
@@ -27,6 +27,7 @@ public:
 
 	int init();
 	int configure();
+	int setStatistics(unsigned int frame, const ipu3_uapi_stats_3a *stats);
 
 private:
 	ia_aiq *aiq_;

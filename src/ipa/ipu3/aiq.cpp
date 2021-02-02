@@ -123,4 +123,25 @@ int AIQ::configure()
 	return 0;
 }
 
+int AIQ::setStatistics(unsigned int frame, const ipu3_uapi_stats_3a *stats)
+{
+	LOG(AIQ, Debug) << "Set Statistitcs";
+
+	(void)frame;
+	(void)stats;
+	ia_aiq_statistics_input_params stats_param = {};
+
+	/* We should give the converted statistics into the AIQ library here. */
+
+	ia_err err = ia_aiq_statistics_set(aiq_, &stats_param);
+	if (err) {
+		LOG(AIQ, Error) << "Failed to set statistics: "
+				<< ia_err_decode(err);
+
+		LOG(AIQ, Error) << "Not quitting";
+	}
+
+	return 0;
+}
+
 } /* namespace libcamera */
