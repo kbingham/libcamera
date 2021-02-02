@@ -16,6 +16,7 @@ ipu3_ipa_includes = [
 ipu3_ipa_files = files([
     'aiq.cpp',
     'ipu3.cpp',
+    'parameter_encoder.cpp',
 ])
 
 mod = shared_module(ipa_name,

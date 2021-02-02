@@ -8,6 +8,8 @@
 #include "libcamera/internal/file.h"
 #include "libcamera/internal/log.h"
 
+#include "parameter_encoder.h"
+
 #include "aiq.h"
 
 namespace libcamera {
@@ -140,6 +142,26 @@ int AIQ::setStatistics(unsigned int frame, const ipu3_uapi_stats_3a *stats)
 
 		LOG(AIQ, Error) << "Not quitting";
 	}
+
+	return 0;
+}
+
+/*
+ * Run algorithms, and store the configuration in the parameters buffers
+ * This is likely to change drastically as we progress, and the algorithms
+ * might run asycnronously, or after receipt of statistics, with the filling
+ * of the parameter buffer being the only part handled when called for.
+ */
+int AIQ::run(unsigned int frame, ipu3_uapi_params *params)
+{
+	(void)frame;
+
+	aic_config config;
+
+	/* Run AWB algorithms, using the config structures. */
+
+	/* IPU3 firmware specific encoding for ISP controls. */
+	ParameterEncoder::encode(&config, params);
 
 	return 0;
 }

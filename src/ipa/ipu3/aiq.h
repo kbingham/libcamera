@@ -28,6 +28,7 @@ public:
 	int init();
 	int configure();
 	int setStatistics(unsigned int frame, const ipu3_uapi_stats_3a *stats);
+	int run(unsigned int frame, ipu3_uapi_params *params);
 
 private:
 	ia_aiq *aiq_;

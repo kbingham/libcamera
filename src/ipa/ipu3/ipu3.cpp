@@ -24,9 +24,8 @@
 #include "libcamera/internal/buffer.h"
 #include "libcamera/internal/log.h"
 
-/* IA AIQ Wrapper API */
 #include "aiq.h"
-
+#include "parameter_encoder.h"
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPAIPU3)
@@ -197,7 +196,22 @@ void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 	/* Prepare parameters buffer. */
 	memset(params, 0, sizeof(*params));
 
-	/* \todo Fill in parameters buffer. */
+	/* 'controls' has all the Requested controls for this next frame */
+
+	/*
+	 * Call into the AIQ object, and set up the library with any requested
+	 * controls or settings from the incoming request.
+	 *
+	 * (statistics are fed into the library as a separate event
+	 *  when available)
+	 *
+	 * - Run algorithms
+	 *
+	 * - Fill params buffer with the results of the algorithms.
+	 */
+
+	/* Run algorithms into/using this context structure */
+	aiq_.run(frame, params);
 
 	IPAOperationData op;
 	op.operation = IPU3_IPA_ACTION_PARAM_FILLED;
@@ -205,6 +219,7 @@ void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 	queueFrameAction.emit(frame, op);
 
 	/* \todo Calculate new values for exposure_ and gain_. */
+	/* Should this be done before returning the param buffer? */
 	setControls(frame);
 }
 
