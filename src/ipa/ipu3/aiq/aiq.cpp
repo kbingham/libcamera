@@ -13,6 +13,7 @@
 #include "libcamera/internal/log.h"
 
 #include "aiq/binary_data.h"
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(AIQ)

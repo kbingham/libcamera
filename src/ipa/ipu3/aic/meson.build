@@ -2,4 +2,5 @@
 
 ipu3_ipa_files += files([
     'aic.cpp',
+    'parameter_encoder.cpp',
 ])
