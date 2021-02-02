@@ -5,7 +5,11 @@ project('ia_imaging', 'c')
 ia_imaging_source = meson.current_source_dir() / 'ia_imaging'
 
 ia_library_path = ia_imaging_source / 'usr/lib64'
-ia_library_includes = ia_imaging_source / 'usr/include'
+
+ia_library_includes = include_directories([
+  'ia_imaging/usr/include',
+  'ia_imaging/usr/include/ia_imaging',
+])
 
 cc = meson.get_compiler('c')
 
@@ -22,6 +26,7 @@ ia_deps = [
 
 ia_imaging_dep = declare_dependency(
     dependencies : ia_deps,
-    include_directories : include_directories('ia_imaging/usr/include'))
+    include_directories : ia_library_includes,
+)
 
 # find ia_imaging/usr/include/ | sort | while read line; do echo "    '$line',"; done;
