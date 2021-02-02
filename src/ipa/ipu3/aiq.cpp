@@ -116,4 +116,11 @@ int AIQ::init()
 	return 0;
 }
 
+int AIQ::configure()
+{
+	LOG(AIQ, Debug) << "Configure AIQ";
+
+	return 0;
+}
+
 } /* namespace libcamera */

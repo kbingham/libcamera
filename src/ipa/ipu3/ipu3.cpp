@@ -112,6 +112,10 @@ void IPAIPU3::configure([[maybe_unused]] const CameraSensorInfo &info,
 	gain_ = maxGain_;
 
 	setControls(0);
+	if (aiq_.configure()) {
+		LOG(IPAIPU3, Error) << "Failed to configure the AIQ";
+		return;
+	}
 }
 
 void IPAIPU3::mapBuffers(const std::vector<IPABuffer> &buffers)

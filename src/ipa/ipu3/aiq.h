@@ -26,6 +26,7 @@ public:
 	~AIQ();
 
 	int init();
+	int configure();
 
 private:
 	ia_aiq *aiq_;
