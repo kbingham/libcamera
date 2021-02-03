@@ -85,11 +85,11 @@ static int log_severity_to_syslog(LogSeverity severity)
 static const char *log_severity_name(LogSeverity severity)
 {
 	static const char *const names[] = {
-		"DEBUG",
-		" INFO",
-		" WARN",
-		"ERROR",
-		"FATAL",
+		"\033[1m\033[37mDEBUG\033[0m",
+		"\033[1m\033[32m INFO\033[0m",
+		"\033[1m\033[33m WARN\033[0m",
+		"\033[1m\033[31mERROR\033[0m",
+		"\033[1m\033[35mFATAL\033[0m",
 	};
 
 	if (static_cast<unsigned int>(severity) < std::size(names))
