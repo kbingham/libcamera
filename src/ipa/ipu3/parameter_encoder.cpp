@@ -199,6 +199,15 @@ static void ispLinVmemEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.lin_vmem_params = 1;
 }
 
+static void ispGammaCtrlEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.gamma.gc_ctrl.enable = config->rgbpp_2500_config.gamma.enable;
+	MEMCPY_S(params->acc_param.gamma.gc_lut.lut, sizeof(params->acc_param.gamma.gc_lut.lut),
+		 config->rgbpp_2500_config.gamma.lut_entries, sizeof(config->rgbpp_2500_config.gamma.lut_entries));
+
+	params->use.acc_gamma = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -212,6 +221,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispAwbEncode(config, params);
 	ispAfEncode(config, params);
 	ispLinVmemEncode(config, params);
+	ispGammaCtrlEncode(config, params);
 
 	return;
 }
