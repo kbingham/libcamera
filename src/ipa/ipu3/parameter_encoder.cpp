@@ -93,6 +93,15 @@ static const int16_t c[XNR3_LOOK_UP_TABLE_POINTS] = {
 	1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+/* Temporal Noise Reduction v3 */
+#define TNR3_NUM_POINTS (TNR3_NUM_SEGMENTS + 1)
+#define TNR3_KNEE_POINTS (TNR3_NUM_SEGMENTS - 1)
+#define TNR3_ISP_SCALE (1 << (ISP_VEC_ELEMBITS - 1))
+#define TNR3_RND_OFFSET (TNR3_ISP_SCALE >> 1)
+#define TNR3_MAX_VALUE (TNR3_ISP_SCALE - 1)
+#define TNR3_MIN_VALUE -(TNR3_ISP_SCALE)
+#define HOST_SCALING 0
+
 /* Imported directly from CommonUtilMacros.h */
 #ifndef MEMCPY_S
 #define MEMCPY_S(dest, dmax, src, smax) memcpy((dest), (src), std::min((size_t)(dmax), (size_t)(smax)))
@@ -100,6 +109,7 @@ static const int16_t c[XNR3_LOOK_UP_TABLE_POINTS] = {
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
+#define clamp(a, min_val, max_val) MIN(MAX((a), (min_val)), (max_val))
 
 static void ispAwbFrEncode(aic_config *config, ipu3_uapi_params *params)
 {
@@ -1060,6 +1070,125 @@ static void ispXnr3VmemEncode([[maybe_unused]] aic_config *config, ipu3_uapi_par
 	params->use.xnr3_vmem_params = 1;
 }
 
+static int qrmul(int number1, int number2)
+{
+	int result;
+	int offset = TNR3_RND_OFFSET;
+	int prod = number1 * number2;
+
+	if (prod >= 0)
+		result = prod + offset;
+	else
+		result = prod - offset;
+
+	return (result / TNR3_ISP_SCALE);
+}
+
+static void ispTnr3VmemEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	int i, j = 0;
+	int xdiff, scale_factor;
+	int knee_point[TNR3_NUM_POINTS];
+	int slopeu_y[TNR3_NUM_SEGMENTS];
+	int slopeu_u[TNR3_NUM_SEGMENTS];
+	int slopeu_v[TNR3_NUM_SEGMENTS];
+	int normalised_ydiff[TNR3_NUM_SEGMENTS];
+	int normalised_udiff[TNR3_NUM_SEGMENTS];
+	int normalised_vdiff[TNR3_NUM_SEGMENTS];
+	int yintercept_y[TNR3_NUM_SEGMENTS];
+	int yintercept_u[TNR3_NUM_SEGMENTS];
+	int yintercept_v[TNR3_NUM_SEGMENTS];
+
+	knee_point[0] = 0;
+	knee_point[TNR3_NUM_POINTS - 1] = TNR3_MAX_VALUE;
+
+	for (i = 0; i < TNR3_KNEE_POINTS; i++) {
+		knee_point[1 + i] = config->tnr3_2500_config.knee_y[i];
+	}
+
+	for (i = 0; i < TNR3_NUM_SEGMENTS; i++) {
+		/* Calculating slope for Y, U and V. Slope is (y2 - y1)/(x2 - x1).
+		 * This division results in a loss of the normalisation coefficient
+		 * which causes unacceptable loss in precision. In order to
+		 * overcome that, we multiple the ydiff (y2 - y1) by the
+		 * normalisation coefficient once again
+		 */
+		normalised_ydiff[i] = (config->tnr3_2500_config.sigma_y[i + 1] - config->tnr3_2500_config.sigma_y[i]) * TNR3_ISP_SCALE;
+		normalised_udiff[i] = (config->tnr3_2500_config.sigma_u[i + 1] - config->tnr3_2500_config.sigma_u[i]) * TNR3_ISP_SCALE;
+		normalised_vdiff[i] = (config->tnr3_2500_config.sigma_v[i + 1] - config->tnr3_2500_config.sigma_v[i]) * TNR3_ISP_SCALE;
+
+		/* Calculation of xdiff (x2 - x1) */
+		xdiff = knee_point[i + 1] - knee_point[i];
+
+		if (xdiff == 0) { /* Zero length segment */
+			slopeu_y[i] = 0;
+			slopeu_u[i] = 0;
+			slopeu_v[i] = 0;
+		} else {
+			/* Slope(normalised) = ydiff(normalised)/xdiff. As the slope
+			 * should be normalised to ISP_VEC_ELEMBITS, it should be
+			 * clipped at the minimum and maximum allowable values.
+			 */
+			slopeu_y[i] = clamp((normalised_ydiff[i] / xdiff), TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+			slopeu_u[i] = clamp((normalised_udiff[i] / xdiff), TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+			slopeu_v[i] = clamp((normalised_vdiff[i] / xdiff), TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+		}
+		/* Calculate Y axis (standard deviation) intercept using the formula
+		 * Y1 - m*X1 for each linear segment per plane. To mimic the method
+		 * followed in ATE, this calculation is done after clipping the
+		 * slope value post normalisation. As the input points are
+		 * already normalised, there is no need for clipping the
+		 * Y-intercepts.
+		 * TODO: ATE does nearest even rounding whereas we do nearest
+		 * rounding. We need to modify the ATE code to work with integer
+		 * values so that similar rounding mechanisms can be implemented
+		 * on both sides
+		 */
+		yintercept_y[i] = config->tnr3_2500_config.sigma_y[i] - qrmul(slopeu_y[i], knee_point[i]);
+		yintercept_u[i] = config->tnr3_2500_config.sigma_u[i] - qrmul(slopeu_u[i], knee_point[i]);
+		yintercept_v[i] = config->tnr3_2500_config.sigma_v[i] - qrmul(slopeu_v[i], knee_point[i]);
+	}
+
+#if HOST_SCALING
+	scale_factor = 2;
+#else
+	scale_factor = 1;
+#endif
+	for (i = 0; i < TNR3_NUM_SEGMENTS; i++) {
+		j = (TNR3_NUM_SEGMENTS - 1) - i;
+		/* Slope */
+		/* TODO: Should the scaling be done on Host or ISP ?? */
+		params->tnr3_vmem_params.slope[j] = clamp(slopeu_y[i] * scale_factor, TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+		params->tnr3_vmem_params.slope[j + TNR3_NUM_SEGMENTS] = clamp(slopeu_u[i] * scale_factor, TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+		params->tnr3_vmem_params.slope[j + 2 * TNR3_NUM_SEGMENTS] = clamp(slopeu_v[i] * scale_factor, TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+		/* Y intercept */
+		/* TODO: Should the scaling be done on HOST or ISP ?? */
+		params->tnr3_vmem_params.sigma[j] = clamp(yintercept_y[i] * scale_factor, TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+		params->tnr3_vmem_params.sigma[j + TNR3_NUM_SEGMENTS] = clamp(yintercept_u[i] * scale_factor, TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+		params->tnr3_vmem_params.sigma[j + 2 * TNR3_NUM_SEGMENTS] = clamp(yintercept_v[i] * scale_factor, TNR3_MIN_VALUE, TNR3_MAX_VALUE);
+	}
+
+	params->use.tnr3_vmem_params = 1;
+}
+
+static void
+ispTnr3DmemEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	CLEAR(params->tnr3_dmem_params);
+
+	params->tnr3_dmem_params.knee_y1 = config->tnr3_2500_config.knee_y[0];
+	params->tnr3_dmem_params.knee_y2 = config->tnr3_2500_config.knee_y[1];
+	params->tnr3_dmem_params.maxfb_y = config->tnr3_2500_config.maxfb_y;
+	params->tnr3_dmem_params.maxfb_u = config->tnr3_2500_config.maxfb_u;
+	params->tnr3_dmem_params.maxfb_v = config->tnr3_2500_config.maxfb_v;
+	params->tnr3_dmem_params.round_adj_y = config->tnr3_2500_config.round_adj_y;
+	params->tnr3_dmem_params.round_adj_u = config->tnr3_2500_config.round_adj_u;
+	params->tnr3_dmem_params.round_adj_v = config->tnr3_2500_config.round_adj_v;
+	params->tnr3_dmem_params.ref_buf_select = config->tnr3_2500_config.ref_buf_select;
+
+	params->use.tnr3_dmem_params = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -1093,6 +1222,8 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispBnrGreenDisparityEncode(config, params);
 	ispXnr3Encode(config, params);
 	ispXnr3VmemEncode(config, params);
+	ispTnr3VmemEncode(config, params);
+	ispTnr3DmemEncode(config, params);
 
 	return;
 }
