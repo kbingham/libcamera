@@ -10,13 +10,23 @@
 
 #include "parameter_encoder.h"
 
+#include <algorithm>
 #include <assert.h>
+#include <string.h>
 
 namespace libcamera {
 
 /* Auto White Balance */
 #define AWB_FR_MAX_GRID_CELLS_IN_ONE_SET 32
 #define AWB_FR_GRID_DIM_MASK 0x3F
+
+/* Auto Exposure */
+#define AE_NUM_OF_WEIGHT_ELEMS 96
+
+/* Imported directly from CommonUtilMacros.h */
+#ifndef MEMCPY_S
+#define MEMCPY_S(dest, dmax, src, smax) memcpy((dest), (src), std::min((size_t)(dmax), (size_t)(smax)))
+#endif
 
 static void ispAwbFrEncode(aic_config *config, ipu3_uapi_params *params)
 {
@@ -62,6 +72,38 @@ static void ispAwbFrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_awb_fr = 1;
 }
 
+static void ispAeEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.ae.grid_cfg.ae_en = 1;
+	params->acc_param.ae.grid_cfg.block_height_log2 = config->ae_2500_config.ae.ae_grid_config.block_height;
+	params->acc_param.ae.grid_cfg.block_width_log2 = config->ae_2500_config.ae.ae_grid_config.block_width;
+	params->acc_param.ae.grid_cfg.width = config->ae_2500_config.ae.ae_grid_config.grid_width;
+	params->acc_param.ae.grid_cfg.height = config->ae_2500_config.ae.ae_grid_config.grid_height;
+	params->acc_param.ae.grid_cfg.x_start = config->ae_2500_config.ae.ae_grid_config.x_start;
+	params->acc_param.ae.grid_cfg.y_start = config->ae_2500_config.ae.ae_grid_config.y_start;
+
+	for (int elem_index = 0; elem_index < AE_NUM_OF_WEIGHT_ELEMS; elem_index++) {
+		params->acc_param.ae.weights[elem_index].cell0 = config->ae_2500_config.ae.ae_weights.val[8 * elem_index];
+		params->acc_param.ae.weights[elem_index].cell1 = config->ae_2500_config.ae.ae_weights.val[8 * elem_index + 1];
+		params->acc_param.ae.weights[elem_index].cell2 = config->ae_2500_config.ae.ae_weights.val[8 * elem_index + 2];
+		params->acc_param.ae.weights[elem_index].cell3 = config->ae_2500_config.ae.ae_weights.val[8 * elem_index + 3];
+		params->acc_param.ae.weights[elem_index].cell4 = config->ae_2500_config.ae.ae_weights.val[8 * elem_index + 4];
+		params->acc_param.ae.weights[elem_index].cell5 = config->ae_2500_config.ae.ae_weights.val[8 * elem_index + 5];
+		params->acc_param.ae.weights[elem_index].cell6 = config->ae_2500_config.ae.ae_weights.val[8 * elem_index + 6];
+		params->acc_param.ae.weights[elem_index].cell7 = config->ae_2500_config.ae.ae_weights.val[8 * elem_index + 7];
+	}
+
+	params->acc_param.ae.ae_ccm.gain_gr = config->ae_2500_config.ae.ae_ccm.wb_coeffs.gain_GR;
+	params->acc_param.ae.ae_ccm.gain_r = config->ae_2500_config.ae.ae_ccm.wb_coeffs.gain_R;
+	params->acc_param.ae.ae_ccm.gain_b = config->ae_2500_config.ae.ae_ccm.wb_coeffs.gain_B;
+	params->acc_param.ae.ae_ccm.gain_gb = config->ae_2500_config.ae.ae_ccm.wb_coeffs.gain_GB;
+
+	MEMCPY_S(params->acc_param.ae.ae_ccm.mat, sizeof(params->acc_param.ae.ae_ccm.mat),
+		 config->ae_2500_config.ae.ae_ccm.mat_coeffs.coeffs, sizeof(config->ae_2500_config.ae.ae_ccm.mat_coeffs.coeffs));
+
+	params->use.acc_ae = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -71,6 +113,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	return;
 
 	ispAwbFrEncode(config, params);
+	ispAeEncode(config, params);
 
 	return;
 }
