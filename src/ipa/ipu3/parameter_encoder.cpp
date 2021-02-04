@@ -40,6 +40,23 @@ namespace libcamera {
 /* Chroma Noise Reduction */
 #define DALPHA_MAX 256
 
+/* Advanced Noise reduction */
+#define SQRT_LUT                              \
+	{                                     \
+		724, 768, 810, 849, 887,      \
+		923, 958, 991, 1024, 1056,    \
+		1086, 1116, 1145, 1173, 1201, \
+		1228, 1254, 1280, 1305, 1330, \
+		1355, 1379, 1402, 1425, 1448  \
+	}
+#define X_SQR_RESET_MAX (0xffffff)
+#define Y_SQR_RESET_MAX X_SQR_RESET_MAX
+#define R_NORM_FACTOR_MAX (0x1f)
+#define RAD_GAIN_SCALE_FACTOR (0xff)
+#define COLOR_REG_W_MASK 0xfff
+#define COLOR_BETA_MASK 0x7ff
+#define COLOR_ALPHA_MASK 0x1ff
+
 /* Imported directly from CommonUtilMacros.h */
 #ifndef MEMCPY_S
 #define MEMCPY_S(dest, dmax, src, smax) memcpy((dest), (src), std::min((size_t)(dmax), (size_t)(smax)))
@@ -655,6 +672,97 @@ static void ispTccEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_tcc = 1;
 }
 
+static void copyAlpha(ipu3_uapi_anr_alpha *to, alpha_t *from)
+{
+	to->gr = from->Alpha_Gr & COLOR_ALPHA_MASK;
+	to->r = from->Alpha_R & COLOR_ALPHA_MASK;
+	to->b = from->Alpha_B & COLOR_ALPHA_MASK;
+	to->gb = from->Alpha_Gb & COLOR_ALPHA_MASK;
+	to->dc_gr = from->Alpha_DC_Gr & COLOR_ALPHA_MASK;
+	to->dc_r = from->Alpha_DC_R & COLOR_ALPHA_MASK;
+	to->dc_b = from->Alpha_DC_B & COLOR_ALPHA_MASK;
+	to->dc_gb = from->Alpha_DC_Gb & COLOR_ALPHA_MASK;
+}
+
+static void copyBeta(ipu3_uapi_anr_beta *to, beta_t *from)
+{
+	to->beta_gr = from->Beta_Gr & COLOR_BETA_MASK;
+	to->beta_r = from->Beta_R & COLOR_BETA_MASK;
+	to->beta_b = from->Beta_B & COLOR_BETA_MASK;
+	to->beta_gb = from->Beta_Gb & COLOR_BETA_MASK;
+}
+
+static void copyColoreRg(ipu3_uapi_anr_plane_color *to, plain_color_w_matrix_t *from)
+{
+	for (int i = 0; i < W_MATRIX_SIZE; i++) {
+		to->reg_w_gr[i] = from->Gr[i] & COLOR_REG_W_MASK;
+		to->reg_w_r[i] = from->R[i] & COLOR_REG_W_MASK;
+		to->reg_w_b[i] = from->B[i] & COLOR_REG_W_MASK;
+		to->reg_w_gb[i] = from->Gb[i] & COLOR_REG_W_MASK;
+	}
+}
+
+static void ispAnrEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	CLEAR(params->acc_param.anr);
+
+	short sqrt_lut[] = SQRT_LUT;
+
+	params->acc_param.anr.transform.enable = 1;
+	params->acc_param.anr.transform.adaptive_treshhold_en = config->anr_2500_config.anr.transform.ADAPTIVE_TRESHHOLD_EN & 0x1;
+	copyAlpha(&params->acc_param.anr.transform.alpha[0], &config->anr_2500_config.anr.transform.plane_0.alpha);
+	copyAlpha(&params->acc_param.anr.transform.alpha[1], &config->anr_2500_config.anr.transform.plane_1.alpha);
+	copyAlpha(&params->acc_param.anr.transform.alpha[2], &config->anr_2500_config.anr.transform.plane_2.alpha);
+
+	copyBeta(&params->acc_param.anr.transform.beta[0], &config->anr_2500_config.anr.transform.plane_0.beta);
+	copyBeta(&params->acc_param.anr.transform.beta[1], &config->anr_2500_config.anr.transform.plane_1.beta);
+	copyBeta(&params->acc_param.anr.transform.beta[2], &config->anr_2500_config.anr.transform.plane_2.beta);
+
+	copyColoreRg(&params->acc_param.anr.transform.color[0], &config->anr_2500_config.anr.transform.plane_0.color_reg_w);
+	copyColoreRg(&params->acc_param.anr.transform.color[1], &config->anr_2500_config.anr.transform.plane_1.color_reg_w);
+	copyColoreRg(&params->acc_param.anr.transform.color[2], &config->anr_2500_config.anr.transform.plane_2.color_reg_w);
+
+	MEMCPY_S(params->acc_param.anr.transform.sqrt_lut,
+		 sizeof(params->acc_param.anr.transform.sqrt_lut),
+		 &sqrt_lut,
+		 sizeof(sqrt_lut));
+
+	params->acc_param.anr.transform.xreset = config->anr_2500_config.anr.transform.CALC.Xreset;
+	params->acc_param.anr.transform.yreset = config->anr_2500_config.anr.transform.CALC.Yreset;
+
+	params->acc_param.anr.transform.x_sqr_reset = config->anr_2500_config.anr.transform.CALC.X_sqr_reset;
+	if (config->anr_2500_config.anr.transform.CALC.X_sqr_reset & ~(X_SQR_RESET_MAX)) {
+		params->acc_param.anr.transform.x_sqr_reset = X_SQR_RESET_MAX;
+	}
+
+	params->acc_param.anr.transform.r_normfactor = config->anr_2500_config.anr.transform.CALC.R_NormFactor;
+	if (config->anr_2500_config.anr.transform.CALC.R_NormFactor & ~(R_NORM_FACTOR_MAX)) {
+		params->acc_param.anr.transform.r_normfactor = R_NORM_FACTOR_MAX;
+	}
+
+	params->acc_param.anr.transform.y_sqr_reset = config->anr_2500_config.anr.transform.CALC.Y_sqr_reset;
+	if (config->anr_2500_config.anr.transform.CALC.Y_sqr_reset & ~(Y_SQR_RESET_MAX)) {
+		params->acc_param.anr.transform.y_sqr_reset = Y_SQR_RESET_MAX;
+	}
+
+	params->acc_param.anr.transform.gain_scale = config->anr_2500_config.anr.transform.CALC.radial_gain_scale_factor;
+	if (config->anr_2500_config.anr.transform.CALC.radial_gain_scale_factor & ~(RAD_GAIN_SCALE_FACTOR)) {
+		params->acc_param.anr.transform.gain_scale = RAD_GAIN_SCALE_FACTOR;
+	}
+	params->acc_param.anr.stitch.anr_stitch_en = 1;
+
+	for (int i = 0, j = 0; i < IPU3_UAPI_ANR_PYRAMID_SIZE; ++i) {
+		params->acc_param.anr.stitch.pyramid[i].entry0 = config->anr_2500_config.anr.stitch.pyramid_reg[j++];
+
+		if (i < IPU3_UAPI_ANR_PYRAMID_SIZE - 1) {
+			params->acc_param.anr.stitch.pyramid[i].entry1 = config->anr_2500_config.anr.stitch.pyramid_reg[j++];
+			params->acc_param.anr.stitch.pyramid[i].entry2 = config->anr_2500_config.anr.stitch.pyramid_reg[j++];
+		}
+	}
+
+	params->use.acc_anr = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -682,6 +790,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispChnrC0Encode(config, params);
 	ispYEeNrEncode(config, params);
 	ispTccEncode(config, params);
+	ispAnrEncode(config, params);
 
 	return;
 }
