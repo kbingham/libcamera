@@ -763,6 +763,59 @@ static void ispAnrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_anr = 1;
 }
 
+static void ispBnrEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	CLEAR(params->acc_param.bnr);
+
+	params->acc_param.bnr.wb_gains.gr = config->bnr_2500_config.bnr.wb_gains.gr;
+	params->acc_param.bnr.wb_gains.r = config->bnr_2500_config.bnr.wb_gains.r;
+	params->acc_param.bnr.wb_gains.b = config->bnr_2500_config.bnr.wb_gains.b;
+	params->acc_param.bnr.wb_gains.gb = config->bnr_2500_config.bnr.wb_gains.gb;
+
+	params->acc_param.bnr.wb_gains_thr.gr = (unsigned char)config->bnr_2500_config.bnr.wb_gains_thr.gr;
+	params->acc_param.bnr.wb_gains_thr.r = (unsigned char)config->bnr_2500_config.bnr.wb_gains_thr.r;
+	params->acc_param.bnr.wb_gains_thr.b = (unsigned char)config->bnr_2500_config.bnr.wb_gains_thr.b;
+	params->acc_param.bnr.wb_gains_thr.gb = (unsigned char)config->bnr_2500_config.bnr.wb_gains_thr.gb;
+
+	params->acc_param.bnr.thr_coeffs.cf = config->bnr_2500_config.bnr.thr_coeffs.cf;
+	params->acc_param.bnr.thr_coeffs.cg = config->bnr_2500_config.bnr.thr_coeffs.cg;
+	params->acc_param.bnr.thr_coeffs.ci = config->bnr_2500_config.bnr.thr_coeffs.ci;
+	params->acc_param.bnr.thr_coeffs.r_nf = config->bnr_2500_config.bnr.thr_coeffs.r_nf;
+
+	params->acc_param.bnr.thr_ctrl_shd.gr = config->bnr_2500_config.bnr.thr_ctrl_shd.gr;
+	params->acc_param.bnr.thr_ctrl_shd.r = config->bnr_2500_config.bnr.thr_ctrl_shd.r;
+	params->acc_param.bnr.thr_ctrl_shd.b = config->bnr_2500_config.bnr.thr_ctrl_shd.b;
+	params->acc_param.bnr.thr_ctrl_shd.gb = config->bnr_2500_config.bnr.thr_ctrl_shd.gb;
+
+	params->acc_param.bnr.opt_center.x_reset = config->bnr_2500_config.bnr.opt_center.x_reset;
+	params->acc_param.bnr.opt_center.y_reset = config->bnr_2500_config.bnr.opt_center.y_reset;
+
+	params->acc_param.bnr.opt_center_sqr.x_sqr_reset = config->bnr_2500_config.bnr.opt_center.x_sqr_reset;
+	params->acc_param.bnr.opt_center_sqr.y_sqr_reset = config->bnr_2500_config.bnr.opt_center.y_sqr_reset;
+
+	MEMCPY_S(params->acc_param.bnr.lut.values,
+		 sizeof(params->acc_param.bnr.lut.values),
+		 config->bnr_2500_config.bnr.lut.values,
+		 sizeof(config->bnr_2500_config.bnr.lut.values));
+
+	params->acc_param.bnr.bp_ctrl.bp_thr_gain = config->bnr_2500_config.bnr.bp_ctrl.bp_thr_gain;
+	params->acc_param.bnr.bp_ctrl.defect_mode = config->bnr_2500_config.bnr.bp_ctrl.defect_mode;
+	params->acc_param.bnr.bp_ctrl.bp_gain = config->bnr_2500_config.bnr.bp_ctrl.bp_gain;
+	params->acc_param.bnr.bp_ctrl.w0_coeff = config->bnr_2500_config.bnr.bp_ctrl.w0_coeff;
+	params->acc_param.bnr.bp_ctrl.w1_coeff = config->bnr_2500_config.bnr.bp_ctrl.w1_coeff;
+
+	params->acc_param.bnr.dn_detect_ctrl.alpha = config->bnr_2500_config.bnr.dn_detect_ctrl.alpha;
+	params->acc_param.bnr.dn_detect_ctrl.beta = config->bnr_2500_config.bnr.dn_detect_ctrl.beta;
+	params->acc_param.bnr.dn_detect_ctrl.gamma = config->bnr_2500_config.bnr.dn_detect_ctrl.gamma;
+	params->acc_param.bnr.dn_detect_ctrl.max_inf = config->bnr_2500_config.bnr.dn_detect_ctrl.max_inf;
+	params->acc_param.bnr.dn_detect_ctrl.gd_enable = config->bnr_2500_config.bnr.dn_detect_ctrl.gd_en;
+	params->acc_param.bnr.dn_detect_ctrl.bpc_enable = config->bnr_2500_config.bnr.dn_detect_ctrl.bpc_en;
+	params->acc_param.bnr.dn_detect_ctrl.bnr_enable = config->bnr_2500_config.bnr.dn_detect_ctrl.bnr_en;
+	params->acc_param.bnr.dn_detect_ctrl.ff_enable = 1;
+
+	params->use.acc_bnr = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -791,6 +844,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispYEeNrEncode(config, params);
 	ispTccEncode(config, params);
 	ispAnrEncode(config, params);
+	ispBnrEncode(config, params);
 
 	return;
 }
