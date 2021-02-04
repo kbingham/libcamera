@@ -624,6 +624,37 @@ static void ispYEeNrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_y_ee_nr = 1;
 }
 
+static void ispTccEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.tcc.gen_control.en = 1;
+	params->acc_param.tcc.gen_control.blend_shift = config->yuvp2_2500_config.tcc.gen_control.blend_shift;
+	params->acc_param.tcc.gen_control.delta = config->yuvp2_2500_config.tcc.gen_control.delta;
+	params->acc_param.tcc.gen_control.gamma = config->yuvp2_2500_config.tcc.gen_control.gamma;
+	params->acc_param.tcc.gen_control.gain_according_to_y_only = config->yuvp2_2500_config.tcc.gen_control.gain_according_to_y_only;
+
+	MEMCPY_S(params->acc_param.tcc.macc_table.entries,
+		 sizeof(params->acc_param.tcc.macc_table.entries),
+		 config->yuvp2_2500_config.tcc.macc_table.entries,
+		 sizeof(config->yuvp2_2500_config.tcc.macc_table.entries));
+
+	MEMCPY_S(params->acc_param.tcc.inv_y_lut.entries,
+		 sizeof(params->acc_param.tcc.inv_y_lut.entries),
+		 config->yuvp2_2500_config.tcc.inv_y_lut.entries,
+		 sizeof(config->yuvp2_2500_config.tcc.inv_y_lut.entries));
+
+	MEMCPY_S(params->acc_param.tcc.gain_pcwl.entries,
+		 sizeof(params->acc_param.tcc.gain_pcwl.entries),
+		 config->yuvp2_2500_config.tcc.gain_pcwl.entries,
+		 sizeof(config->yuvp2_2500_config.tcc.gain_pcwl.entries));
+
+	MEMCPY_S(params->acc_param.tcc.r_sqr_lut.entries,
+		 sizeof(params->acc_param.tcc.r_sqr_lut.entries),
+		 config->yuvp2_2500_config.tcc.r_sqr_lut.entries,
+		 sizeof(config->yuvp2_2500_config.tcc.r_sqr_lut.entries));
+
+	params->use.acc_tcc = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -650,6 +681,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispChnrEncode(config, params);
 	ispChnrC0Encode(config, params);
 	ispYEeNrEncode(config, params);
+	ispTccEncode(config, params);
 
 	return;
 }
