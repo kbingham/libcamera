@@ -484,6 +484,54 @@ static void ispIefdEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_iefd = 1;
 }
 
+static void ispYdsEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.yds.c00 = config->yuvp1_2500_config.yds.c00;
+	params->acc_param.yds.c01 = config->yuvp1_2500_config.yds.c01;
+	params->acc_param.yds.c02 = config->yuvp1_2500_config.yds.c02;
+	params->acc_param.yds.c03 = config->yuvp1_2500_config.yds.c03;
+	params->acc_param.yds.c10 = config->yuvp1_2500_config.yds.c10;
+	params->acc_param.yds.c11 = config->yuvp1_2500_config.yds.c11;
+	params->acc_param.yds.c12 = config->yuvp1_2500_config.yds.c12;
+	params->acc_param.yds.c13 = config->yuvp1_2500_config.yds.c13;
+	params->acc_param.yds.norm_factor = config->yuvp1_2500_config.yds.norm_factor;
+	params->acc_param.yds.bin_output = config->yuvp1_2500_config.yds.bin_output;
+
+	params->use.acc_yds = 1;
+}
+
+static void ispYdsC0Encode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.yds_c0.c00 = config->yuvp1_c0_2500_config.yds_c0.c00;
+	params->acc_param.yds_c0.c01 = config->yuvp1_c0_2500_config.yds_c0.c01;
+	params->acc_param.yds_c0.c02 = config->yuvp1_c0_2500_config.yds_c0.c02;
+	params->acc_param.yds_c0.c03 = config->yuvp1_c0_2500_config.yds_c0.c03;
+	params->acc_param.yds_c0.c10 = config->yuvp1_c0_2500_config.yds_c0.c10;
+	params->acc_param.yds_c0.c11 = config->yuvp1_c0_2500_config.yds_c0.c11;
+	params->acc_param.yds_c0.c12 = config->yuvp1_c0_2500_config.yds_c0.c12;
+	params->acc_param.yds_c0.c13 = config->yuvp1_c0_2500_config.yds_c0.c13;
+	params->acc_param.yds_c0.norm_factor = config->yuvp1_c0_2500_config.yds_c0.norm_factor;
+	params->acc_param.yds_c0.bin_output = config->yuvp1_c0_2500_config.yds_c0.bin_output;
+
+	params->use.acc_yds_c0 = 1;
+}
+
+static void ispYds2Encode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.yds2.c00 = config->yuvp2_2500_config.yds2.c00;
+	params->acc_param.yds2.c01 = config->yuvp2_2500_config.yds2.c01;
+	params->acc_param.yds2.c02 = config->yuvp2_2500_config.yds2.c02;
+	params->acc_param.yds2.c03 = config->yuvp2_2500_config.yds2.c03;
+	params->acc_param.yds2.c10 = config->yuvp2_2500_config.yds2.c10;
+	params->acc_param.yds2.c11 = config->yuvp2_2500_config.yds2.c11;
+	params->acc_param.yds2.c12 = config->yuvp2_2500_config.yds2.c12;
+	params->acc_param.yds2.c13 = config->yuvp2_2500_config.yds2.c13;
+	params->acc_param.yds2.norm_factor = config->yuvp2_2500_config.yds2.norm_factor;
+	params->acc_param.yds2.bin_output = config->yuvp2_2500_config.yds2.bin_output;
+
+	params->use.acc_yds2 = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -504,6 +552,9 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispDmEncode(config, params);
 	ispShdEncode(config, params);
 	ispIefdEncode(config, params);
+	ispYdsEncode(config, params);
+	ispYdsC0Encode(config, params);
+	ispYds2Encode(config, params);
 
 	return;
 }
