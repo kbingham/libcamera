@@ -816,6 +816,17 @@ static void ispBnrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_bnr = 1;
 }
 
+static void ispOBGEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->obgrid_param.gr = config->obgrid_2500_config.table_GR[0];
+	params->obgrid_param.r = config->obgrid_2500_config.table_R[0];
+	params->obgrid_param.b = config->obgrid_2500_config.table_B[0];
+	params->obgrid_param.gb = config->obgrid_2500_config.table_GB[0];
+
+	params->use.obgrid = 1;
+	params->use.obgrid_param = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -845,6 +856,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispTccEncode(config, params);
 	ispAnrEncode(config, params);
 	ispBnrEncode(config, params);
+	ispOBGEncode(config, params);
 
 	return;
 }
