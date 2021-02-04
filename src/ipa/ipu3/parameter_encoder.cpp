@@ -34,12 +34,16 @@ namespace libcamera {
 #define SHD_MAX_CELLS_PER_SET 146
 #define SHD_MAX_CFG_SETS IPU3_UAPI_SHD_MAX_CFG_SETS
 
+/* Iefd */
+#define XY_2_RESET_MASK ((1 << 24) - 1)
+
 /* Imported directly from CommonUtilMacros.h */
 #ifndef MEMCPY_S
 #define MEMCPY_S(dest, dmax, src, smax) memcpy((dest), (src), std::min((size_t)(dmax), (size_t)(smax)))
 #endif
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define CLEAR(x) memset(&(x), 0, sizeof(x))
 
 static void ispAwbFrEncode(aic_config *config, ipu3_uapi_params *params)
 {
@@ -327,6 +331,159 @@ static void ispShdEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_shd = 1;
 }
 
+static void ispIefdEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	CLEAR(params->acc_param.iefd);
+
+	params->acc_param.iefd.control.iefd_en = config->yuvp1_c0_2500_config.iefd.control.iefd_en ? 1 : 0;
+	params->acc_param.iefd.control.rad_en = config->yuvp1_c0_2500_config.iefd.control.iefd_radial_en ? 1 : 0;
+	params->acc_param.iefd.control.denoise_en = config->yuvp1_c0_2500_config.iefd.control.iefd_denoise_en ? 1 : 0;
+	params->acc_param.iefd.control.direct_smooth_en = config->yuvp1_c0_2500_config.iefd.control.iefd_dir_en ? 1 : 0;
+
+	params->acc_param.iefd.control.vssnlm_en = 1;
+
+	params->acc_param.iefd.units.cu_1.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_1.x[0];
+	params->acc_param.iefd.units.cu_1.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_1.x[1];
+	params->acc_param.iefd.units.cu_1.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_1.a[0];
+	params->acc_param.iefd.units.cu_1.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_1.b[0];
+
+	params->acc_param.iefd.units.cu_ed.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.x[0];
+	params->acc_param.iefd.units.cu_ed.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.x[1];
+	params->acc_param.iefd.units.cu_ed.x2 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.x[2];
+	params->acc_param.iefd.units.cu_ed.x3 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.x[3];
+	params->acc_param.iefd.units.cu_ed.x4 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.x[4];
+	params->acc_param.iefd.units.cu_ed.x5 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.x[5];
+
+	params->acc_param.iefd.units.cu_ed.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.a[0];
+	params->acc_param.iefd.units.cu_ed.a12 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.a[1];
+	params->acc_param.iefd.units.cu_ed.a23 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.a[2];
+	params->acc_param.iefd.units.cu_ed.a34 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.a[3];
+	params->acc_param.iefd.units.cu_ed.a45 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.a[4];
+
+	params->acc_param.iefd.units.cu_ed.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.b[0];
+	params->acc_param.iefd.units.cu_ed.b12 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.b[1];
+	params->acc_param.iefd.units.cu_ed.b23 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.b[2];
+	params->acc_param.iefd.units.cu_ed.b34 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.b[3];
+	params->acc_param.iefd.units.cu_ed.b45 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_ed.b[4];
+
+	params->acc_param.iefd.units.cu_3.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_3.x[0];
+	params->acc_param.iefd.units.cu_3.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_3.x[1];
+	params->acc_param.iefd.units.cu_3.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_3.a[0];
+	params->acc_param.iefd.units.cu_3.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_3.b[0];
+
+	params->acc_param.iefd.units.cu_5.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_5.x[0];
+	params->acc_param.iefd.units.cu_5.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_5.x[1];
+	params->acc_param.iefd.units.cu_5.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_5.a[0];
+	params->acc_param.iefd.units.cu_5.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_5.b[0];
+
+	params->acc_param.iefd.units.cu_6.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.x[0];
+	params->acc_param.iefd.units.cu_6.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.x[1];
+	params->acc_param.iefd.units.cu_6.x2 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.x[2];
+	params->acc_param.iefd.units.cu_6.x3 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.x[3];
+	params->acc_param.iefd.units.cu_6.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.a[0];
+	params->acc_param.iefd.units.cu_6.a12 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.a[1];
+	params->acc_param.iefd.units.cu_6.a23 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.a[2];
+	params->acc_param.iefd.units.cu_6.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.b[0];
+	params->acc_param.iefd.units.cu_6.b12 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.b[1];
+	params->acc_param.iefd.units.cu_6.b23 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_6.b[2];
+
+	params->acc_param.iefd.units.cu_7.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_7.x[0];
+	params->acc_param.iefd.units.cu_7.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_7.x[1];
+	params->acc_param.iefd.units.cu_7.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_7.a[0];
+	params->acc_param.iefd.units.cu_7.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_7.b[0];
+
+	params->acc_param.iefd.units.cu_unsharp.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.x[0];
+	params->acc_param.iefd.units.cu_unsharp.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.x[1];
+	params->acc_param.iefd.units.cu_unsharp.x2 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.x[2];
+	params->acc_param.iefd.units.cu_unsharp.x3 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.x[3];
+	params->acc_param.iefd.units.cu_unsharp.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.a[0];
+	params->acc_param.iefd.units.cu_unsharp.a12 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.a[1];
+	params->acc_param.iefd.units.cu_unsharp.a23 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.a[2];
+	params->acc_param.iefd.units.cu_unsharp.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.b[0];
+	params->acc_param.iefd.units.cu_unsharp.b12 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.b[1];
+	params->acc_param.iefd.units.cu_unsharp.b23 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_unsharp.b[2];
+
+	params->acc_param.iefd.units.cu_radial.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.x[0];
+	params->acc_param.iefd.units.cu_radial.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.x[1];
+	params->acc_param.iefd.units.cu_radial.x2 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.x[2];
+	params->acc_param.iefd.units.cu_radial.x3 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.x[3];
+	params->acc_param.iefd.units.cu_radial.x4 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.x[4];
+	params->acc_param.iefd.units.cu_radial.x5 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.x[5];
+	params->acc_param.iefd.units.cu_radial.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.a[0];
+	params->acc_param.iefd.units.cu_radial.a12 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.a[1];
+	params->acc_param.iefd.units.cu_radial.a23 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.a[2];
+	params->acc_param.iefd.units.cu_radial.a34 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.a[3];
+	params->acc_param.iefd.units.cu_radial.a45 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.a[4];
+	params->acc_param.iefd.units.cu_radial.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.b[0];
+	params->acc_param.iefd.units.cu_radial.b12 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.b[1];
+	params->acc_param.iefd.units.cu_radial.b23 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.b[2];
+	params->acc_param.iefd.units.cu_radial.b34 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.b[3];
+	params->acc_param.iefd.units.cu_radial.b45 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_radial.b[4];
+
+	params->acc_param.iefd.units.cu_vssnlm.x0 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_vssnlm.x[0];
+	params->acc_param.iefd.units.cu_vssnlm.x1 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_vssnlm.x[1];
+	params->acc_param.iefd.units.cu_vssnlm.a01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_vssnlm.a[0];
+	params->acc_param.iefd.units.cu_vssnlm.b01 = config->yuvp1_c0_2500_config.iefd.cfg_units.cu_vssnlm.b[0];
+
+	params->acc_param.iefd.config.clamp_stitch = config->yuvp1_c0_2500_config.iefd.config.clamp_stitch;
+	params->acc_param.iefd.config.direct_metric_update = config->yuvp1_c0_2500_config.iefd.config.direct_metric_update;
+	params->acc_param.iefd.config.horver_diag_coeff = config->yuvp1_c0_2500_config.iefd.config.horver_diag_coeff;
+	params->acc_param.iefd.config.ed_horver_diag_coeff = config->yuvp1_c0_2500_config.iefd.config.ed_horver_diag_coeff;
+
+	params->acc_param.iefd.sharp.cfg.nega_lmt_txt = config->yuvp1_c0_2500_config.iefd.sharp.cfg.nega_lmt_txt;
+	params->acc_param.iefd.sharp.cfg.posi_lmt_txt = config->yuvp1_c0_2500_config.iefd.sharp.cfg.posi_lmt_txt;
+	params->acc_param.iefd.sharp.cfg.nega_lmt_dir = config->yuvp1_c0_2500_config.iefd.sharp.cfg.nega_lmt_dir;
+	params->acc_param.iefd.sharp.cfg.posi_lmt_dir = config->yuvp1_c0_2500_config.iefd.sharp.cfg.posi_lmt_dir;
+
+	params->acc_param.iefd.sharp.far_w.dir_shrp = config->yuvp1_c0_2500_config.iefd.sharp.far_w.dir_shrp;
+	params->acc_param.iefd.sharp.far_w.dir_dns = config->yuvp1_c0_2500_config.iefd.sharp.far_w.dir_dns;
+	params->acc_param.iefd.sharp.far_w.ndir_dns_powr = config->yuvp1_c0_2500_config.iefd.sharp.far_w.ndir_dns_powr;
+	params->acc_param.iefd.sharp.unshrp_cfg.unsharp_weight = config->yuvp1_c0_2500_config.iefd.sharp.unshrp_cfg.unsharp_weight;
+	params->acc_param.iefd.sharp.unshrp_cfg.unsharp_amount = config->yuvp1_c0_2500_config.iefd.sharp.unshrp_cfg.unsharp_amount;
+
+	params->acc_param.iefd.unsharp.unsharp_coef0.c00 = config->yuvp1_c0_2500_config.iefd.unsharp.unsharp_coef0.c00;
+	params->acc_param.iefd.unsharp.unsharp_coef0.c01 = config->yuvp1_c0_2500_config.iefd.unsharp.unsharp_coef0.c01;
+	params->acc_param.iefd.unsharp.unsharp_coef0.c02 = config->yuvp1_c0_2500_config.iefd.unsharp.unsharp_coef0.c02;
+	params->acc_param.iefd.unsharp.unsharp_coef1.c11 = config->yuvp1_c0_2500_config.iefd.unsharp.unsharp_coef1.c11;
+	params->acc_param.iefd.unsharp.unsharp_coef1.c12 = config->yuvp1_c0_2500_config.iefd.unsharp.unsharp_coef1.c12;
+	params->acc_param.iefd.unsharp.unsharp_coef1.c22 = config->yuvp1_c0_2500_config.iefd.unsharp.unsharp_coef1.c22;
+
+	params->acc_param.iefd.rad.reset_xy.x = config->yuvp1_c0_2500_config.iefd.rad.reset.x;
+	params->acc_param.iefd.rad.reset_xy.y = config->yuvp1_c0_2500_config.iefd.rad.reset.y;
+	params->acc_param.iefd.rad.reset_x2.x2 = (config->yuvp1_c0_2500_config.iefd.rad.reset.x *
+						  config->yuvp1_c0_2500_config.iefd.rad.reset.x) &
+						 XY_2_RESET_MASK;
+	params->acc_param.iefd.rad.reset_y2.y2 = (config->yuvp1_c0_2500_config.iefd.rad.reset.y *
+						  config->yuvp1_c0_2500_config.iefd.rad.reset.y) &
+						 XY_2_RESET_MASK;
+
+	params->acc_param.iefd.rad.cfg.rad_nf = config->yuvp1_c0_2500_config.iefd.rad.cfg.rad_nf;
+	params->acc_param.iefd.rad.cfg.rad_inv_r2 = config->yuvp1_c0_2500_config.iefd.rad.cfg.rad_inv_r2;
+	params->acc_param.iefd.rad.rad_far_w.rad_dir_far_sharp_w = config->yuvp1_c0_2500_config.iefd.rad.rad_far_w.rad_dir_far_sharp_w;
+	params->acc_param.iefd.rad.rad_far_w.rad_dir_far_dns_w = config->yuvp1_c0_2500_config.iefd.rad.rad_far_w.rad_dir_far_dns_w;
+	params->acc_param.iefd.rad.rad_far_w.rad_ndir_far_dns_power = config->yuvp1_c0_2500_config.iefd.rad.rad_far_w.rad_ndir_far_dns_power;
+
+	params->acc_param.iefd.rad.cu_cfg0.cu6_pow = config->yuvp1_c0_2500_config.iefd.rad.cu_cfg0.cu6_pow;
+	params->acc_param.iefd.rad.cu_cfg0.cu_unsharp_pow = config->yuvp1_c0_2500_config.iefd.rad.cu_cfg0.cu_unsharp_pow;
+	params->acc_param.iefd.rad.cu_cfg0.rad_cu6_pow = config->yuvp1_c0_2500_config.iefd.rad.cu_cfg0.rad_cu6_pow;
+	params->acc_param.iefd.rad.cu_cfg0.rad_cu_unsharp_pow = config->yuvp1_c0_2500_config.iefd.rad.cu_cfg0.rad_cu_unsharp_pow;
+
+	params->acc_param.iefd.rad.cu_cfg1.rad_cu6_x1 = config->yuvp1_c0_2500_config.iefd.rad.cu_cfg1.rad_cu6_x1;
+	params->acc_param.iefd.rad.cu_cfg1.rad_cu_unsharp_x1 = config->yuvp1_c0_2500_config.iefd.rad.cu_cfg1.rad_cu_unsharp_x1;
+
+	if (params->acc_param.iefd.control.vssnlm_en) {
+		params->acc_param.iefd.vsslnm.vss_lut_x.vs_x0 = config->yuvp1_c0_2500_config.iefd.vsslnm.vss_lut_x.vs_x0;
+		params->acc_param.iefd.vsslnm.vss_lut_x.vs_x1 = config->yuvp1_c0_2500_config.iefd.vsslnm.vss_lut_x.vs_x1;
+		params->acc_param.iefd.vsslnm.vss_lut_x.vs_x2 = config->yuvp1_c0_2500_config.iefd.vsslnm.vss_lut_x.vs_x2;
+
+		params->acc_param.iefd.vsslnm.vss_lut_y.vs_y1 = config->yuvp1_c0_2500_config.iefd.vsslnm.vss_lut_y.vs_y1;
+		params->acc_param.iefd.vsslnm.vss_lut_y.vs_y2 = config->yuvp1_c0_2500_config.iefd.vsslnm.vss_lut_y.vs_y2;
+		params->acc_param.iefd.vsslnm.vss_lut_y.vs_y3 = config->yuvp1_c0_2500_config.iefd.vsslnm.vss_lut_y.vs_y3;
+	}
+
+	params->use.acc_iefd = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -346,6 +503,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispCdsEncode(config, params);
 	ispDmEncode(config, params);
 	ispShdEncode(config, params);
+	ispIefdEncode(config, params);
 
 	return;
 }
