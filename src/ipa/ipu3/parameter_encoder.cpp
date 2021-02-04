@@ -208,6 +208,24 @@ static void ispGammaCtrlEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_gamma = 1;
 }
 
+static void ispCcmEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.ccm.coeff_m11 = config->rgbpp_2500_config.ccm.matrix_coeffs.m11;
+	params->acc_param.ccm.coeff_m12 = config->rgbpp_2500_config.ccm.matrix_coeffs.m12;
+	params->acc_param.ccm.coeff_m13 = config->rgbpp_2500_config.ccm.matrix_coeffs.m13;
+	params->acc_param.ccm.coeff_o_r = config->rgbpp_2500_config.ccm.offsets.R;
+	params->acc_param.ccm.coeff_m21 = config->rgbpp_2500_config.ccm.matrix_coeffs.m21;
+	params->acc_param.ccm.coeff_m22 = config->rgbpp_2500_config.ccm.matrix_coeffs.m22;
+	params->acc_param.ccm.coeff_m23 = config->rgbpp_2500_config.ccm.matrix_coeffs.m23;
+	params->acc_param.ccm.coeff_o_g = config->rgbpp_2500_config.ccm.offsets.G;
+	params->acc_param.ccm.coeff_m31 = config->rgbpp_2500_config.ccm.matrix_coeffs.m31;
+	params->acc_param.ccm.coeff_m32 = config->rgbpp_2500_config.ccm.matrix_coeffs.m32;
+	params->acc_param.ccm.coeff_m33 = config->rgbpp_2500_config.ccm.matrix_coeffs.m33;
+	params->acc_param.ccm.coeff_o_b = config->rgbpp_2500_config.ccm.offsets.B;
+
+	params->use.acc_ccm = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -222,6 +240,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispAfEncode(config, params);
 	ispLinVmemEncode(config, params);
 	ispGammaCtrlEncode(config, params);
+	ispCcmEncode(config, params);
 
 	return;
 }
