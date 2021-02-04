@@ -104,6 +104,23 @@ static void ispAeEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_ae = 1;
 }
 
+static void ispAwbEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.awb.config.grid.block_height_log2 = (__u16)config->awb_2500_config.awb.grid.grid_block_height;
+	params->acc_param.awb.config.grid.block_width_log2 = (__u16)config->awb_2500_config.awb.grid.grid_block_width;
+	params->acc_param.awb.config.grid.height = config->awb_2500_config.awb.grid.grid_height;
+	params->acc_param.awb.config.grid.width = config->awb_2500_config.awb.grid.grid_width;
+	params->acc_param.awb.config.grid.x_start = config->awb_2500_config.awb.grid.grid_x_start;
+	params->acc_param.awb.config.grid.y_start = config->awb_2500_config.awb.grid.grid_y_start;
+
+	params->acc_param.awb.config.rgbs_thr_b = config->awb_2500_config.awb.rgbs_B_threshold | IPU3_UAPI_AWB_RGBS_THR_B_EN | IPU3_UAPI_AWB_RGBS_THR_B_INCL_SAT;
+	params->acc_param.awb.config.rgbs_thr_gb = config->awb_2500_config.awb.rgbs_Gb_threshold;
+	params->acc_param.awb.config.rgbs_thr_gr = config->awb_2500_config.awb.rgbs_Gr_threshold;
+	params->acc_param.awb.config.rgbs_thr_r = config->awb_2500_config.awb.rgbs_R_threshold;
+
+	params->use.acc_awb = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -114,6 +131,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 
 	ispAwbFrEncode(config, params);
 	ispAeEncode(config, params);
+	ispAwbEncode(config, params);
 
 	return;
 }
