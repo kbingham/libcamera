@@ -244,6 +244,24 @@ static void ispCscEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_csc = 1;
 }
 
+static void ispCdsEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.cds.ds_c00 = (__u32)config->rgbpp_2500_config.cds.coeffs.c00;
+	params->acc_param.cds.ds_c01 = (__u32)config->rgbpp_2500_config.cds.coeffs.c01;
+	params->acc_param.cds.ds_c02 = (__u32)config->rgbpp_2500_config.cds.coeffs.c02;
+	params->acc_param.cds.ds_c03 = (__u32)config->rgbpp_2500_config.cds.coeffs.c03;
+	params->acc_param.cds.ds_c10 = (__u32)config->rgbpp_2500_config.cds.coeffs.c10;
+	params->acc_param.cds.ds_c11 = (__u32)config->rgbpp_2500_config.cds.coeffs.c11;
+	params->acc_param.cds.ds_c12 = (__u32)config->rgbpp_2500_config.cds.coeffs.c12;
+	params->acc_param.cds.ds_c13 = (__u32)config->rgbpp_2500_config.cds.coeffs.c13;
+	params->acc_param.cds.ds_nf = (__u32)config->rgbpp_2500_config.cds.nf;
+
+	params->acc_param.cds.uv_bin_output = 0;
+	params->acc_param.cds.csc_en = 1;
+
+	params->use.acc_cds = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -260,6 +278,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispGammaCtrlEncode(config, params);
 	ispCcmEncode(config, params);
 	ispCscEncode(config, params);
+	ispCdsEncode(config, params);
 
 	return;
 }
