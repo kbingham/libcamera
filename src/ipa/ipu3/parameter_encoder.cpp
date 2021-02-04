@@ -262,6 +262,20 @@ static void ispCdsEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_cds = 1;
 }
 
+static void ispDmEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.dm.dm_en = 1;
+	params->acc_param.dm.ch_ar_en = config->dm_2500_config.dm.ch_ar_en;
+	params->acc_param.dm.fcc_en = config->dm_2500_config.dm.fcc_en;
+	params->acc_param.dm.gamma_sc = config->dm_2500_config.dm.gamma_sc;
+	params->acc_param.dm.lc_ctrl = config->dm_2500_config.dm.lc_ctrl;
+	params->acc_param.dm.cr_param1 = config->dm_2500_config.dm.cr_param1;
+	params->acc_param.dm.cr_param2 = config->dm_2500_config.dm.cr_param2;
+	params->acc_param.dm.coring_param = config->dm_2500_config.dm.coring_param;
+
+	params->use.acc_dm = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -279,6 +293,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispCcmEncode(config, params);
 	ispCscEncode(config, params);
 	ispCdsEncode(config, params);
+	ispDmEncode(config, params);
 
 	return;
 }
