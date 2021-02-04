@@ -827,6 +827,22 @@ static void ispOBGEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.obgrid_param = 1;
 }
 
+static void ispBnrGreenDisparityEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	CLEAR(params->acc_param.green_disparity);
+
+	params->acc_param.green_disparity.gd_red = config->bnr_2500_config.green_disparity.GD_Red;
+	params->acc_param.green_disparity.gd_green = config->bnr_2500_config.green_disparity.GD_Green;
+	params->acc_param.green_disparity.gd_blue = config->bnr_2500_config.green_disparity.GD_Blue;
+	params->acc_param.green_disparity.gd_black = config->bnr_2500_config.green_disparity.GD_Black;
+	params->acc_param.green_disparity.gd_shading = config->bnr_2500_config.green_disparity.GD_Shading;
+	params->acc_param.green_disparity.gd_support = config->bnr_2500_config.green_disparity.GD_Support;
+	params->acc_param.green_disparity.gd_clip = config->bnr_2500_config.green_disparity.GD_Clip;
+	params->acc_param.green_disparity.gd_central_weight = config->bnr_2500_config.green_disparity.GD_Central_Weight;
+
+	params->use.acc_green_disparity = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -857,6 +873,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispAnrEncode(config, params);
 	ispBnrEncode(config, params);
 	ispOBGEncode(config, params);
+	ispBnrGreenDisparityEncode(config, params);
 
 	return;
 }
