@@ -70,6 +70,29 @@ namespace libcamera {
 #define XNR_CORING_SCALE_FACTOR (1 << XNR_CORING_SCALE_LOG2)
 #define XNR_BLENDING_SCALE_FACTOR (1 << XNR_BLENDING_SCALE_LOG2)
 
+/* Extreme Noise Reduction version 3 Vmem */
+#define ISP_VEC_NELEMS 64
+#define XNR3_LOOK_UP_TABLE_POINTS 16
+
+static const int16_t x[XNR3_LOOK_UP_TABLE_POINTS] = {
+	1024, 1164, 1320, 1492, 1680, 1884, 2108, 2352,
+	2616, 2900, 3208, 3540, 3896, 4276, 4684, 5120
+};
+
+static const int16_t a[XNR3_LOOK_UP_TABLE_POINTS] = {
+	-7213, -5580, -4371, -3421, -2722, -2159, -6950, -5585,
+	-4529, -3697, -3010, -2485, -2070, -1727, -1428, 0
+};
+
+static const int16_t b[XNR3_LOOK_UP_TABLE_POINTS] = {
+	4096, 3603, 3178, 2811, 2497, 2226, 1990, 1783,
+	1603, 1446, 1307, 1185, 1077, 981, 895, 819
+};
+
+static const int16_t c[XNR3_LOOK_UP_TABLE_POINTS] = {
+	1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
 /* Imported directly from CommonUtilMacros.h */
 #ifndef MEMCPY_S
 #define MEMCPY_S(dest, dmax, src, smax) memcpy((dest), (src), std::min((size_t)(dmax), (size_t)(smax)))
@@ -987,6 +1010,56 @@ static void ispXnr3Encode(aic_config *config, ipu3_uapi_params *params)
 	params->use.xnr3_dmem_params = 1;
 }
 
+static void ispXnr3VmemEncode([[maybe_unused]] aic_config *config, ipu3_uapi_params *params)
+{
+	struct ipu3_uapi_isp_xnr3_vmem_params *to = &params->xnr3_vmem_params;
+	CLEAR(params->xnr3_vmem_params);
+
+	unsigned i, j, base;
+	const unsigned total_blocks = 4;
+	const unsigned shuffle_block = 16;
+
+	/* Init */
+	for (i = 0; i < ISP_VEC_NELEMS; i++) {
+		to->x[i] = 0;
+		to->a[i] = 0;
+		to->b[i] = 0;
+		to->c[i] = 0;
+	}
+
+	/* Constraints on "x":
+	 * - values should be greater or equal to 0.
+	 * - values should be ascending.
+	 */
+	assert(x[0] >= 0);
+
+	for (j = 1; j < XNR3_LOOK_UP_TABLE_POINTS; j++) {
+		assert(x[j] >= 0);
+		assert(x[j] > x[j - 1]);
+	}
+
+	/* The implementation of the calulating 1/x is based on the availability
+	 * of the OP_vec_shuffle16 operation.
+	 * A 64 element vector is split up in 4 blocks of 16 element. Each array
+	 * is copied to a vector 4 times, (starting at 0, 16, 32 and 48). All
+	 * array elements are copied or initialised as described in the KFS. The
+	 * remaining elements of a vector are set to 0.
+	 */
+	/* TODO: guard this code with above assumptions */
+	for (i = 0; i < total_blocks; i++) {
+		base = shuffle_block * i;
+
+		for (j = 0; j < XNR3_LOOK_UP_TABLE_POINTS; j++) {
+			to->x[base + j] = x[j];
+			to->a[base + j] = a[j];
+			to->b[base + j] = b[j];
+			to->c[base + j] = c[j];
+		}
+	}
+
+	params->use.xnr3_vmem_params = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -1019,6 +1092,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispOBGEncode(config, params);
 	ispBnrGreenDisparityEncode(config, params);
 	ispXnr3Encode(config, params);
+	ispXnr3VmemEncode(config, params);
 
 	return;
 }
