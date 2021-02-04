@@ -37,6 +37,9 @@ namespace libcamera {
 /* Iefd */
 #define XY_2_RESET_MASK ((1 << 24) - 1)
 
+/* Chroma Noise Reduction */
+#define DALPHA_MAX 256
+
 /* Imported directly from CommonUtilMacros.h */
 #ifndef MEMCPY_S
 #define MEMCPY_S(dest, dmax, src, smax) memcpy((dest), (src), std::min((size_t)(dmax), (size_t)(smax)))
@@ -532,6 +535,51 @@ static void ispYds2Encode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_yds2 = 1;
 }
 
+static void ispChnrEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	CLEAR(params->acc_param.chnr);
+
+	params->acc_param.chnr.coring.u = config->yuvp1_2500_config.chnr.coring.u;
+	params->acc_param.chnr.coring.v = config->yuvp1_2500_config.chnr.coring.v;
+
+	params->acc_param.chnr.sense_gain.vy = config->yuvp1_2500_config.chnr.sense_gain.vy;
+	params->acc_param.chnr.sense_gain.vu = config->yuvp1_2500_config.chnr.sense_gain.vu;
+	params->acc_param.chnr.sense_gain.vv = config->yuvp1_2500_config.chnr.sense_gain.vv;
+	params->acc_param.chnr.sense_gain.hy = config->yuvp1_2500_config.chnr.sense_gain.hy;
+	params->acc_param.chnr.sense_gain.hu = config->yuvp1_2500_config.chnr.sense_gain.hu;
+	params->acc_param.chnr.sense_gain.hv = config->yuvp1_2500_config.chnr.sense_gain.hv;
+
+	params->acc_param.chnr.iir_fir.fir_0h = config->yuvp1_2500_config.chnr.iir_fir.fir_0h;
+	params->acc_param.chnr.iir_fir.fir_1h = config->yuvp1_2500_config.chnr.iir_fir.fir_1h;
+	params->acc_param.chnr.iir_fir.fir_2h = config->yuvp1_2500_config.chnr.iir_fir.fir_2h;
+	params->acc_param.chnr.iir_fir.dalpha_clip_val = DALPHA_MAX - config->yuvp1_2500_config.chnr.iir_fir.iir_min_prev;
+
+	params->use.acc_chnr = 1;
+}
+
+static void
+ispChnrC0Encode(aic_config *config, ipu3_uapi_params *params)
+{
+	CLEAR(params->acc_param.chnr_c0);
+
+	params->acc_param.chnr_c0.coring.u = config->yuvp1_c0_2500_config.chnr_c0.coring.u;
+	params->acc_param.chnr_c0.coring.v = config->yuvp1_c0_2500_config.chnr_c0.coring.v;
+
+	params->acc_param.chnr_c0.sense_gain.vy = config->yuvp1_c0_2500_config.chnr_c0.sense_gain.vy;
+	params->acc_param.chnr_c0.sense_gain.vu = config->yuvp1_c0_2500_config.chnr_c0.sense_gain.vu;
+	params->acc_param.chnr_c0.sense_gain.vv = config->yuvp1_c0_2500_config.chnr_c0.sense_gain.vv;
+	params->acc_param.chnr_c0.sense_gain.hy = config->yuvp1_c0_2500_config.chnr_c0.sense_gain.hy;
+	params->acc_param.chnr_c0.sense_gain.hu = config->yuvp1_c0_2500_config.chnr_c0.sense_gain.hu;
+	params->acc_param.chnr_c0.sense_gain.hv = config->yuvp1_c0_2500_config.chnr_c0.sense_gain.hv;
+
+	params->acc_param.chnr_c0.iir_fir.fir_0h = config->yuvp1_c0_2500_config.chnr_c0.iir_fir.fir_0h;
+	params->acc_param.chnr_c0.iir_fir.fir_1h = config->yuvp1_c0_2500_config.chnr_c0.iir_fir.fir_1h;
+	params->acc_param.chnr_c0.iir_fir.fir_2h = config->yuvp1_c0_2500_config.chnr_c0.iir_fir.fir_2h;
+	params->acc_param.chnr_c0.iir_fir.dalpha_clip_val = DALPHA_MAX - config->yuvp1_c0_2500_config.chnr_c0.iir_fir.iir_min_prev;
+
+	params->use.acc_chnr_c0 = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -555,6 +603,8 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispYdsEncode(config, params);
 	ispYdsC0Encode(config, params);
 	ispYds2Encode(config, params);
+	ispChnrEncode(config, params);
+	ispChnrC0Encode(config, params);
 
 	return;
 }
