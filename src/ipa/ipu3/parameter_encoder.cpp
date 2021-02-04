@@ -30,6 +30,10 @@ namespace libcamera {
 #define SH_CSS_BAYER_BITS 11
 #define LIN_MAX_VALUE (1 << SH_CSS_BAYER_BITS)
 
+/* Bayer Shading Correction */
+#define SHD_MAX_CELLS_PER_SET 146
+#define SHD_MAX_CFG_SETS IPU3_UAPI_SHD_MAX_CFG_SETS
+
 /* Imported directly from CommonUtilMacros.h */
 #ifndef MEMCPY_S
 #define MEMCPY_S(dest, dmax, src, smax) memcpy((dest), (src), std::min((size_t)(dmax), (size_t)(smax)))
@@ -276,6 +280,53 @@ static void ispDmEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_dm = 1;
 }
 
+static void ispShdEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	params->acc_param.shd.shd.grid.width = config->shd_2500_config.shd.grid.grid_width;
+	params->acc_param.shd.shd.grid.height = config->shd_2500_config.shd.grid.grid_height;
+	params->acc_param.shd.shd.grid.block_width_log2 = config->shd_2500_config.shd.grid.block_width;
+	params->acc_param.shd.shd.grid.block_height_log2 = config->shd_2500_config.shd.grid.block_height;
+
+	assert(config->shd_2500_config.shd.grid.grid_width);
+	params->acc_param.shd.shd.grid.grid_height_per_slice =
+		(unsigned char)(SHD_MAX_CELLS_PER_SET / config->shd_2500_config.shd.grid.grid_width);
+	params->acc_param.shd.shd.grid.x_start = config->shd_2500_config.shd.grid.x_start;
+	params->acc_param.shd.shd.grid.y_start = config->shd_2500_config.shd.grid.y_start;
+
+	params->acc_param.shd.shd.general.shd_enable = config->shd_2500_config.shd.general.shd_enable;
+	params->acc_param.shd.shd.general.gain_factor = config->shd_2500_config.shd.general.gain_factor;
+	params->acc_param.shd.shd.general.init_set_vrt_offst_ul =
+		(-(signed int)config->shd_2500_config.shd.grid.y_start >> (signed int)config->shd_2500_config.shd.grid.block_height) % (signed int)params->acc_param.shd.shd.grid.grid_height_per_slice;
+
+	params->acc_param.shd.shd.black_level.bl_r = config->shd_2500_config.shd.black_level.bl_R;
+	params->acc_param.shd.shd.black_level.bl_gr = config->shd_2500_config.shd.black_level.bl_Gr | (config->shd_2500_config.shd.black_level.normalization_shift << IPU3_UAPI_SHD_BLGR_NF_SHIFT);
+	params->acc_param.shd.shd.black_level.bl_gb = config->shd_2500_config.shd.black_level.bl_Gb;
+	params->acc_param.shd.shd.black_level.bl_b = config->shd_2500_config.shd.black_level.bl_B;
+
+	unsigned int set_grid_limit =
+		config->shd_2500_config.shd.grid.grid_width * params->acc_param.shd.shd.grid.grid_height_per_slice;
+	unsigned int public_grid_limit =
+		config->shd_2500_config.shd.grid.grid_width * config->shd_2500_config.shd.grid.grid_height;
+	unsigned int set_index, set_grid_index, public_grid_index = 0;
+
+	for (set_index = 0; set_index < SHD_MAX_CFG_SETS; set_index++) {
+		for (set_grid_index = 0;
+		     set_grid_index < set_grid_limit && public_grid_index < public_grid_limit;
+		     set_grid_index++, public_grid_index++) {
+			params->acc_param.shd.shd_lut.sets[set_index].r_and_gr[set_grid_index].r =
+				config->shd_2500_config.shd.luts.R[public_grid_index];
+			params->acc_param.shd.shd_lut.sets[set_index].r_and_gr[set_grid_index].gr =
+				config->shd_2500_config.shd.luts.Gr[public_grid_index];
+			params->acc_param.shd.shd_lut.sets[set_index].gb_and_b[set_grid_index].gb =
+				config->shd_2500_config.shd.luts.Gb[public_grid_index];
+			params->acc_param.shd.shd_lut.sets[set_index].gb_and_b[set_grid_index].b =
+				config->shd_2500_config.shd.luts.B[public_grid_index];
+		}
+	}
+
+	params->use.acc_shd = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -294,6 +345,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispCscEncode(config, params);
 	ispCdsEncode(config, params);
 	ispDmEncode(config, params);
+	ispShdEncode(config, params);
 
 	return;
 }
