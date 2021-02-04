@@ -26,10 +26,16 @@ namespace libcamera {
 /* Auto Focus */
 #define AF_MAX_GRID_CELLS_IN_ONE_SET 32
 
+/* Linearization Vmem */
+#define SH_CSS_BAYER_BITS 11
+#define LIN_MAX_VALUE (1 << SH_CSS_BAYER_BITS)
+
 /* Imported directly from CommonUtilMacros.h */
 #ifndef MEMCPY_S
 #define MEMCPY_S(dest, dmax, src, smax) memcpy((dest), (src), std::min((size_t)(dmax), (size_t)(smax)))
 #endif
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 static void ispAwbFrEncode(aic_config *config, ipu3_uapi_params *params)
 {
@@ -176,6 +182,23 @@ static void ispAfEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_af = 1;
 }
 
+static void ispLinVmemEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	for (unsigned int i = 0; i < LIN_SEGMENTS; i++) {
+		params->lin_vmem_params.lin_lutlow_gr[i] = MIN(LIN_MAX_VALUE - 1, config->lin_2500_config.curve_lut_GR[i]);
+		params->lin_vmem_params.lin_lutlow_r[i] = MIN(LIN_MAX_VALUE - 1, config->lin_2500_config.curve_lut_R[i]);
+		params->lin_vmem_params.lin_lutlow_b[i] = MIN(LIN_MAX_VALUE - 1, config->lin_2500_config.curve_lut_B[i]);
+		params->lin_vmem_params.lin_lutlow_gb[i] = MIN(LIN_MAX_VALUE - 1, config->lin_2500_config.curve_lut_GB[i]);
+
+		params->lin_vmem_params.lin_lutdif_gr[i] = config->lin_2500_config.curve_lut_GR[i + 1] - config->lin_2500_config.curve_lut_GR[i];
+		params->lin_vmem_params.lin_lutdif_r[i] = config->lin_2500_config.curve_lut_R[i + 1] - config->lin_2500_config.curve_lut_R[i];
+		params->lin_vmem_params.lin_lutdif_b[i] = config->lin_2500_config.curve_lut_B[i + 1] - config->lin_2500_config.curve_lut_B[i];
+		params->lin_vmem_params.lin_lutdif_gb[i] = config->lin_2500_config.curve_lut_GB[i + 1] - config->lin_2500_config.curve_lut_GB[i];
+	}
+
+	params->use.lin_vmem_params = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -188,6 +211,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispAeEncode(config, params);
 	ispAwbEncode(config, params);
 	ispAfEncode(config, params);
+	ispLinVmemEncode(config, params);
 
 	return;
 }
