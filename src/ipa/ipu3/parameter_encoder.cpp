@@ -580,6 +580,50 @@ ispChnrC0Encode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_chnr_c0 = 1;
 }
 
+static void ispYEeNrEncode(aic_config *config, ipu3_uapi_params *params)
+{
+	CLEAR(params->acc_param.y_ee_nr);
+
+	params->acc_param.y_ee_nr.lpf.enable = config->yuvp1_2500_config.y_ee_nr.lpf.y_ee_nr_en;
+	params->acc_param.y_ee_nr.lpf.a_diag = config->yuvp1_2500_config.y_ee_nr.lpf.a_diag;
+	params->acc_param.y_ee_nr.lpf.a_cent = config->yuvp1_2500_config.y_ee_nr.lpf.a_cent;
+	params->acc_param.y_ee_nr.lpf.a_periph = config->yuvp1_2500_config.y_ee_nr.lpf.a_periph;
+
+	params->acc_param.y_ee_nr.sense.edge_sense_0 = config->yuvp1_2500_config.y_ee_nr.sense.edge_sense_0;
+	params->acc_param.y_ee_nr.sense.delta_edge_sense = config->yuvp1_2500_config.y_ee_nr.sense.delta_edge_sense;
+	params->acc_param.y_ee_nr.sense.corner_sense_0 = config->yuvp1_2500_config.y_ee_nr.sense.corner_sense_0;
+	params->acc_param.y_ee_nr.sense.delta_corner_sense = config->yuvp1_2500_config.y_ee_nr.sense.delta_corner_sense;
+
+	params->acc_param.y_ee_nr.gain.gain_pos_0 = config->yuvp1_2500_config.y_ee_nr.gain.gain_pos_0;
+	params->acc_param.y_ee_nr.gain.delta_gain_posi = config->yuvp1_2500_config.y_ee_nr.gain.delta_gain_posi;
+	params->acc_param.y_ee_nr.gain.gain_neg_0 = config->yuvp1_2500_config.y_ee_nr.gain.gain_neg_0;
+	params->acc_param.y_ee_nr.gain.delta_gain_neg = config->yuvp1_2500_config.y_ee_nr.gain.delta_gain_neg;
+
+	params->acc_param.y_ee_nr.clip.clip_pos_0 = config->yuvp1_2500_config.y_ee_nr.clip.clip_pos_0;
+	params->acc_param.y_ee_nr.clip.delta_clip_posi = config->yuvp1_2500_config.y_ee_nr.clip.delta_clip_posi;
+	params->acc_param.y_ee_nr.clip.clip_neg_0 = config->yuvp1_2500_config.y_ee_nr.clip.clip_neg_0;
+	params->acc_param.y_ee_nr.clip.delta_clip_neg = config->yuvp1_2500_config.y_ee_nr.clip.delta_clip_neg;
+
+	params->acc_param.y_ee_nr.frng.gain_exp = config->yuvp1_2500_config.y_ee_nr.frng.gain_exp;
+	params->acc_param.y_ee_nr.frng.min_edge = config->yuvp1_2500_config.y_ee_nr.frng.min_edge;
+	params->acc_param.y_ee_nr.frng.lin_seg_param = config->yuvp1_2500_config.y_ee_nr.frng.lin_seg_param;
+	params->acc_param.y_ee_nr.frng.t1 = config->yuvp1_2500_config.y_ee_nr.frng.t1;
+	params->acc_param.y_ee_nr.frng.t2 = config->yuvp1_2500_config.y_ee_nr.frng.t2;
+
+	params->acc_param.y_ee_nr.diag.diag_disc_g = config->yuvp1_2500_config.y_ee_nr.diag.diag_disc_g;
+	params->acc_param.y_ee_nr.diag.hvw_hor = config->yuvp1_2500_config.y_ee_nr.diag.hvw_hor;
+	params->acc_param.y_ee_nr.diag.dw_hor = config->yuvp1_2500_config.y_ee_nr.diag.dw_hor;
+	params->acc_param.y_ee_nr.diag.hvw_diag = config->yuvp1_2500_config.y_ee_nr.diag.hvw_diag;
+	params->acc_param.y_ee_nr.diag.dw_diag = config->yuvp1_2500_config.y_ee_nr.diag.dw_diag;
+
+	params->acc_param.y_ee_nr.fc_coring.pos_0 = config->yuvp1_2500_config.y_ee_nr.fc_coring.pos_0;
+	params->acc_param.y_ee_nr.fc_coring.pos_delta = config->yuvp1_2500_config.y_ee_nr.fc_coring.pos_delta;
+	params->acc_param.y_ee_nr.fc_coring.neg_0 = config->yuvp1_2500_config.y_ee_nr.fc_coring.neg_0;
+	params->acc_param.y_ee_nr.fc_coring.neg_delta = config->yuvp1_2500_config.y_ee_nr.fc_coring.neg_delta;
+
+	params->use.acc_y_ee_nr = 1;
+}
+
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
 	/*
@@ -605,6 +649,7 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispYds2Encode(config, params);
 	ispChnrEncode(config, params);
 	ispChnrC0Encode(config, params);
+	ispYEeNrEncode(config, params);
 
 	return;
 }
