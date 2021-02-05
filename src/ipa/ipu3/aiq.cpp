@@ -196,6 +196,7 @@ int AIQ::run(unsigned int frame, ipu3_uapi_params *params)
 	/* Run AWB algorithms, using the config structures. */
 
 	af_run();
+	gbce_run();
 
 	/* IPU3 firmware specific encoding for ISP controls. */
 	ParameterEncoder::encode(&config, params);
@@ -237,6 +238,26 @@ int AIQ::af_run()
 	}
 
 	/* TODO: Parse and set afResults somewhere */
+
+	return 0;
+}
+
+int AIQ::gbce_run()
+{
+	ia_aiq_gbce_input_params params = {
+		ia_aiq_gbce_level_use_tuning,
+		ia_aiq_tone_map_level_use_tuning,
+		ia_aiq_frame_use_still,
+		0
+	}; // TODO: Set/store externally
+	ia_aiq_gbce_results *gbceResults = nullptr;
+
+	ia_err err = ia_aiq_gbce_run(aiq_, &params, &gbceResults);
+	if (err) {
+		LOG(AIQ, Error) << "Failed to run GBCE: "
+				<< ia_err_decode(err);
+		return err;
+	}
 
 	return 0;
 }
