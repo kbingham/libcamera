@@ -368,18 +368,23 @@ int CameraSensor::validateSensorDriver()
 	 * For raw sensors, make sure the sensor driver supports the controls
 	 * required by the CameraSensor class.
 	 */
-	static constexpr uint32_t mandatoryControls[] = {
-		V4L2_CID_EXPOSURE,
-		V4L2_CID_HBLANK,
-		V4L2_CID_PIXEL_RATE,
-		V4L2_CID_VBLANK,
+	static struct {
+		uint32_t ctrl;
+		std::string name;
+	} mandatoryControls[] = {
+#define MANDATORY_CONTROL(__ctrl) { __ctrl, #__ctrl }
+		MANDATORY_CONTROL(V4L2_CID_EXPOSURE),
+		MANDATORY_CONTROL(V4L2_CID_HBLANK),
+		MANDATORY_CONTROL(V4L2_CID_PIXEL_RATE),
+		MANDATORY_CONTROL(V4L2_CID_VBLANK),
+#undef MANDATORY_CONTROL
 	};
 
 	err = 0;
-	for (uint32_t ctrl : mandatoryControls) {
-		if (!controls.count(ctrl)) {
+	for (auto &c : mandatoryControls) {
+		if (!controls.count(c.ctrl)) {
 			LOG(CameraSensor, Error)
-				<< "Mandatory V4L2 control " << utils::hex(ctrl)
+				<< "Mandatory V4L2 control " << c.name
 				<< " not available";
 			err = -EINVAL;
 		}
