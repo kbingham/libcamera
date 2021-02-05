@@ -14,6 +14,12 @@ namespace libcamera {
 
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
+	/*
+	 * Do not encode parameters until the algorithms are run,
+	 * or assertions will be hit
+	 */
+	return;
+
 	(void)config;
 	(void)params;
 
