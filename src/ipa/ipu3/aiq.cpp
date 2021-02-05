@@ -197,6 +197,7 @@ int AIQ::run(unsigned int frame, ipu3_uapi_params *params)
 
 	af_run();
 	gbce_run();
+	ae_run();
 
 	/* IPU3 firmware specific encoding for ISP controls. */
 	ParameterEncoder::encode(&config, params);
@@ -257,6 +258,41 @@ int AIQ::gbce_run()
 		LOG(AIQ, Error) << "Failed to run GBCE: "
 				<< ia_err_decode(err);
 		return err;
+	}
+
+	return 0;
+}
+
+int AIQ::ae_run()
+{
+	ia_aiq_ae_input_params ae_params = {
+		2, /* Multiple exposure for exposure bracketing. */
+		ia_aiq_frame_use_still, ia_aiq_flash_mode_auto,
+		ia_aiq_ae_operation_mode_automatic,
+		ia_aiq_ae_metering_mode_evaluative,
+		ia_aiq_ae_priority_mode_normal,
+		ia_aiq_ae_flicker_reduction_auto,
+		NULL, /* AE descriptor sensor? param, mandatory */
+		NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, -1,
+		ia_aiq_aperture_control_dc_iris_auto,
+		ia_aiq_ae_exposure_distribution_auto, -1
+	};
+
+	ia_aiq_ae_results *aeResults = nullptr;
+	ia_err err = ia_aiq_ae_run(aiq_, &ae_params, &aeResults);
+	if (err) {
+		LOG(AIQ, Error) << "Failed to run AutoExposure: "
+				<< ia_err_decode(err);
+		return err;
+	}
+
+	if (aeResults) {
+		LOG(AIQ, Info) << "AE:"
+			       << " Num:" << aeResults->num_exposures
+			       << " lux: " << aeResults->lux_level_estimate
+			       << " F:" << aeResults->aperture_control->aperture_fn;
+	} else {
+		LOG(AIQ, Error) << "AE: No results";
 	}
 
 	return 0;
