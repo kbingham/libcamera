@@ -21,7 +21,11 @@
 
 #include "ipu3_stats.h"
 
+#include <string.h>
+
 namespace libcamera {
+
+typedef void * hrt_vaddress;
 
 #define CSS_ALIGN(d, a) d __attribute__((aligned(a)))
 
@@ -420,11 +424,27 @@ struct stats_4a_private_raw_buffer {
 
 };
 
+static void mmgr_load(void *src, void *dst, int len)
+{
+	/* Wrapper imported from ipu3 IPA in CrOS. Originally was MEMCPY_S.
+	 * \todo: Check whether we need to use memcpy_s() instead? */
+	memcpy(dst, src, (size_t)(len));
+}
+
 void
 IPAIPU3Stats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *all_stats,
 				[[maybe_unused]] const struct ipu3_uapi_stats_3a *isp_stats)
 {
 	/* extract, memcpy and debubble each of 3A stats */
+	struct ia_css_4a_statistics *host_stats = &all_stats->ia_css_4a_statistics;
+
+	hrt_vaddress af_ddr_addr = (hrt_vaddress)(long int)
+				   &(((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->af_raw_buffer);
+
+	/* load metadata */
+	mmgr_load(af_ddr_addr,
+		 (void *)&(host_stats->data->af_raw_buffer),
+		 sizeof(af_public_raw_buffer_t));
 }
 
 ia_err
