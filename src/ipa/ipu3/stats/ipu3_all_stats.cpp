@@ -434,10 +434,16 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 
 	hrt_vaddress af_ddr_addr = (hrt_vaddress)(long int)&(((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->af_raw_buffer);
 
+	hrt_vaddress awb_ddr_addr = (hrt_vaddress)(long int)&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->awb_raw_buffer;
+
 	/* load metadata */
 	mmgr_load(af_ddr_addr,
 		  (void *)&(host_stats->data->af_raw_buffer),
 		  sizeof(af_public_raw_buffer_t));
+
+	mmgr_load(awb_ddr_addr,
+		  (void *)&(host_stats->data->awb_raw_buffer),
+		  sizeof(awb_public_raw_buffer_t));
 }
 
 ia_err
