@@ -31,6 +31,8 @@ public:
 	int run(unsigned int frame, ipu3_uapi_params *params);
 
 private:
+	int af_run();
+
 	ia_aiq *aiq_;
 	std::string version_;
 };

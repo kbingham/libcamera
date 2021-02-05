@@ -195,8 +195,48 @@ int AIQ::run(unsigned int frame, ipu3_uapi_params *params)
 
 	/* Run AWB algorithms, using the config structures. */
 
+	af_run();
+
 	/* IPU3 firmware specific encoding for ISP controls. */
 	ParameterEncoder::encode(&config, params);
+
+	return 0;
+}
+
+int AIQ::af_run()
+{
+	ia_aiq_af_input_params afParams = {
+		ia_aiq_frame_use_still, 0, 1500,
+		ia_aiq_af_operation_mode_auto,
+		ia_aiq_af_range_normal,
+		ia_aiq_af_metering_mode_auto,
+		ia_aiq_flash_mode_auto,
+		NULL, NULL, false
+	}; // Get from input params
+
+	ia_aiq_af_results *afResults = nullptr;
+
+	ia_err err = ia_aiq_af_run(aiq_, &afParams, &afResults);
+	if (err) {
+		LOG(AIQ, Error) << "Failed to run Auto-focus: "
+				<< ia_err_decode(err);
+		return err;
+	}
+
+	if (afResults) {
+		LOG(AIQ, Info) << "AF: Focal distance " << afResults->current_focus_distance;
+		LOG(AIQ, Debug) << "=== AUTO FOCUS ==="
+			       << "AutoFocus status: " << afResults->status << "\n"
+			       << "Focal distance: " << afResults->current_focus_distance << "\n"
+			       << "next_lens_position: " << afResults->next_lens_position << "\n"
+			       << "lens_driver_action: " << afResults->lens_driver_action << "\n"
+			       << "use_af_assist: " << afResults->use_af_assist << "\n"
+			       << "Final lens pos: " << afResults->final_lens_position_reached << "\n\n";
+	} else {
+		LOG(AIQ, Error) << "Auto Focus produced no results";
+	}
+
+	/* TODO: Parse and set afResults somewhere */
 
 	return 0;
 }
