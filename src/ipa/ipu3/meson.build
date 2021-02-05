@@ -18,6 +18,7 @@ ipu3_ipa_includes = [
 ipu3_ipa_files = files([
     'aiq.cpp',
     'ipu3.cpp',
+    'ipu3_stats.cpp',
     'parameter_encoder.cpp',
 ])
 
