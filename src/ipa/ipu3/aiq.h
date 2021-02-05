@@ -32,6 +32,7 @@ public:
 
 private:
 	ia_aiq *aiq_;
+	std::string version_;
 };
 
 } /* namespace libcamera */

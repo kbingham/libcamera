@@ -115,6 +115,9 @@ int AIQ::init()
 		return -ENODATA;
 	}
 
+	version_ = ia_aiq_get_version();
+	LOG(AIQ, Info) << "AIQ Library version: " << version_;
+
 	return 0;
 }
 
