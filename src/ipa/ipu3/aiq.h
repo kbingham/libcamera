@@ -34,6 +34,7 @@ private:
 	int af_run();
 	int gbce_run();
 	int ae_run();
+	int awb_run();
 
 	ia_aiq *aiq_;
 	std::string version_;

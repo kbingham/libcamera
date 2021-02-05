@@ -198,6 +198,7 @@ int AIQ::run(unsigned int frame, ipu3_uapi_params *params)
 	af_run();
 	gbce_run();
 	ae_run();
+	awb_run();
 
 	/* IPU3 firmware specific encoding for ISP controls. */
 	ParameterEncoder::encode(&config, params);
@@ -293,6 +294,33 @@ int AIQ::ae_run()
 			       << " F:" << aeResults->aperture_control->aperture_fn;
 	} else {
 		LOG(AIQ, Error) << "AE: No results";
+	}
+
+	return 0;
+}
+
+int AIQ::awb_run()
+{
+	ia_aiq_awb_input_params awbParams = {
+		ia_aiq_frame_use_still, ia_aiq_awb_operation_mode_auto,
+		nullptr, nullptr, 0.0
+	};
+
+	ia_aiq_awb_results awb_result_alloc = {};
+	ia_aiq_awb_results *awbResults = &awb_result_alloc;
+	ia_err err = ia_aiq_awb_run(aiq_, &awbParams, &awbResults);
+	if (err) {
+		LOG(AIQ, Error) << "Failed to run Auto-white-balance: "
+				<< ia_err_decode(err);
+		return err;
+	}
+
+	if (awbResults) {
+		LOG(AIQ, Info) << "Final R/G: " << awbResults->final_r_per_g << "\n"
+			       << "Final B/G: " << awbResults->final_b_per_g << "\n"
+			       << "ConvergenceDistance. : " << awbResults->distance_from_convergence;
+	} else {
+		LOG(AIQ, Error) << "No AWB results...";
 	}
 
 	return 0;
