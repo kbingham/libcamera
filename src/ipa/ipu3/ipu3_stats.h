@@ -25,10 +25,20 @@
 #include <ia_imaging/ia_aiq_types.h>
 #include <ia_imaging/stats_3a_public.h>
 
+#include <linux/intel-ipu3.h>
+
 namespace libcamera {
 
 class IPAIPU3Stats {
 public:
+	struct ipu3_stats_all_stats {
+		struct ia_css_4a_statistics ia_css_4a_statistics;
+		struct stats_4a_public_raw_buffer stats_4a_public_raw_buffer;
+		struct ia_css_2500_4a_config ia_css_2500_4a_config;
+	};
+
+	void ipu3_stats_get_3a(struct ipu3_stats_all_stats *all_stats,
+			       const struct ipu3_uapi_stats_3a *isp_stats);
 	ia_err intel_skycam_statistics_convert(const ia_css_4a_statistics& statistics,
 					       ia_aiq_rgbs_grid* out_rgbs_grid,
 					       ia_aiq_af_grid* out_af_grid);
