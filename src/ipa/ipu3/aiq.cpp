@@ -16,6 +16,38 @@ namespace libcamera {
 
 LOG_DEFINE_CATEGORY(AIQ)
 
+static std::string ia_err_decode(ia_err err)
+{
+	static const char *errors[] = {
+		"None", /*!< No errors*/
+		"General", /*!< General error*/
+		"Memory", /*!< Out of memory*/
+		"Corrupted", /*!< Corrupted data*/
+		"Internal", /*!< Error in code*/
+		"Invalid", /*!< Invalid argument for a function*/
+		"Disabled", /*!< Functionality is disabled*/
+	};
+
+	std::ostringstream o;
+
+	o << "[";
+
+	unsigned int count = 0;
+	for (unsigned int i = 0; i <= 6; i++) {
+		if (err & (1 << i)) {
+			if (count)
+				o << ",";
+
+			o << errors[i];
+			count++;
+		}
+	}
+
+	o << "]";
+
+	return o.str();
+}
+
 /**
  * \brief Binary Data wrapper
  *
