@@ -437,6 +437,8 @@ IPAIPU3Stats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *al
 {
 	/* extract, memcpy and debubble each of 3A stats */
 	struct ia_css_4a_statistics *host_stats = &all_stats->ia_css_4a_statistics;
+	ae_private_raw_buffer_aligned_t ae_raw_buffer_s;
+	unsigned int ae_join_buffers;
 
 	hrt_vaddress af_ddr_addr = (hrt_vaddress)(long int)
 				   &(((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->af_raw_buffer);
@@ -446,6 +448,19 @@ IPAIPU3Stats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *al
 
 	hrt_vaddress awb_fr_ddr_addr = (hrt_vaddress)(long int)
 				        &((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->awb_fr_raw_buffer;
+
+	hrt_vaddress ae_buff_0_ddr_addr = (hrt_vaddress)(long int)
+					  &((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->ae_raw_buffer[0];
+	hrt_vaddress ae_buff_1_ddr_addr = (hrt_vaddress)(long int)
+					  &((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->ae_raw_buffer[1];
+
+	hrt_vaddress ae_pp_info_addr = (hrt_vaddress)(long int)
+					&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->ae_join_buffers;
+
+	/* load ae post processing info */
+	mmgr_load(ae_pp_info_addr,
+		 (void *)&(ae_join_buffers),
+		  sizeof(unsigned int));
 
 	/* load metadata */
 	mmgr_load(af_ddr_addr,
@@ -459,6 +474,16 @@ IPAIPU3Stats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *al
 	mmgr_load(awb_fr_ddr_addr,
 		 (void *)&(host_stats->data->awb_fr_raw_buffer),
 		 sizeof(awb_fr_public_raw_buffer_t));
+
+	mmgr_load(ae_buff_0_ddr_addr,
+		 (void *)&(host_stats->data->ae_raw_buffer),
+		 sizeof(ae_public_raw_buffer_t));
+
+	if (ae_join_buffers == 1) {
+		mmgr_load(ae_buff_1_ddr_addr,
+			 (void *)&(ae_raw_buffer_s),
+			 sizeof(ae_private_raw_buffer_aligned_t));
+	}
 }
 
 ia_err
