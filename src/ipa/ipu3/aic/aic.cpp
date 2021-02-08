@@ -58,7 +58,7 @@ int AIC::init()
 	mRuntimeParams_.focus_rect = &mRuntimeParamsRec_;
 
 	ipa::ipu3::aiq::BinaryData aiqb;
-	int ret = aiqb.load("/etc/camera/ipu3/00imx258.aiqb");
+	int ret = aiqb.load("/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb");
 	if (ret) {
 		LOG(AIC, Error) << "Failed to load AIQB";
 		return -ENODATA;
