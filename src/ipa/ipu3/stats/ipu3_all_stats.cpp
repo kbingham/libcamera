@@ -38,6 +38,9 @@ namespace libcamera {
 #define IA_CSS_LEAVE_PRIVATE(...) \
 	{                         \
 	}
+#define ia_css_debug_dtrace(...) \
+	{                        \
+	}
 
 typedef void *hrt_vaddress;
 
@@ -479,6 +482,128 @@ static void mmgr_load(void *src, void *dst, int len)
 	memcpy(dst, src, (size_t)(len));
 }
 
+static void ia_css_awb_grid_config_ddr_decode(struct awb_public_config_grid_config *to,
+					      struct awb_private_config_s *from)
+{
+	IA_CSS_ENTER_PRIVATE("to=%p, from=%p", to, from);
+
+	to->grid_height = from->rgbs_grd_cfg.grid_height;
+	to->grid_width = from->rgbs_grd_cfg.grid_width;
+	to->grid_x_start = from->rgbs_grd_start.x_start;
+	to->grid_y_start = from->rgbs_grd_start.y_start;
+	to->grid_block_width = from->rgbs_grd_cfg.block_width;
+	to->grid_block_height = from->rgbs_grd_cfg.block_height;
+
+	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+			    "\nW = %d, H = %d , BW = %d, BH = %d , X_S = %d, Y_S = %d \n",
+			    to->grid_width,
+			    to->grid_height,
+			    to->grid_block_width,
+			    to->grid_block_height,
+			    to->grid_x_start,
+			    to->grid_y_start);
+
+	IA_CSS_LEAVE_PRIVATE("");
+}
+
+static void
+ia_css_af_grid_config_ddr_decode(struct af_public_grid_config *to,
+				 struct af_private_config_s *from)
+{
+	IA_CSS_ENTER_PRIVATE("to=%p, from=%p", to, from);
+
+	to->grid_width = from->y_grid_config.grd_cfg.grid_width;
+	to->grid_height = from->y_grid_config.grd_cfg.grid_height;
+	to->block_width = from->y_grid_config.grd_cfg.block_width;
+	to->block_height = from->y_grid_config.grd_cfg.block_height;
+	to->x_start = from->y_grid_config.grd_start.x_start;
+	to->y_start = from->y_grid_config.grd_start.y_start;
+
+	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+			    "\nW = %d, H = %d , BW = %d, BH = %d , X = %d, Y = %d \n",
+			    to->grid_width,
+			    to->grid_height,
+			    to->block_width,
+			    to->block_height,
+			    to->x_start,
+			    to->y_start);
+
+	IA_CSS_LEAVE_PRIVATE("");
+}
+
+static void ia_css_awb_fr_grid_config_ddr_decode(struct awb_fr_public_grid_config *to,
+						 struct awb_fr_private_config_s *from)
+{
+	IA_CSS_ENTER_PRIVATE("to=%p, from=%p", to, from);
+
+	to->grid_width = from->bayer_grd_cfg.grid_width;
+	to->grid_height = from->bayer_grd_cfg.grid_height;
+	to->block_width = from->bayer_grd_cfg.block_width;
+	to->block_height = from->bayer_grd_cfg.block_height;
+	to->x_start = from->bayer_grd_start.x_start;
+	to->y_start = from->bayer_grd_start.y_start;
+
+	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+			    "\nW = %d, H = %d , BW = %d, BH = %d , X = %d, Y = %d \n",
+			    to->grid_width,
+			    to->grid_height,
+			    to->block_width,
+			    to->block_height,
+			    to->x_start,
+			    to->y_start);
+
+	IA_CSS_LEAVE_PRIVATE("");
+}
+
+static void
+ia_css_ae_grid_config_ddr_decode(struct ae_public_config_grid_config *to,
+				 struct ae_private_direct_config_s *from)
+{
+	IA_CSS_ENTER_PRIVATE("to=%p, from=%p", to, from);
+
+	to->grid_width = from->grid_width;
+	to->grid_height = from->grid_height;
+	to->block_width = from->block_width;
+	to->block_height = from->block_height;
+	to->x_start = from->x_start;
+	to->y_start = from->y_start;
+
+	to->ae_en = from->AE_En;
+
+	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+			    "\nW = %d, H = %d , BW = %d, BH = %d , X_S = %d, Y_S = %d , AE_EN = %d\n",
+			    to->grid_width,
+			    to->grid_height,
+			    to->block_width,
+			    to->block_height,
+			    to->x_start,
+			    to->y_start,
+			    to->ae_en);
+
+	IA_CSS_LEAVE_PRIVATE("");
+}
+
+static void ia_css_3a_grid_config_ddr_decode(struct ia_css_2500_4a_config *to,
+					     struct ia_css_4a_private_config *from)
+{
+	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+			    "ia_css_3a_grid_config_ddr_decode() enter\n");
+
+	ia_css_awb_grid_config_ddr_decode(&to->awb_grd_config,
+					  &from->awb_config);
+
+	ia_css_af_grid_config_ddr_decode(&to->af_grd_config, &from->af_config);
+
+	ia_css_awb_fr_grid_config_ddr_decode(&to->awb_fr_grd_config,
+					     &from->awb_fr_config);
+
+	ia_css_ae_grid_config_ddr_decode(&to->ae_grd_config,
+					 &from->ae_grd_config);
+
+	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+			    "ia_css_3a_grid_config_ddr_decode() leave\n");
+}
+
 void IPU3AllStats::ipu3_stats_init_3a(struct ipu3_stats_all_stats *all_stats)
 {
 	all_stats->ia_css_4a_statistics.data =
@@ -555,6 +680,10 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 	if (ae_join_buffers == 1)
 		ia_css_3a_join_ae_buffers(&host_stats->data->ae_raw_buffer,
 					  &ae_raw_buffer_s);
+
+	/* decode must be prior to debubbling! */
+	ia_css_3a_grid_config_ddr_decode(host_stats->stats_4a_config,
+					 &stats_config);
 }
 
 ia_err
