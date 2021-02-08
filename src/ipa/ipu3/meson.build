@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
+subdir('data')
+
 ipa_name = 'ipa_ipu3'
 
 ipu3_ipa_deps = [
