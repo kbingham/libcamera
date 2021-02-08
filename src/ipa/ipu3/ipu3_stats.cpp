@@ -692,9 +692,10 @@ IPAIPU3Stats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *al
 	ia_css_3a_grid_config_ddr_decode(host_stats->stats_4a_config,
 					 &stats_config);
 
-    /* for striping might need to combine buffers of ae */
-    if (ae_join_buffers == 1)
-        ia_css_3a_join_ae_buffers(&host_stats->data->ae_raw_buffer , &ae_raw_buffer_s);
+	/* for striping might need to combine buffers of ae */
+	if (ae_join_buffers == 1)
+		ia_css_3a_join_ae_buffers(&host_stats->data->ae_raw_buffer,
+					  &ae_raw_buffer_s);
 
 }
 
