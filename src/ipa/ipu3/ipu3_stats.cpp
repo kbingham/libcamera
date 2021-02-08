@@ -483,6 +483,14 @@ static void mmgr_load(void *src, void *dst, int len)
 	memcpy(dst, src, (size_t)(len));
 }
 
+void IPAIPU3Stats::ipu3_stats_init_3a(struct ipu3_stats_all_stats *all_stats)
+{
+	all_stats->ia_css_4a_statistics.data =
+		&all_stats->stats_4a_public_raw_buffer;
+	all_stats->ia_css_4a_statistics.stats_4a_config =
+		&all_stats->ia_css_2500_4a_config;
+}
+
 void
 IPAIPU3Stats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *all_stats,
 				[[maybe_unused]] const struct ipu3_uapi_stats_3a *isp_stats)
@@ -515,6 +523,8 @@ IPAIPU3Stats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *al
 
 	hrt_vaddress stats_3a_enable = (hrt_vaddress)(long int)
 					&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->stats_3a_status;
+
+	ipu3_stats_init_3a(all_stats);
 
 	/* load grid configuration */
 	mmgr_load(stats_config_addr,
