@@ -146,7 +146,7 @@ static void ispAwbFrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->acc_param.awb_fr.grid_cfg.block_width_log2 = config->awb_fr_2500_config.awb_fr.grid.block_width & 0x7;
 	params->acc_param.awb_fr.grid_cfg.block_height_log2 = config->awb_fr_2500_config.awb_fr.grid.block_height & 0x7;
 
-	assert(config->awb_fr_2500_config.awb_fr.grid.grid_width);
+	//assert(config->awb_fr_2500_config.awb_fr.grid.grid_width);
 	params->acc_param.awb_fr.grid_cfg.height_per_slice =
 		(unsigned char)(AWB_FR_MAX_GRID_CELLS_IN_ONE_SET / config->awb_fr_2500_config.awb_fr.grid.grid_width);
 	params->acc_param.awb_fr.grid_cfg.x_start = config->awb_fr_2500_config.awb_fr.grid.x_start & 0xFFF;
