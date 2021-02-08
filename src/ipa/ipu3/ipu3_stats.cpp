@@ -21,9 +21,15 @@
 
 #include "ipu3_stats.h"
 
+#include <assert.h>
 #include <string.h>
 
 namespace libcamera {
+
+#define IA_CSS_ENTER(...) { }
+#define IA_CSS_LEAVE(...) { }
+#define IA_CSS_ENTER_PRIVATE(...) { }
+#define IA_CSS_LEAVE_PRIVATE(...) { }
 
 typedef void * hrt_vaddress;
 
@@ -424,6 +430,52 @@ struct stats_4a_private_raw_buffer {
 
 };
 
+static void ia_css_3a_join_ae_buffers(ae_public_raw_buffer_t *to,
+                                      ae_private_raw_buffer_aligned_t *ae_buff)
+{
+	unsigned int i = 0, j = 0;
+	unsigned int size = AE_PRIVATE_NUM_OF_HIST_BINS * AE_PRIVATE_NUM_OF_COLORS;
+	unsigned int color = 0;
+
+	IA_CSS_ENTER_PRIVATE("to=%p, from=%p", to, ae_buff);
+
+	for(i = 0; i < size; i++)
+	{
+		color = i / AE_PRIVATE_NUM_OF_HIST_BINS;
+		j = i % AE_PRIVATE_NUM_OF_HIST_BINS;
+
+		switch(color)
+		{
+			case 0:
+			{
+				to->hist_R.vals[j] += ae_buff->buff.vals[i];
+				break;
+			}
+			case 1:
+			{
+				to->hist_G.vals[j] += ae_buff->buff.vals[i];
+				break;
+			}
+			case 2:
+			{
+				to->hist_B.vals[j] += ae_buff->buff.vals[i];
+				break;
+			}
+			case 3:
+			{
+				to->hist_Y.vals[j] += ae_buff->buff.vals[i];
+				break;
+			}
+			default:
+			{
+				assert(false);
+				break;
+			}
+		}
+	}
+	IA_CSS_LEAVE_PRIVATE("");
+}
+
 static void mmgr_load(void *src, void *dst, int len)
 {
 	/* Wrapper imported from ipu3 IPA in CrOS. Originally was MEMCPY_S.
@@ -484,6 +536,11 @@ IPAIPU3Stats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *al
 			 (void *)&(ae_raw_buffer_s),
 			 sizeof(ae_private_raw_buffer_aligned_t));
 	}
+
+    /* for striping might need to combine buffers of ae */
+    if (ae_join_buffers == 1)
+        ia_css_3a_join_ae_buffers(&host_stats->data->ae_raw_buffer , &ae_raw_buffer_s);
+
 }
 
 ia_err
