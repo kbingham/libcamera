@@ -485,6 +485,7 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 	/* extract, memcpy and debubble each of 3A stats */
 	struct ia_css_4a_statistics *host_stats = &all_stats->ia_css_4a_statistics;
 	struct ia_css_4a_private_config stats_config;
+	struct ff_status stats_enable;
 	ae_private_raw_buffer_aligned_t ae_raw_buffer_s;
 	unsigned int ae_join_buffers;
 
@@ -500,6 +501,8 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 	hrt_vaddress ae_pp_info_addr = (hrt_vaddress)(long int)&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->ae_join_buffers;
 
 	hrt_vaddress stats_config_addr = (hrt_vaddress) & (isp_stats->stats_4a_config);
+
+	hrt_vaddress stats_3a_enable = (hrt_vaddress)(long int)&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->stats_3a_status;
 
 	/* load grid configuration */
 	mmgr_load(stats_config_addr,
@@ -527,6 +530,10 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 	mmgr_load(ae_buff_0_ddr_addr,
 		  (void *)&(host_stats->data->ae_raw_buffer),
 		  sizeof(ae_public_raw_buffer_t));
+
+	mmgr_load(stats_3a_enable,
+		  (void *)&(stats_enable),
+		  sizeof(struct ff_status));
 
 	if (ae_join_buffers == 1) {
 		mmgr_load(ae_buff_1_ddr_addr,
