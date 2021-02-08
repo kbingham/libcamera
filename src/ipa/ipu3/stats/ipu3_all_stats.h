@@ -46,6 +46,8 @@ public:
 	intel_skycam_statistics_convert(const ia_css_4a_statistics &statistics,
 					ia_aiq_rgbs_grid *out_rgbs_grid,
 					ia_aiq_af_grid *out_af_grid);
+private:
+	static void ipu3_stats_init_3a(struct ipu3_stats_all_stats *all_stats);
 };
 
 } /* namespace libcamera */
