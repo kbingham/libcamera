@@ -604,6 +604,285 @@ static void ia_css_3a_grid_config_ddr_decode(struct ia_css_2500_4a_config *to,
 			    "ia_css_3a_grid_config_ddr_decode() leave\n");
 }
 
+/*
+  awb_debubble -
+  Removes bubbles btwn sets of stats caused by ACC
+  Due to striping support set size might differ
+  btwn the stripes  but will stay consistent...
+  example:
+  statistics layout before of ia_css_3a_debubble:
+	  | stats ... 0000 ... stats .... 000 ....|
+  statistics layout after of ia_css_3a_debubble:
+	   | stats ... stats .... stats ...|
+*/
+static void awb_debubble(awb_public_raw_buffer_t *awb_raw_buffer,
+			 struct bubble_info *awb_bubble_info)
+{
+	unsigned int num_sets, src_index, dst_index;
+	unsigned int num_of_stripes;
+	unsigned int i, set_size_w_bubble;
+
+	IA_CSS_ENTER_PRIVATE("buffer=%p, bubble info=%p",
+			     awb_raw_buffer, awb_bubble_info);
+
+	num_of_stripes = awb_bubble_info[0].num_of_stripes;
+	if (num_of_stripes <= 1) {
+		awb_bubble_info[1] = awb_bubble_info[0];
+	}
+
+	for (i = 0; i < RES_MGR_PRIVATE_MAX_NUM_OF_STRIPES; i++) {
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "bubble info stripe %d:\n", i);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "num_of_stirpes = %d \n",
+				    awb_bubble_info[0].num_of_stripes);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "num_sets = %d \n",
+				    awb_bubble_info[i].num_sets);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "size_of_set = %d \n",
+				    awb_bubble_info[i].size_of_set);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "bubble_size = %d \n",
+				    awb_bubble_info[i].bubble_size);
+	}
+
+	if (awb_bubble_info[0].bubble_size || awb_bubble_info[1].bubble_size) {
+		dst_index = awb_bubble_info[0].size_of_set;
+
+		set_size_w_bubble = awb_bubble_info[0].size_of_set +
+				    awb_bubble_info[0].bubble_size;
+
+		src_index = set_size_w_bubble;
+
+		/* number of sets for s0 and s1 are identical */
+		if (num_of_stripes <= 1)
+			num_sets = awb_bubble_info[0].num_sets;
+		else {
+			if (awb_bubble_info[0].bubble_size) {
+				num_sets = awb_bubble_info[0].num_sets * 2;
+			} else {
+				num_sets = awb_bubble_info[1].num_sets * 2;
+			}
+		}
+		for (i = 1; i < num_sets; i++) {
+			memmove((void *)&awb_raw_buffer->rgb_table[dst_index],
+				(void *)&awb_raw_buffer->rgb_table[src_index],
+				(sizeof(awb_public_set_item_t) * awb_bubble_info[i % 2].size_of_set));
+
+			set_size_w_bubble = awb_bubble_info[i % 2].size_of_set +
+					    awb_bubble_info[i % 2].bubble_size;
+
+			src_index += set_size_w_bubble;
+			dst_index += awb_bubble_info[i % 2].size_of_set;
+		}
+	}
+
+	IA_CSS_LEAVE_PRIVATE("");
+}
+
+/*
+  af_debubble-
+  Removes bubbles btwn sets of stats caused by ACC
+  Due to striping support set size might differ
+  btwn the stripes  but will stay consistent...
+  example:
+  statistics layout before of ia_css_3a_debubble:
+	 | stats ... 0000 ... stats .... 000 ....|
+  statistics layout after of ia_css_3a_debubble:
+	 | stats ... stats .... stats ...|
+*/
+static void ia_css_af_debubble(af_public_raw_buffer_t *af_raw_buffer,
+			       struct bubble_info *af_bubble_info)
+{
+	unsigned int num_sets, src_index, dst_index;
+	unsigned int num_of_stripes = 0;
+	unsigned int i, set_size_w_bubble;
+
+	IA_CSS_ENTER_PRIVATE("buffer=%p, bubble info=%p",
+			     af_raw_buffer, af_bubble_info);
+
+	num_of_stripes = af_bubble_info[0].num_of_stripes;
+	if (num_of_stripes <= 1) {
+		af_bubble_info[1] = af_bubble_info[0];
+	}
+
+	for (i = 0; i < RES_MGR_PRIVATE_MAX_NUM_OF_STRIPES; i++) {
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "bubble info stripe %d:\n", i);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "num_of_stirpes = %d\n ",
+				    af_bubble_info[0].num_of_stripes);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "num_sets = %d \n",
+				    af_bubble_info[i].num_sets);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "size_of_set = %d \n",
+				    af_bubble_info[i].size_of_set);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "bubble_size = %d \n",
+				    af_bubble_info[i].bubble_size);
+	}
+
+	if (af_bubble_info[0].bubble_size || af_bubble_info[1].bubble_size) {
+		dst_index = af_bubble_info[0].size_of_set;
+
+		set_size_w_bubble = af_bubble_info[0].size_of_set +
+				    af_bubble_info[0].bubble_size;
+
+		src_index = set_size_w_bubble;
+
+		/* number of sets for s0 and s1 are identical */
+		if (num_of_stripes <= 1)
+			num_sets = af_bubble_info[0].num_sets;
+		else {
+			if (af_bubble_info[0].bubble_size) {
+				num_sets = af_bubble_info[0].num_sets * 2;
+			} else {
+				num_sets = af_bubble_info[1].num_sets * 2;
+			}
+		}
+
+		for (i = 1; i < num_sets; i++) {
+			memmove((void *)&af_raw_buffer->y_table[dst_index],
+				(void *)&af_raw_buffer->y_table[src_index],
+				(sizeof(af_public_y_item_t) * af_bubble_info[i % 2].size_of_set));
+
+			set_size_w_bubble = af_bubble_info[i % 2].size_of_set +
+					    af_bubble_info[i % 2].bubble_size;
+
+			src_index += set_size_w_bubble;
+			dst_index += af_bubble_info[i % 2].size_of_set;
+		}
+	}
+
+	IA_CSS_LEAVE_PRIVATE("");
+}
+
+/* awb_fr_debubble-
+ * Removes bubbles btwn sets of stats caused by ACC
+ * Due to striping support set size might differ
+ * btwn the stripes  but will stay consistent...
+ * example:
+ * statistics layout before of ia_css_3a_debubble:
+ *  | stats ... 0000 ... stats .... 000 ....|
+ * statistics layout after of ia_css_3a_debubble:
+ *  | stats ... stats .... stats ...|
+ */
+
+static void ia_css_awb_fr_debubble(awb_fr_public_raw_buffer_t *awb_fr_raw_buffer,
+				   struct bubble_info *awb_fr_bubble_info)
+{
+	unsigned int num_sets, src_index, dst_index;
+	unsigned int num_of_stripes = 0;
+	unsigned int i, set_size_w_bubble;
+
+	IA_CSS_ENTER_PRIVATE("buffer=%p, bubble info=%p",
+			     awb_fr_raw_buffer, awb_fr_bubble_info);
+
+	num_of_stripes = awb_fr_bubble_info[0].num_of_stripes;
+	if (num_of_stripes <= 1) {
+		awb_fr_bubble_info[1] = awb_fr_bubble_info[0];
+	}
+
+	for (i = 0; i < RES_MGR_PRIVATE_MAX_NUM_OF_STRIPES; i++) {
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "bubble info stripe %d:\n", i);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "num_of_stirpes = %d\n",
+				    awb_fr_bubble_info[0].num_of_stripes);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "num_sets = %d \n",
+				    awb_fr_bubble_info[i].num_sets);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "size_of_set = %d \n",
+				    awb_fr_bubble_info[i].size_of_set);
+
+		ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+				    "bubble_size = %d \n",
+				    awb_fr_bubble_info[i].bubble_size);
+	}
+
+	if (awb_fr_bubble_info[0].bubble_size || awb_fr_bubble_info[1].bubble_size) {
+		dst_index = awb_fr_bubble_info[0].size_of_set;
+
+		set_size_w_bubble = awb_fr_bubble_info[0].size_of_set +
+				    awb_fr_bubble_info[0].bubble_size;
+
+		src_index = set_size_w_bubble;
+
+		// number of sets for s0 and s1 are identical
+		if (num_of_stripes <= 1)
+			num_sets = awb_fr_bubble_info[0].num_sets;
+		else {
+			if (awb_fr_bubble_info[0].bubble_size) {
+				num_sets = awb_fr_bubble_info[0].num_sets * 2;
+			} else {
+				num_sets = awb_fr_bubble_info[1].num_sets * 2;
+			}
+		}
+
+		for (i = 1; i < num_sets; i++) {
+			memmove((void *)&awb_fr_raw_buffer->bayer_table[dst_index],
+				(void *)&awb_fr_raw_buffer->bayer_table[src_index],
+				(sizeof(awb_fr_public_bayer_item_t) * awb_fr_bubble_info[i % 2].size_of_set));
+
+			set_size_w_bubble = awb_fr_bubble_info[i % 2].size_of_set +
+					    awb_fr_bubble_info[i % 2].bubble_size;
+
+			src_index += set_size_w_bubble;
+			dst_index += awb_fr_bubble_info[i % 2].size_of_set;
+		}
+	}
+
+	IA_CSS_LEAVE_PRIVATE("");
+}
+
+/*
+  ia_css_3a_debubble -
+  Removes bubbles btwn sets of stats caused by ACC
+  Due to striping support set size might differ
+  btwn the stripes  but will stay consistent...
+  example:
+  statistics layout before of ia_css_3a_debubble:
+	  | stats ... 0000 ... stats .... 000 ....|
+  statistics layout after of ia_css_3a_debubble:
+	   | stats ... stats .... stats ...|
+*/
+static void ia_css_3a_debubble(struct stats_4a_public_raw_buffer *meta_data,
+			       struct stats_3a_bubble_info_per_stripe *bubble_info,
+			       struct ff_status *stats_enable)
+{
+	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+			    "ia_css_3a_debubble() enter\n");
+
+	if (stats_enable->awb_en) {
+		awb_debubble(&meta_data->awb_raw_buffer,
+			     bubble_info->awb_bubble_info);
+	}
+	if (stats_enable->af_en) {
+		ia_css_af_debubble(&meta_data->af_raw_buffer,
+				   bubble_info->af_bubble_info);
+	}
+	if (stats_enable->awb_fr_en) {
+		ia_css_awb_fr_debubble(&meta_data->awb_fr_raw_buffer,
+				       bubble_info->awb_fr_bubble_info);
+	}
+	ia_css_debug_dtrace(IA_CSS_DEBUG_TRACE,
+			    "ia_css_3a_debubble() leave\n");
+}
+
 void IPU3AllStats::ipu3_stats_init_3a(struct ipu3_stats_all_stats *all_stats)
 {
 	all_stats->ia_css_4a_statistics.data =
@@ -618,6 +897,7 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 	/* extract, memcpy and debubble each of 3A stats */
 	struct ia_css_4a_statistics *host_stats = &all_stats->ia_css_4a_statistics;
 	struct ia_css_4a_private_config stats_config;
+	struct stats_3a_bubble_info_per_stripe stats_bubble_info;
 	struct ff_status stats_enable;
 	ae_private_raw_buffer_aligned_t ae_raw_buffer_s;
 	unsigned int ae_join_buffers;
@@ -633,6 +913,8 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 
 	hrt_vaddress ae_pp_info_addr = (hrt_vaddress)(long int)&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->ae_join_buffers;
 
+	hrt_vaddress stats_bubble_info_addr = (hrt_vaddress) & (isp_stats->stats_3a_bubble_per_stripe);
+
 	hrt_vaddress stats_config_addr = (hrt_vaddress) & (isp_stats->stats_4a_config);
 
 	hrt_vaddress stats_3a_enable = (hrt_vaddress)(long int)&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->stats_3a_status;
@@ -643,6 +925,10 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 	mmgr_load(stats_config_addr,
 		  (void *)&(stats_config),
 		  sizeof(struct ia_css_4a_private_config));
+
+	/* load bubble info */
+	mmgr_load(stats_bubble_info_addr, (void *)&(stats_bubble_info),
+		  sizeof(struct stats_3a_bubble_info_per_stripe));
 
 	/* load ae post processing info */
 	mmgr_load(ae_pp_info_addr,
@@ -684,6 +970,7 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 	/* decode must be prior to debubbling! */
 	ia_css_3a_grid_config_ddr_decode(host_stats->stats_4a_config,
 					 &stats_config);
+	ia_css_3a_debubble(host_stats->data, &stats_bubble_info, &stats_enable);
 }
 
 ia_err
