@@ -484,6 +484,7 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 {
 	/* extract, memcpy and debubble each of 3A stats */
 	struct ia_css_4a_statistics *host_stats = &all_stats->ia_css_4a_statistics;
+	struct ia_css_4a_private_config stats_config;
 	ae_private_raw_buffer_aligned_t ae_raw_buffer_s;
 	unsigned int ae_join_buffers;
 
@@ -497,6 +498,13 @@ void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stat
 	hrt_vaddress ae_buff_1_ddr_addr = (hrt_vaddress)(long int)&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->ae_raw_buffer[1];
 
 	hrt_vaddress ae_pp_info_addr = (hrt_vaddress)(long int)&((struct stats_4a_private_raw_buffer *)(long int)isp_stats)->ae_join_buffers;
+
+	hrt_vaddress stats_config_addr = (hrt_vaddress) & (isp_stats->stats_4a_config);
+
+	/* load grid configuration */
+	mmgr_load(stats_config_addr,
+		  (void *)&(stats_config),
+		  sizeof(struct ia_css_4a_private_config));
 
 	/* load ae post processing info */
 	mmgr_load(ae_pp_info_addr,
