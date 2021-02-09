@@ -133,7 +133,7 @@ int AIQ::init()
 	ia_cmc_t *ia_cmc = nullptr;
 	ia_mkn *ia_mkn = nullptr;
 
-	int ret = aiqb.load("/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb");
+	int ret = aiqb.load("/etc/camera/ipu3/00imx258.aiqb");
 	if (ret) {
 		LOG(AIQ, Error) << "Not quitting";
 	}
