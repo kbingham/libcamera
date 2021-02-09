@@ -237,6 +237,42 @@ int AIQ::af_run()
 		LOG(AIQ, Error) << "Auto Focus produced no results";
 	}
 
+	ia_aiq_af_bracket_input_params af_bracket_params = {
+		2,
+		*afResults,
+		ia_aiq_af_bracket_mode_symmetric
+	};
+	ia_aiq_af_bracket_results *af_bracket_results = nullptr;
+	err = ia_aiq_af_bracket(aiq_, &af_bracket_params, &af_bracket_results);
+	if (err) {
+		LOG(AIQ, Error) << "Failed to run Auto-focus Bracketting: "
+				<< ia_err_decode(err);
+		return err;
+	}
+
+	if (af_bracket_results) {
+		LOG(AIQ, Debug) << "=== AUTO FOCUS BRACKETTING ==="
+				<< "distances_bracketing: " << *af_bracket_results->distances_bracketing << "\n"
+				<< "lens_positions_bracketing: " << *af_bracket_results->lens_positions_bracketing;
+	} else {
+		LOG(AIQ, Error) << "Auto Focus Bracketing produced no results";
+	}
+
+	ia_aiq_dsd_input_params dsd_params{
+		afResults,
+		ia_aiq_scene_mode_landscape
+	};
+
+	ia_aiq_scene_mode detected_scene_mode;
+	err = ia_aiq_dsd_run(aiq_, &dsd_params, &detected_scene_mode);
+	if (err) {
+		LOG(AIQ, Error) << "Failed to run Detect Scene: "
+				<< ia_err_decode(err);
+		return err;
+	}
+
+	LOG(AIQ, Info) << "DSD: Detected: " << detected_scene_mode;
+
 	/* TODO: Parse and set afResults somewhere */
 
 	return 0;
