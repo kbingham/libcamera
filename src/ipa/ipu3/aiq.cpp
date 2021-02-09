@@ -191,8 +191,6 @@ int AIQ::run(unsigned int frame, ipu3_uapi_params *params)
 {
 	(void)frame;
 
-	aic_config config;
-
 	/* Run AWB algorithms, using the config structures. */
 
 	af_run();
@@ -201,7 +199,7 @@ int AIQ::run(unsigned int frame, ipu3_uapi_params *params)
 	awb_run();
 
 	/* IPU3 firmware specific encoding for ISP controls. */
-	ParameterEncoder::encode(&config, params);
+	ParameterEncoder::encode(&config_, params);
 
 	return 0;
 }

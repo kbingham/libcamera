@@ -17,6 +17,8 @@
 #include <ia_imaging/ia_aiq.h>
 #include <linux/intel-ipu3.h>
 
+#include "aic.h"
+
 namespace libcamera {
 
 class AIQ
@@ -38,6 +40,12 @@ private:
 
 	ia_aiq *aiq_;
 	std::string version_;
+
+	/*
+	 * Run state configuration
+	 * TODO: This may need to a new instance per run.
+	 */
+	aic_config_t config_;
 };
 
 } /* namespace libcamera */
