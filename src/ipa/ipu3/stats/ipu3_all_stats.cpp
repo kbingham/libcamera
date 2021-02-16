@@ -23,6 +23,12 @@
 
 namespace libcamera {
 
+void IPU3AllStats::ipu3_stats_get_3a([[maybe_unused]] struct ipu3_stats_all_stats *all_stats,
+				     [[maybe_unused]] const struct ipu3_uapi_stats_3a *isp_stats)
+{
+	/* extract, memcpy and debubble each of 3A stats */
+}
+
 ia_err
 IPU3AllStats::intel_skycam_statistics_convert(const ia_css_4a_statistics &statistics,
 					      ia_aiq_rgbs_grid *out_rgbs_grid,
