@@ -9,6 +9,8 @@
 
 #include "libcamera/internal/log.h"
 
+#include "ipu3_all_stats.h"
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPAIPU3Stats)
@@ -35,7 +37,7 @@ IPAIPU3Stats::~IPAIPU3Stats()
 
 ia_aiq_statistics_input_params *
 IPAIPU3Stats::getInputStatsParams(int frame, ipa::ipu3::aiq::AiqResults *results,
-				  [[maybe_unused]] const ipu3_uapi_stats_3a *stats)
+				  const ipu3_uapi_stats_3a *stats)
 {
 	aiqStatsInputParams_.frame_id = frame;
 	aiqStatsInputParams_.frame_ae_parameters = results->ae();
@@ -44,6 +46,30 @@ IPAIPU3Stats::getInputStatsParams(int frame, ipa::ipu3::aiq::AiqResults *results
 	aiqStatsInputParams_.frame_pa_parameters = results->pa();
 	aiqStatsInputParams_.frame_sa_parameters = results->sa();
 	aiqStatsInputParams_.camera_orientation = ia_aiq_camera_orientation_unknown;
+
+	IPU3AllStats::ipu3_stats_all_stats outStats;
+	memset(&outStats, 0, sizeof(IPU3AllStats::ipu3_stats_all_stats));
+	IPU3AllStats::ipu3_stats_get_3a(&outStats, stats);
+
+	std::shared_ptr<ia_aiq_rgbs_grid> rgbsGrid = nullptr;
+	std::shared_ptr<ia_aiq_af_grid> afGrid = nullptr;
+	int ret = afFilterBuffPool_->acquireItem(afGrid);
+	ret |= rgbsGridBuffPool_->acquireItem(rgbsGrid);
+	if (ret != 0 || afGrid.get() == nullptr || rgbsGrid.get() == nullptr) {
+		LOG(IPAIPU3Stats, Error) << "Failed to acquire 3A buffers from pools";
+		return nullptr;
+	}
+
+	IPU3AllStats::intel_skycam_statistics_convert(outStats.ia_css_4a_statistics,
+						      rgbsGrid.get(), afGrid.get());
+
+	const ia_aiq_rgbs_grid *rgbsGridPtr = rgbsGrid.get();
+	const ia_aiq_af_grid *afGridPtr = afGrid.get();
+
+	aiqStatsInputParams_.num_rgbs_grids = 1;
+	aiqStatsInputParams_.rgbs_grids = &rgbsGridPtr;
+	aiqStatsInputParams_.num_af_grids = 1;
+	aiqStatsInputParams_.af_grids = &afGridPtr;
 
 	return &aiqStatsInputParams_;
 }
