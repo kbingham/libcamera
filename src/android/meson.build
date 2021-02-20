@@ -53,7 +53,6 @@ android_hal_sources = files([
     'jpeg/exif.cpp',
     'jpeg/post_processor_jpeg.cpp',
     'jpeg/thumbnailer.cpp',
-    'yuv/post_processor_yuv.cpp'
 ])
 
 subdir('mm')
