@@ -24,19 +24,6 @@ ia_deps = [
   cc.find_library('libSkyCamAICKBL', dirs : ia_library_path),
 ]
 
-ia_so_files = files([
-  ia_library_path / 'libia_aiq.so',
-  ia_library_path / 'libia_exc.so',
-  ia_library_path / 'libia_coordinate.so',
-  ia_library_path / 'libia_nvm.so',
-  ia_library_path / 'libia_cmc_parser.so',
-  ia_library_path / 'libia_mkn.so',
-  ia_library_path / 'libia_log.so',
-])
-
-install_data(ia_so_files,
-             install_dir : get_option('libdir'))
-
 ia_imaging_dep = declare_dependency(
     dependencies : ia_deps,
     include_directories : ia_library_includes,
