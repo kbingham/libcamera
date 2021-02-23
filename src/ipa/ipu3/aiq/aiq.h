@@ -41,6 +41,8 @@ public:
 			  const ipu3_uapi_stats_3a *stats);
 	int run(unsigned int frame, aiq::AiqInputParameters &params,
 		aiq::AiqResults &results);
+	int run2a(unsigned int frame, aiq::AiqInputParameters &params,
+		  aiq::AiqResults &results);
 
 private:
 	std::string decodeError(ia_err err);

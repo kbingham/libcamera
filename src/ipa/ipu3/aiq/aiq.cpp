@@ -156,6 +156,25 @@ int AIQ::run(unsigned int frame, aiq::AiqInputParameters &params,
 	return 0;
 }
 
+int AIQ::run2a(unsigned int frame, aiq::AiqInputParameters &params,
+	       aiq::AiqResults &results)
+{
+	(void)frame;
+
+	/* Run AWB algorithms, using the config structures. */
+	aeRun(params.aeInputParams, results);
+	awbRun(params.awbParams, results);
+
+	params.paParams.awb_results = results.awb();
+	params.paParams.exposure_params = results.ae()->exposures[0].exposure;
+	parameterAdapterRun(params.paParams, results);
+
+	gbceRun(params.gbceParams, results);
+	afRun(params.afParams, results);
+
+	return 0;
+}
+
 int AIQ::afRun(ia_aiq_af_input_params &afParams, aiq::AiqResults &results)
 {
 	ia_aiq_af_results *afResults = nullptr;
