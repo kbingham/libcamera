@@ -14,6 +14,7 @@
 #include "libcamera/internal/log.h"
 
 #include "../aiq/binary_data.h"
+#include "parameter_encoder.h"
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 #define ALIGN128(x) (((x) + 127) & ~127)
@@ -119,13 +120,14 @@ void AIC::reset()
 {
 }
 
-int AIC::run()
+int AIC::run(ipu3_uapi_params *params)
 {
 	LOG(AIC, Debug) << "IA AIC Run()";
 	skyCam_->Run(&mRuntimeParams_, 1);
-	/* \todo: Get the AicConfig here. The output config should be run
-	 * down through the ParameterEncoder to get h/w params.
-	 */
+
+	/* IPU3 firmware specific encoding for ISP controls. */
+	ParameterEncoder::encode(GetAicConfig(), params);
+
 	return 0;
 }
 

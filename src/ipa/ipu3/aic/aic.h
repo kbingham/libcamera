@@ -9,6 +9,8 @@
 
 #include <libcamera/geometry.h>
 
+#include <linux/intel-ipu3.h>
+
 #include "kbl_aic.h"
 
 #include "aiq/aiq_results.h"
@@ -26,7 +28,7 @@ public:
 
 	int init();
 	void reset();
-	int run();
+	int run(ipu3_uapi_params *params);
 	aic_config_t *GetAicConfig();
 	void updateRuntimeParams(ipa::ipu3::aiq::AiqResults &results);
 	std::string version();
