@@ -13,6 +13,7 @@
 #include "libcamera/internal/log.h"
 
 #include "aiq/binary_data.h"
+#include "stats/ipa_ipu3_stats.h"
 
 namespace libcamera {
 
@@ -102,6 +103,8 @@ int AIQ::init()
 	version_ = ia_aiq_get_version();
 	LOG(AIQ, Info) << "AIQ Library version: " << version_;
 
+	aiqStats_ = new IPAIPU3Stats;
+
 	return 0;
 }
 
@@ -119,11 +122,12 @@ int AIQ::setStatistics(unsigned int frame, aiq::AiqResults &results,
 
 	(void)frame;
 	(void)stats;
-	ia_aiq_statistics_input_params stats_param = {};
 
 	/* We should give the converted statistics into the AIQ library here. */
+	ia_aiq_statistics_input_params *statParams =
+		aiqStats_->getInputStatsParams(frame, &results, stats);
 
-	ia_err err = ia_aiq_statistics_set(aiq_, &stats_param);
+	ia_err err = ia_aiq_statistics_set(aiq_, statParams);
 	if (err) {
 		LOG(AIQ, Error) << "Failed to set statistics: "
 				<< decodeError(err);

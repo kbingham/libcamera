@@ -22,6 +22,8 @@
 
 namespace libcamera {
 
+class IPAIPU3Stats;
+
 namespace ipa::ipu3::aiq {
 
 class AIQ
@@ -60,6 +62,8 @@ private:
 	ia_aiq *aiq_;
 	ia_cmc_t *iaCmc_;
 	std::string version_;
+
+	IPAIPU3Stats *aiqStats_;
 };
 
 } /* namespace ipa::ipu3::aiq */

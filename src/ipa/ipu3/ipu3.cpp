@@ -229,7 +229,7 @@ void IPAIPU3::parseStatistics(unsigned int frame,
 	 * of the statistics in to allow the library to identify how long
 	 * convergence takes. Without it = the algos will not converge. */
 
-	aiq_.setStatistics(frame, stats);
+	aiq_.setStatistics(frame, results_, stats);
 
 	ipa::ipu3::IPU3Action op;
 	op.op = ipa::ipu3::ActionMetadataReady;
