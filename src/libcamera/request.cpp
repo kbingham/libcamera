@@ -23,6 +23,8 @@
 #include "libcamera/internal/framebuffer.h"
 #include "libcamera/internal/tracepoints.h"
 
+#define REQUEST_CANARY 0x1F2E3D4C
+
 /**
  * \file libcamera/request.h
  * \brief Describes a frame capture request to be processed by a camera
@@ -48,7 +50,7 @@ LOG_DEFINE_CATEGORY(Request)
  * \param camera The Camera that creates the request
  */
 Request::Private::Private(Camera *camera)
-	: camera_(camera), cancelled_(false)
+	: camera_(camera), cancelled_(false), canary_(REQUEST_CANARY)
 {
 }
 
@@ -114,6 +116,8 @@ void Request::Private::complete()
 {
 	Request *request = _o<Request>();
 
+	ASSERT(canary_ == REQUEST_CANARY);
+
 	LOG(Request, Debug) << request->toString();
 	LIBCAMERA_TRACEPOINT(request_complete, this);
 
@@ -126,6 +130,8 @@ void Request::Private::complete()
 void Request::Private::doCancelRequest()
 {
 	Request *request = _o<Request>();
+
+	ASSERT(canary_ == REQUEST_CANARY);
 
 	for (FrameBuffer *buffer : pending_) {
 		buffer->_d()->cancel();
@@ -149,6 +155,8 @@ void Request::Private::doCancelRequest()
 void Request::Private::cancel()
 {
 	Request *request = _o<Request>();
+
+	ASSERT(canary_ == REQUEST_CANARY);
 
 	LIBCAMERA_TRACEPOINT(request_cancel, this);
 	LOG(Request, Debug) << request->toString();
@@ -347,7 +355,7 @@ void Request::Private::timeout()
  */
 Request::Request(Camera *camera, uint64_t cookie)
 	: Extensible(std::make_unique<Private>(camera)),
-	  cookie_(cookie), status_(RequestPending)
+	  cookie_(cookie), status_(RequestPending), canary_(REQUEST_CANARY)
 {
 	controls_ = new ControlList(controls::controls,
 				    camera->_d()->validator());
@@ -368,6 +376,8 @@ Request::~Request()
 
 	delete metadata_;
 	delete controls_;
+
+	canary_ = 0;
 }
 
 /**
@@ -382,6 +392,11 @@ Request::~Request()
  */
 void Request::reuse(ReuseFlag flags)
 {
+	if (canary_ != REQUEST_CANARY) {
+		LOG(Request, Error) << "Invalid Request object";
+		return;
+	}
+
 	LIBCAMERA_TRACEPOINT(request_reuse, this);
 
 	_d()->reset();
@@ -463,6 +478,11 @@ void Request::reuse(ReuseFlag flags)
 int Request::addBuffer(const Stream *stream, FrameBuffer *buffer,
 		       std::unique_ptr<Fence> fence)
 {
+	if (canary_ != REQUEST_CANARY) {
+		LOG(Request, Error) << "Invalid Request object";
+		return -EINVAL;
+	}
+
 	if (!stream) {
 		LOG(Request, Error) << "Invalid stream reference";
 		return -EINVAL;
@@ -510,6 +530,11 @@ int Request::addBuffer(const Stream *stream, FrameBuffer *buffer,
  */
 FrameBuffer *Request::findBuffer(const Stream *stream) const
 {
+	if (canary_ != REQUEST_CANARY) {
+		LOG(Request, Error) << "Invalid Request object";
+		return nullptr;
+	}
+
 	const auto it = bufferMap_.find(stream);
 	if (it == bufferMap_.end())
 		return nullptr;
@@ -572,6 +597,7 @@ uint32_t Request::sequence() const
  */
 bool Request::hasPendingBuffers() const
 {
+	ASSERT(canary_ == REQUEST_CANARY);
 	return !_d()->pending_.empty();
 }
 
@@ -592,6 +618,25 @@ std::string Request::toString() const
 }
 
 /**
+ * \brief Identify if the Request object is valid and alive
+ *
+ * This provides a means of checking if the request is a valid request object.
+ * While Requests are constructed by libcamera, they are owned and may be freed
+ * by applications. It can be all to easy to release a Request object while it
+ * is still in use by libcamera - or attempt to requeue invalid or deleted
+ * requests.
+ *
+ * The canary provides an insight that the object is not valid and shall be
+ * rejected by libcamera API calls.
+ *
+ * \return True if the canary has died, and the object shall not be trusted
+ */
+bool Request::canary() const
+{
+	return canary_ != REQUEST_CANARY;
+}
+
+/**
  * \brief Insert a text representation of a Request into an output stream
  * \param[in] out The output stream
  * \param[in] r The Request
@@ -601,6 +646,11 @@ std::ostream &operator<<(std::ostream &out, const Request &r)
 {
 	/* Pending, Completed, Cancelled(X). */
 	static const char *statuses = "PCX";
+
+	if (r.canary()) {
+		out << "Request(Invalid Canary)";
+		return out;
+	}
 
 	/* Example Output: Request(55:P:1/2:6523524) */
 	out << "Request(" << r.sequence() << ":" << statuses[r.status()] << ":"

@@ -65,6 +65,8 @@ public:
 
 	std::string toString() const;
 
+	bool canary() const;
+
 private:
 	LIBCAMERA_DISABLE_COPY(Request)
 
@@ -74,6 +76,8 @@ private:
 
 	const uint64_t cookie_;
 	Status status_;
+
+	int32_t canary_;
 };
 
 std::ostream &operator<<(std::ostream &out, const Request &r);

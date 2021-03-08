@@ -59,6 +59,8 @@ private:
 	std::unordered_set<FrameBuffer *> pending_;
 	std::map<FrameBuffer *, std::unique_ptr<EventNotifier>> notifiers_;
 	std::unique_ptr<Timer> timer_;
+
+	uint32_t canary_;
 };
 
 } /* namespace libcamera */

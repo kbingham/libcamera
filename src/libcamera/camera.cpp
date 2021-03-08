@@ -1116,6 +1116,11 @@ int Camera::queueRequest(Request *request)
 {
 	Private *const d = _d();
 
+	if (request->canary()) {
+		LOG(Camera, Error) << "Invalid request";
+		return -EINVAL;
+	}
+
 	int ret = d->isAccessAllowed(Private::CameraRunning);
 	if (ret < 0)
 		return ret;
