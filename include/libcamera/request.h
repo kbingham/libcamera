@@ -79,6 +79,8 @@ private:
 	const uint64_t cookie_;
 	Status status_;
 	bool cancelled_;
+
+	uint32_t canary_;
 };
 
 } /* namespace libcamera */
