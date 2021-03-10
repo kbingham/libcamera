@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <queue>
+#include <string>
 #include <vector>
 
 namespace libcamera {
@@ -34,6 +35,8 @@ public:
 
 		bool paramDequeued;
 		bool metadataProcessed;
+
+		const std::string toString() const;
 	};
 
 	IPU3Frames();
@@ -48,6 +51,8 @@ public:
 
 	Info *find(unsigned int id);
 	Info *find(FrameBuffer *buffer);
+
+	void dump() const;
 
 private:
 	std::queue<FrameBuffer *> availableParamBuffers_;
