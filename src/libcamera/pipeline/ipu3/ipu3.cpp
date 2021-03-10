@@ -777,6 +777,13 @@ void PipelineHandlerIPU3::stopDevice(Camera *camera)
 	if (ret)
 		LOG(IPU3, Warning) << "Failed to stop camera " << camera->id();
 
+	/*
+	 * All requests must have completed before releasing buffers.
+	 * \todo: Ensure all pipeline handlers guarantee queuedRequests is empty
+	 * at the end of stop().
+	 */
+	ASSERT(data->queuedRequests_.empty());
+
 	freeBuffers(camera);
 }
 
