@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <queue>
+#include <string>
 #include <vector>
 
 #include <libcamera/base/signal.h>
@@ -40,6 +41,8 @@ public:
 
 		bool paramDequeued;
 		bool metadataProcessed;
+
+		std::string toString() const;
 	};
 
 	IPU3Frames();
@@ -56,6 +59,7 @@ public:
 	Info *find(FrameBuffer *buffer);
 
 	Signal<> bufferAvailable;
+	void dump() const;
 
 private:
 	std::queue<FrameBuffer *> availableParamBuffers_;

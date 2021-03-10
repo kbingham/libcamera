@@ -7,6 +7,8 @@
 
 #include "frames.h"
 
+#include <sstream>
+
 #include <libcamera/framebuffer.h>
 #include <libcamera/request.h>
 
@@ -138,6 +140,29 @@ IPU3Frames::Info *IPU3Frames::find(FrameBuffer *buffer)
 	LOG(IPU3, Fatal) << "Can't find tracking information from buffer";
 
 	return nullptr;
+}
+
+std::string IPU3Frames::Info::toString() const
+{
+	std::stringstream ss;
+
+	ss << request->toString()
+	   << (metadataProcessed ? "" : "[!metadata]")
+	   << (paramDequeued ? "" : "[!param]");
+
+	return ss.str();
+}
+
+void IPU3Frames::dump() const
+{
+	LOG(IPU3, Debug) << "Frames:";
+
+	for (auto const &pair : frameInfo_) {
+		Info *info = pair.second.get();
+
+		LOG(IPU3, Debug)
+			<< " - " << info->toString();
+	}
 }
 
 } /* namespace libcamera */
