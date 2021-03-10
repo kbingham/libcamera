@@ -72,8 +72,8 @@ LOG_DEFINE_CATEGORY(Request)
  *
  */
 Request::Request(Camera *camera, uint64_t cookie)
-	: camera_(camera), cookie_(cookie), status_(RequestPending),
-	  cancelled_(false)
+	: camera_(camera), sequence_(0), cookie_(cookie),
+	  status_(RequestPending), cancelled_(false)
 {
 	/**
 	 * \todo Should the Camera expose a validator instance, to avoid
@@ -126,6 +126,7 @@ void Request::reuse(ReuseFlag flags)
 		bufferMap_.clear();
 	}
 
+	sequence_ = 0;
 	status_ = RequestPending;
 	cancelled_ = false;
 
@@ -225,6 +226,12 @@ FrameBuffer *Request::findBuffer(const Stream *stream) const
  * \todo Offer a read-only API towards applications while keeping a read/write
  * API internally.
  * \return The metadata associated with the request
+ */
+
+/**
+ * \fn Request::sequence()
+ * \brief Retrieve the sequence number for the request
+ * \return The request sequence number
  */
 
 /**
