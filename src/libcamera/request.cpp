@@ -128,6 +128,7 @@ void Request::reuse(ReuseFlag flags)
 	if (flags & ReuseBuffers) {
 		for (auto pair : bufferMap_) {
 			FrameBuffer *buffer = pair.second;
+
 			buffer->setRequest(this);
 			pending_.insert(buffer);
 		}
