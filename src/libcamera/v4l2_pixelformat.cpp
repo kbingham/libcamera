@@ -57,6 +57,9 @@ const std::map<V4L2PixelFormat, PixelFormat> vpf2pf{
 	{ V4L2PixelFormat(V4L2_PIX_FMT_ARGB32), formats::BGRA8888 },
 	{ V4L2PixelFormat(V4L2_PIX_FMT_BGRA32), formats::RGBA8888 },
 
+	// Can't really be the same as V4L2_PIX_FMT_XRGB32 ???
+	{ V4L2PixelFormat(V4L2_PIX_FMT_RGBX32), formats::XBGR8888 },
+
 	/* YUV packed formats. */
 	{ V4L2PixelFormat(V4L2_PIX_FMT_YUYV), formats::YUYV },
 	{ V4L2PixelFormat(V4L2_PIX_FMT_YVYU), formats::YVYU },
