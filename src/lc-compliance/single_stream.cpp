@@ -46,7 +46,7 @@ Results::Result testRequestUnbalance(std::shared_ptr<Camera> camera,
 Results testSingleStream(std::shared_ptr<Camera> camera)
 {
 	const std::vector<std::pair<std::string, StreamRole>> roles = {
-		{ "raw", Raw },
+//		{ "raw", Raw },
 		{ "still", StillCapture },
 		{ "video", VideoRecording },
 		{ "viewfinder", Viewfinder },
