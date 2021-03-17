@@ -56,7 +56,8 @@ class IPU3CameraData : public CameraData
 {
 public:
 	IPU3CameraData(PipelineHandler *pipe)
-		: CameraData(pipe), exposureTime_(0), supportsFlips_(false)
+		: CameraData(pipe), exposureTime_(0), supportsFlips_(false),
+		  rawOnly_(false)
 	{
 	}
 
@@ -82,6 +83,8 @@ public:
 	std::unique_ptr<DelayedControls> delayedCtrls_;
 	IPU3Frames frameInfos_;
 
+	/* IPA is not handled on RAW only configurations. */
+	bool rawOnly_;
 	std::unique_ptr<ipa::ipu3::IPAProxyIPU3> ipa_;
 
 private:
@@ -577,8 +580,10 @@ int PipelineHandlerIPU3::configure(Camera *camera, CameraConfiguration *c)
 	 * part.
 	 */
 	ImgUDevice::PipeConfig imguConfig = config->imguConfig();
-	if (imguConfig.isNull())
+	if (imguConfig.isNull()) {
+		data->rawOnly_ = true;
 		return 0;
+	}
 
 	ret = imgu->configure(imguConfig, &cio2Format);
 	if (ret)
@@ -1273,6 +1278,13 @@ void IPU3CameraData::cio2BufferReady(FrameBuffer *buffer)
 
 	if (request->findBuffer(&rawStream_))
 		pipe_->completeBuffer(request, buffer);
+
+	if (rawOnly_) {
+		/* Do not queue anything through the IPA or to the IMGU */
+		frameInfos_.remove(info);
+		pipe_->completeRequest(request);
+		return;
+	}
 
 	ipa::ipu3::IPU3Event ev;
 	ev.op = ipa::ipu3::EventFillParams;
