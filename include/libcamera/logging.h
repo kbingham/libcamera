@@ -20,6 +20,7 @@ int logSetFile(const char *path);
 int logSetStream(std::ostream *stream);
 int logSetTarget(LoggingTarget target);
 void logSetLevel(const char *category, const char *level);
+void backtrace();
 
 } /* namespace libcamera */
 

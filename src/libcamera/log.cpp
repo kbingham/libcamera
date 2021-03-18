@@ -327,6 +327,16 @@ int logSetStream(std::ostream *stream)
 }
 
 /**
+ * \brief Generate a backtrace to the log
+ *
+ * This function explicitly requests a generated backtrace to the logger.
+ */
+void backtrace()
+{
+	Logger::instance()->backtrace();
+}
+
+/**
  * \brief Set the logging target
  * \param[in] target Logging destination
  *
