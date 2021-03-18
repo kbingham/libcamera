@@ -346,8 +346,9 @@ public:
 		const std::set<Stream *> &streams);
 	~Private();
 
-	int isAccessAllowed(State state, bool allowDisconnected = false) const;
-	int isAccessAllowed(State low, State high,
+	int isAccessAllowed(const char *from, State state,
+			    bool allowDisconnected = false) const;
+	int isAccessAllowed(const char *from, State low, State high,
 			    bool allowDisconnected = false) const;
 
 	void disconnect();
@@ -384,7 +385,8 @@ static const char *const camera_state_names[] = {
 	"Running",
 };
 
-int Camera::Private::isAccessAllowed(State state, bool allowDisconnected) const
+int Camera::Private::isAccessAllowed(const char *from, State state,
+				     bool allowDisconnected) const
 {
 	if (!allowDisconnected && disconnected_)
 		return -ENODEV;
@@ -395,14 +397,16 @@ int Camera::Private::isAccessAllowed(State state, bool allowDisconnected) const
 
 	ASSERT(static_cast<unsigned int>(state) < std::size(camera_state_names));
 
-	LOG(Camera, Debug) << "Camera in " << camera_state_names[currentState]
-			   << " state trying operation requiring state "
-			   << camera_state_names[state];
+	LOG(Camera, Warning) << "Camera in " << camera_state_names[currentState]
+			     << " state trying operation ["
+			     << from << "] requiring state "
+			     << camera_state_names[state];
 
 	return -EACCES;
 }
 
-int Camera::Private::isAccessAllowed(State low, State high,
+int Camera::Private::isAccessAllowed(const char *from,
+				     State low, State high,
 				     bool allowDisconnected) const
 {
 	if (!allowDisconnected && disconnected_)
@@ -415,10 +419,11 @@ int Camera::Private::isAccessAllowed(State low, State high,
 	ASSERT(static_cast<unsigned int>(low) < std::size(camera_state_names) &&
 	       static_cast<unsigned int>(high) < std::size(camera_state_names));
 
-	LOG(Camera, Debug) << "Camera in " << camera_state_names[currentState]
-			   << " state trying operation requiring state between "
-			   << camera_state_names[low] << " and "
-			   << camera_state_names[high];
+	LOG(Camera, Warning) << "Camera in " << camera_state_names[currentState]
+			     << " state trying operation [" << from
+			     << "] requiring state between "
+			     << camera_state_names[low] << " and "
+			     << camera_state_names[high];
 
 	return -EACCES;
 }
@@ -646,7 +651,7 @@ int Camera::exportFrameBuffers(Stream *stream,
 {
 	Private *const d = LIBCAMERA_D_PTR();
 
-	int ret = d->isAccessAllowed(Private::CameraConfigured);
+	int ret = d->isAccessAllowed(__FUNCTION__, Private::CameraConfigured);
 	if (ret < 0)
 		return ret;
 
@@ -693,7 +698,7 @@ int Camera::acquire()
 	 * No manual locking is required as PipelineHandler::lock() is
 	 * thread-safe.
 	 */
-	int ret = d->isAccessAllowed(Private::CameraAvailable);
+	int ret = d->isAccessAllowed(__FUNCTION__, Private::CameraAvailable);
 	if (ret < 0)
 		return ret == -EACCES ? -EBUSY : ret;
 
@@ -726,7 +731,8 @@ int Camera::release()
 {
 	Private *const d = LIBCAMERA_D_PTR();
 
-	int ret = d->isAccessAllowed(Private::CameraAvailable,
+	int ret = d->isAccessAllowed(__FUNCTION__,
+				     Private::CameraAvailable,
 				     Private::CameraConfigured, true);
 	if (ret < 0)
 		return ret == -EACCES ? -EBUSY : ret;
@@ -805,7 +811,8 @@ std::unique_ptr<CameraConfiguration> Camera::generateConfiguration(const StreamR
 {
 	Private *const d = LIBCAMERA_D_PTR();
 
-	int ret = d->isAccessAllowed(Private::CameraAvailable,
+	int ret = d->isAccessAllowed(__FUNCTION__,
+				     Private::CameraAvailable,
 				     Private::CameraRunning);
 	if (ret < 0)
 		return nullptr;
@@ -866,7 +873,8 @@ int Camera::configure(CameraConfiguration *config)
 {
 	Private *const d = LIBCAMERA_D_PTR();
 
-	int ret = d->isAccessAllowed(Private::CameraAcquired,
+	int ret = d->isAccessAllowed(__FUNCTION__,
+				     Private::CameraAcquired,
 				     Private::CameraConfigured);
 	if (ret < 0)
 		return ret;
@@ -938,7 +946,8 @@ std::unique_ptr<Request> Camera::createRequest(uint64_t cookie)
 {
 	Private *const d = LIBCAMERA_D_PTR();
 
-	int ret = d->isAccessAllowed(Private::CameraConfigured,
+	int ret = d->isAccessAllowed(__FUNCTION__,
+				     Private::CameraConfigured,
 				     Private::CameraRunning);
 	if (ret < 0)
 		return nullptr;
@@ -972,7 +981,7 @@ int Camera::queueRequest(Request *request)
 {
 	Private *const d = LIBCAMERA_D_PTR();
 
-	int ret = d->isAccessAllowed(Private::CameraRunning);
+	int ret = d->isAccessAllowed(__FUNCTION__, Private::CameraRunning);
 	if (ret < 0)
 		return ret;
 
@@ -1022,7 +1031,7 @@ int Camera::start(const ControlList *controls)
 {
 	Private *const d = LIBCAMERA_D_PTR();
 
-	int ret = d->isAccessAllowed(Private::CameraConfigured);
+	int ret = d->isAccessAllowed(__FUNCTION__, Private::CameraConfigured);
 	if (ret < 0)
 		return ret;
 
@@ -1056,7 +1065,7 @@ int Camera::stop()
 {
 	Private *const d = LIBCAMERA_D_PTR();
 
-	int ret = d->isAccessAllowed(Private::CameraRunning);
+	int ret = d->isAccessAllowed(__FUNCTION__, Private::CameraRunning);
 	if (ret < 0)
 		return ret;
 
@@ -1082,7 +1091,7 @@ void Camera::requestComplete(Request *request)
 	Private *const d = LIBCAMERA_D_PTR();
 
 	/* Disconnected cameras are still able to complete requests. */
-	int ret = d->isAccessAllowed(Private::CameraRunning);
+	int ret = d->isAccessAllowed(__FUNCTION__, Private::CameraRunning);
 	if (ret < 0 && ret != -ENODEV)
 		LOG(Camera, Fatal) << "Trying to complete a request when stopped";
 
