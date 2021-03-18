@@ -12,6 +12,7 @@
 #include <iomanip>
 
 #include <libcamera/framebuffer_allocator.h>
+#include <libcamera/logging.h>
 #include <libcamera/request.h>
 #include <libcamera/stream.h>
 
@@ -403,6 +404,8 @@ int Camera::Private::isAccessAllowed(const char *from, State state,
 			     << " state trying operation ["
 			     << from << "] requiring state "
 			     << camera_state_names[state];
+
+	libcamera::backtrace();
 
 	return -EACCES;
 }
