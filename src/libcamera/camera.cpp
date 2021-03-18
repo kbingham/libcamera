@@ -527,6 +527,8 @@ int Camera::Private::isAccessAllowed(State state, bool allowDisconnected,
 			   << " state trying " << from << "() requiring state "
 			   << camera_state_names[state];
 
+	libcamera::backtrace();
+
 	return -EACCES;
 }
 
