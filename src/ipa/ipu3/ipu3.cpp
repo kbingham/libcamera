@@ -22,6 +22,7 @@
 #include "libcamera/internal/log.h"
 
 /* IA AIQ Wrapper API */
+#include "aic/aic.h"
 #include "aiq/aiq.h"
 
 namespace libcamera {
@@ -67,16 +68,24 @@ private:
 	uint32_t minGain_;
 	uint32_t maxGain_;
 
-	/* AIQ Instance */
+	/* Intel Library Instances. */
 	aiq::AIQ aiq_;
 	aiq::AiqInputParameters aiqInputParams_;
 	aiq::AiqResults results_;
+	aic::AIC aic_;
 };
 
 int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
 {
+	int ret;
+
 	LOG(IPAIPU3, Info) << "Initialising IPA IPU3 + AIQ";
-	return aiq_.init();
+
+	ret = aiq_.init();
+	if (ret)
+		return ret;
+
+	return aic_.init();
 }
 
 int IPAIPU3::start()
