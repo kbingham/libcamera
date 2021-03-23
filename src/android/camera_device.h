@@ -29,6 +29,8 @@
 #include "camera_worker.h"
 #include "jpeg/encoder.h"
 
+struct CameraProps;
+
 class CameraDevice : protected libcamera::Loggable
 {
 public:
@@ -36,7 +38,7 @@ public:
 						    std::shared_ptr<libcamera::Camera> cam);
 	~CameraDevice();
 
-	int initialize();
+	int initialize(const CameraProps *cameraProps = nullptr);
 
 	int open(const hw_module_t *hardwareModule);
 	void close();

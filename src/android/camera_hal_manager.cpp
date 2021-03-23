@@ -41,6 +41,16 @@ int CameraHalManager::init()
 {
 	cameraManager_ = std::make_unique<CameraManager>();
 
+	/*
+	 * Open and parse configuration file.
+	 *
+	 * If the configuration file is not available the HAL only supports
+	 * external cameras. If it exists but it's not valid then error out.
+	 */
+	halConfig_.open();
+	if (halConfig_.exists() && !halConfig_.valid())
+		return -EINVAL;
+
 	/* Support camera hotplug. */
 	cameraManager_->cameraAdded.connect(this, &CameraHalManager::cameraAdded);
 	cameraManager_->cameraRemoved.connect(this, &CameraHalManager::cameraRemoved);
@@ -100,6 +110,8 @@ void CameraHalManager::cameraAdded(std::shared_ptr<Camera> cam)
 	auto iter = cameraIdsMap_.find(cam->id());
 	if (iter != cameraIdsMap_.end()) {
 		id = iter->second;
+		if (id >= firstExternalCameraId_)
+			isCameraExternal = true;
 	} else {
 		isCameraNew = true;
 
@@ -117,7 +129,30 @@ void CameraHalManager::cameraAdded(std::shared_ptr<Camera> cam)
 
 	/* Create a CameraDevice instance to wrap the libcamera Camera. */
 	std::unique_ptr<CameraDevice> camera = CameraDevice::create(id, cam);
-	int ret = camera->initialize();
+
+	/*
+	 * The configuration file must be valid for internal cameras.
+	 * External cameras can be initialized without configuration file.
+	 */
+	int ret = -EINVAL;
+	if (!halConfig_.exists()) {
+		if (isCameraExternal)
+			ret = camera->initialize();
+	} else {
+		/*
+		 * Get camera properties from the configuration file which
+		 * exists and is valid.
+		 *
+		 * Internal cameras are required to have a corresponding entry
+		 * in the configuration file. External cameras are not required
+		 * to.
+		 */
+		const CameraProps *cameraProps = &halConfig_.cameraProps(cam->id());
+		if (cameraProps->valid)
+			ret = camera->initialize(cameraProps);
+		else if (isCameraExternal)
+			ret = camera->initialize();
+	}
 	if (ret) {
 		LOG(HAL, Error) << "Failed to initialize camera: " << cam->id();
 		return;
