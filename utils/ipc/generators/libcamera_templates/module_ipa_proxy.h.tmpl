@@ -104,7 +104,13 @@ private:
 		{{interface_name}} *ipa_;
 	};
 
-	bool running_;
+	enum {{proxy_name}}States {
+		Stopped,
+		Stopping,
+		Running,
+	};
+	enum {{proxy_name}}States state_;
+
 	Thread thread_;
 	ThreadProxy proxy_;
 	std::unique_ptr<{{interface_name}}> ipa_;
