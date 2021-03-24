@@ -28,7 +28,7 @@ struct FrameMetadata {
 		unsigned int bytesused;
 	};
 
-	Status status = FrameCancelled;
+	Status status;
 	unsigned int sequence;
 	uint64_t timestamp;
 	std::vector<Plane> planes;
