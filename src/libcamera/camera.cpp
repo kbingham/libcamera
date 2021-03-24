@@ -1082,6 +1082,8 @@ int Camera::stop()
 	d->pipe_->invokeMethod(&PipelineHandler::stop, ConnectionTypeBlocking,
 			       this);
 
+	ASSERT(!d->pipe_->active(this));
+
 	d->setState(Private::CameraConfigured);
 
 	return 0;
