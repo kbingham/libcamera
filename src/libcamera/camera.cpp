@@ -339,6 +339,7 @@ public:
 		CameraAvailable,
 		CameraAcquired,
 		CameraConfigured,
+		CameraStopping,
 		CameraRunning,
 	};
 
@@ -382,6 +383,7 @@ static const char *const camera_state_names[] = {
 	"Available",
 	"Acquired",
 	"Configured",
+	"Stopping",
 	"Running",
 };
 
@@ -492,6 +494,7 @@ void Camera::Private::setState(State state)
  *   node [shape = doublecircle ]; Available;
  *   node [shape = circle ]; Acquired;
  *   node [shape = circle ]; Configured;
+ *   node [shape = circle ]; Stopping;
  *   node [shape = circle ]; Running;
  *
  *   Available -> Available [label = "release()"];
@@ -504,7 +507,8 @@ void Camera::Private::setState(State state)
  *   Configured -> Configured [label = "configure(), createRequest()"];
  *   Configured -> Running [label = "start()"];
  *
- *   Running -> Configured [label = "stop()"];
+ *   Running -> Stopping [label = "stop()"];
+ *   Stopping -> Configured;
  *   Running -> Running [label = "createRequest(), queueRequest()"];
  * }
  * \enddot
@@ -523,6 +527,12 @@ void Camera::Private::setState(State state)
  * The camera is configured and ready to be started. The application may
  * release() the camera and to get back to the Available state or start()
  * it to progress to the Running state.
+ *
+ * \subsubsection Stopping
+ * The camera has been asked to stop. Pending reqeusts are being completed or
+ * cancelled, and no new requests are permitted to be queued. The camera will
+ * transition to the Configured state when all queued requests have been
+ * returned to the application.
  *
  * \subsubsection Running
  * The camera is running and ready to process requests queued by the
@@ -1071,6 +1081,8 @@ int Camera::stop()
 
 	LOG(Camera, Debug) << "Stopping capture";
 
+	d->setState(Private::CameraStopping);
+
 	d->pipe_->invokeMethod(&PipelineHandler::stop, ConnectionTypeBlocking,
 			       this);
 
@@ -1091,7 +1103,9 @@ void Camera::requestComplete(Request *request)
 	Private *const d = LIBCAMERA_D_PTR();
 
 	/* Disconnected cameras are still able to complete requests. */
-	int ret = d->isAccessAllowed(__FUNCTION__, Private::CameraRunning);
+	int ret = d->isAccessAllowed(__FUNCTION__,
+				     Private::CameraStopping,
+				     Private::CameraRunning);
 	if (ret < 0 && ret != -ENODEV)
 		LOG(Camera, Fatal) << "Trying to complete a request when stopped";
 
