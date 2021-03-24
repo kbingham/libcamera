@@ -358,6 +358,23 @@ const ControlList &PipelineHandler::properties(const Camera *camera) const
  */
 
 /**
+ * \brief Determine if the camera has any requests pending
+ * \param[in] camera The camera to check
+ *
+ * This method determines if there are any requests queued to the pipeline
+ * awaiting processing.
+ *
+ * \context This function is called from the CameraManager thread.
+ *
+ * \return True if there are pending requests, or false otherwise
+ */
+bool PipelineHandler::active(const Camera *camera)
+{
+	const CameraData *data = cameraData(camera);
+	return !data->queuedRequests_.empty();
+}
+
+/**
  * \fn PipelineHandler::queueRequest()
  * \brief Queue a request
  * \param[in] request The request to queue
