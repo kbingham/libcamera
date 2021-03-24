@@ -134,6 +134,10 @@ IPU3Frames::Info *IPU3Frames::find(FrameBuffer *buffer)
 			return info;
 	}
 
+	Request *r = buffer->request();
+	if (r)
+		LOG(IPU3, Error) << "Buffer->Request is " << r->toString();
+
 	LOG(IPU3, Fatal) << "Can't find tracking informaton from buffer";
 
 	return nullptr;
