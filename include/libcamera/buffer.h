@@ -49,6 +49,7 @@ public:
 	Request *request() const { return request_; }
 	void setRequest(Request *request) { request_ = request; }
 	const FrameMetadata &metadata() const { return metadata_; }
+	void cancel() { metadata_.status = FrameMetadata::FrameCancelled; }
 
 	unsigned int cookie() const { return cookie_; }
 	void setCookie(unsigned int cookie) { cookie_ = cookie; }
