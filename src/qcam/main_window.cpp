@@ -16,6 +16,7 @@
 
 #include <QComboBox>
 #include <QCoreApplication>
+#include <QDate>
 #include <QFileDialog>
 #include <QImage>
 #include <QImageWriter>
@@ -215,6 +216,13 @@ int MainWindow::createToolbars()
 	action->setShortcut(Qt::Key_Space);
 	connect(action, &QAction::toggled, this, &MainWindow::toggleCapture);
 	startStopAction_ = action;
+
+	/* Fast save action */
+	action = toolbar_->addAction(QIcon::fromTheme("document-save",
+						      QIcon(":save.svg")),
+				     "Save");
+	action->setShortcut(QKeySequence::Save);
+	connect(action, &QAction::triggered, this, &MainWindow::saveImage);
 
 	/* Save As... action. */
 	action = toolbar_->addAction(QIcon::fromTheme("document-save-as",
@@ -645,6 +653,23 @@ void MainWindow::removeCamera(std::shared_ptr<Camera> camera)
 /* -----------------------------------------------------------------------------
  * Image Save
  */
+
+void MainWindow::saveImage()
+{
+	QImage image = viewfinder_->getCurrentImage();
+	QString defaultPath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+
+	QDateTime now = QDateTime::currentDateTime();
+
+	QString filename = defaultPath + "/" + now.toString(Qt::ISODate) + ".jpg";
+
+	QImageWriter writer(filename);
+
+	statusBar()->showMessage("Saving" + filename, 2000);
+
+	writer.setQuality(95);
+	writer.write(image);
+}
 
 void MainWindow::saveImageAs()
 {
