@@ -43,6 +43,7 @@ Q_SIGNALS:
 
 protected:
 	void paintEvent(QPaintEvent *) override;
+	void resizeEvent(QResizeEvent *) override;
 	QSize sizeHint() const override;
 
 private:
@@ -50,6 +51,7 @@ private:
 
 	libcamera::PixelFormat format_;
 	QSize size_;
+	QRect place_;
 
 	/* Camera stopped icon */
 	QSize vfSize_;
