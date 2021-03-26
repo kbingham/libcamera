@@ -64,6 +64,7 @@ private Q_SLOTS:
 	void switchCamera();
 	void toggleCapture(bool start);
 
+	void saveImage();
 	void saveImageAs();
 	void captureRaw();
 	void processRaw(libcamera::FrameBuffer *buffer,
