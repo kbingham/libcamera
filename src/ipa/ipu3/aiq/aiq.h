@@ -14,6 +14,8 @@
 #include <ia_imaging/ia_cmc_parser.h>
 #include <linux/intel-ipu3.h>
 
+#include <libcamera/geometry.h>
+
 #include "aiq_input_parameters.h"
 #include "aiq_results.h"
 #include "binary_data.h"

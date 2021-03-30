@@ -10,6 +10,8 @@
 
 #include <ia_imaging/ia_aiq.h>
 
+#include <libcamera/internal/camera_sensor.h>
+
 #ifndef IPA_IPU3_AIQ_INPUT_PARAMETERS_H
 #define IPA_IPU3_AIQ_INPUT_PARAMETERS_H
 
@@ -27,6 +29,7 @@ static const unsigned int NUM_EXPOSURES = 1; /*!> Number of frames AIQ algorithm
 struct AiqInputParameters {
 	void init();
 	void reset();
+	int configureSensorParams(const CameraSensorInfo &sensorInfo);
 	AiqInputParameters &operator=(const AiqInputParameters &other);
 
 	ia_aiq_ae_input_params aeInputParams;

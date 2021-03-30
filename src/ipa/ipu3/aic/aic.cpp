@@ -50,6 +50,7 @@ int AIC::init(BinaryData &aiqb)
 	CLEAR(mRuntimeParamsInFrameParams_);
 	CLEAR(mRuntimeParamsRec_);
 	CLEAR(mRuntimeParams_);
+
 	mRuntimeParams_.output_frame_params = &mRuntimeParamsOutFrameParams_;
 	mRuntimeParams_.frame_resolution_parameters = &mRuntimeParamsResCfgParams_;
 	mRuntimeParams_.input_frame_params = &mRuntimeParamsInFrameParams_;
@@ -69,6 +70,45 @@ int AIC::init(BinaryData &aiqb)
 	ISPPipe *pipe = static_cast<ISPPipe *>(pipe_);
 	skyCam_ = std::make_unique<KBL_AIC>(&pipe, 1, iaCmc_, aiqb.data(),
 					    mRuntimeParams_, 0, 0);
+
+	return 0;
+}
+
+int AIC::configure(const Size bds, const Size ifSize,
+		   const Size gdcSize, const Size cropRegion)
+{
+	LOG(AIC, Debug) << "IA AIC configure(): "
+			<< " bds: " << bds.width << "x" << bds.height
+			<< " ifSize: " << ifSize.width << "x" << ifSize.height
+			<< " gdcSize: " << gdcSize.width << "x" << gdcSize.height
+			<< " cropRegion: " << cropRegion.width << "x" << cropRegion.height;
+
+	//Fill AIC input frame params
+	mRuntimeParams_.frame_use = ia_aiq_frame_use_still;
+	mRuntimeParams_.mode_index = AIC_MODE_STILL;
+	mRuntimeParamsInFrameParams_.sensor_frame_params.horizontal_crop_offset = 0;
+	mRuntimeParamsInFrameParams_.sensor_frame_params.vertical_crop_offset = 0;
+	mRuntimeParamsInFrameParams_.sensor_frame_params.cropped_image_width = cropRegion.width;
+	mRuntimeParamsInFrameParams_.sensor_frame_params.cropped_image_height = cropRegion.height;
+	mRuntimeParamsInFrameParams_.sensor_frame_params.horizontal_scaling_numerator = 1;
+	mRuntimeParamsInFrameParams_.sensor_frame_params.horizontal_scaling_denominator = 1;
+	mRuntimeParamsInFrameParams_.sensor_frame_params.vertical_scaling_numerator = 1;
+	mRuntimeParamsInFrameParams_.sensor_frame_params.vertical_scaling_denominator = 1;
+	mRuntimeParamsInFrameParams_.fix_flip_x = 0;
+	mRuntimeParamsInFrameParams_.fix_flip_y = 0;
+
+	mRuntimeParamsOutFrameParams_.width = cropRegion.width;
+	mRuntimeParamsOutFrameParams_.height = cropRegion.height;
+
+	mRuntimeParamsResCfgParams_.BDSin_img_width = ifSize.width;
+	mRuntimeParamsResCfgParams_.BDSin_img_height = ifSize.height;
+	mRuntimeParamsResCfgParams_.BDSout_img_width = bds.width;
+	mRuntimeParamsResCfgParams_.BDSout_img_height = bds.height;
+
+	mRuntimeParamsResCfgParams_.horizontal_IF_crop = bds.width;
+	mRuntimeParamsResCfgParams_.vertical_IF_crop = bds.height;
+	mRuntimeParamsResCfgParams_.BDS_horizontal_padding =
+		static_cast<uint16_t>(ALIGN128(bds.width) - bds.width);
 
 	return 0;
 }
