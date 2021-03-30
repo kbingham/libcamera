@@ -83,6 +83,22 @@ void AiqInputParameters::reset()
 	saParams.sensor_frame_params = &sensorFrameParams;
 }
 
+int AiqInputParameters::configureSensorParams(const CameraSensorInfo &sensorInfo)
+{
+	sensorDescriptor.pixel_clock_freq_mhz = sensorInfo.pixelRate / 1000000;
+	sensorDescriptor.pixel_periods_per_line = sensorInfo.lineLength;
+	sensorDescriptor.line_periods_per_field = sensorInfo.minFrameLength;
+	sensorDescriptor.line_periods_vertical_blanking = 106; /* default */
+	//INFO: fine integration is not supported by v4l2
+	sensorDescriptor.fine_integration_time_min = 0;
+	sensorDescriptor.fine_integration_time_max_margin = sensorDescriptor.pixel_periods_per_line;
+	sensorDescriptor.coarse_integration_time_min = 4; /* min VBLANK */
+	/* Guess from hal-configs-nautilus/files/camera3_profiles.xml#263 */
+	sensorDescriptor.coarse_integration_time_max_margin = 10;
+
+	return 0;
+}
+
 AiqInputParameters &AiqInputParameters::operator=(const AiqInputParameters &other)
 {
 	if (this == &other)

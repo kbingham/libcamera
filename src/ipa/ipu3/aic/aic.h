@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include <libcamera/geometry.h>
+
 #include "kbl_aic.h"
 
 #include "aiq/aiq_results.h"
@@ -28,6 +30,8 @@ public:
 	aic_config_t *GetAicConfig();
 	void updateRuntimeParams(ipa::ipu3::aiq::AiqResults &results);
 	std::string version();
+	int configure(const Size bds, const Size ifSize, const Size gdcSize,
+		      const Size cropRegion_);
 
 private:
 	/** \todo: Only a single AIC_MODE is supported currently. */

@@ -41,8 +41,10 @@ public:
 	int start() override;
 	void stop() override {}
 
-	void configure(const std::map<uint32_t, ControlInfoMap> &entityControls,
-		       const Size &bdsOutputSize) override;
+	void configure(const CameraSensorInfo &sensorInfo,
+		       const std::map<uint32_t, ControlInfoMap> &entityControls,
+		       const Size &bdsOutputSize, const Size &ifSize,
+		       const Size &gdcSize, const Size &cropRegion) override;
 
 	void mapBuffers(const std::vector<IPABuffer> &buffers) override;
 	void unmapBuffers(const std::vector<unsigned int> &ids) override;
@@ -85,6 +87,8 @@ int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
 	if (ret)
 		return ret;
 
+	aiqInputParams_.init();
+
 	return aic_.init();
 }
 
@@ -95,8 +99,12 @@ int IPAIPU3::start()
 	return 0;
 }
 
-void IPAIPU3::configure(const std::map<uint32_t, ControlInfoMap> &entityControls,
-			[[maybe_unused]] const Size &bdsOutputSize)
+void IPAIPU3::configure(const CameraSensorInfo &sensorInfo,
+			const std::map<uint32_t, ControlInfoMap> &entityControls,
+			[[maybe_unused]] const Size &bdsOutputSize,
+			[[maybe_unused]] const Size &ifSize,
+			[[maybe_unused]] const Size &gdcSize,
+			[[maybe_unused]] const Size &cropRegion)
 {
 	if (entityControls.empty())
 		return;
@@ -125,6 +133,16 @@ void IPAIPU3::configure(const std::map<uint32_t, ControlInfoMap> &entityControls
 
 	if (aiq_.configure()) {
 		LOG(IPAIPU3, Error) << "Failed to configure the AIQ";
+		return;
+	}
+
+	if (aiqInputParams_.configureSensorParams(sensorInfo)) {
+		LOG(IPAIPU3, Error) << "Failed to configure AiqInputParams";
+		return;
+	}
+
+	if (aic_.configure(bdsOutputSize, ifSize, gdcSize, cropRegion)) {
+		LOG(IPAIPU3, Error) << "Failed to configure the AIC";
 		return;
 	}
 }
