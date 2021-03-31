@@ -4,11 +4,26 @@ subdir('data')
 
 ipa_name = 'ipa_ipu3'
 
+ipu3_ipa_deps = [
+    libatomic,
+    libcamera_dep,
+    ia_imaging_dep,
+]
+
+ipu3_ipa_includes = [
+    ipa_includes,
+    libipa_includes,
+]
+
+ipu3_ipa_files = files([
+    'ipu3.cpp',
+])
+
 mod = shared_module(ipa_name,
-                    ['ipu3.cpp', libcamera_generated_ipa_headers],
+                    [ipu3_ipa_files, libcamera_generated_ipa_headers],
                     name_prefix : '',
-                    include_directories : [ipa_includes, libipa_includes],
-                    dependencies : libcamera_dep,
+                    include_directories : ipu3_ipa_includes,
+                    dependencies : ipu3_ipa_deps,
                     link_with : libipa,
                     install : true,
                     install_dir : ipa_install_dir)
