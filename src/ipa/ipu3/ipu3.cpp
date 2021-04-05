@@ -184,6 +184,9 @@ void IPAIPU3::configure(const CameraSensorInfo &sensorInfo,
 		LOG(IPAIPU3, Error) << "Failed to configure the AIC";
 		return;
 	}
+
+	/* Set AE/AWB defaults, this typically might not belong here */
+	aiqInputParams_.setAeAwbAfDefaults();
 }
 
 void IPAIPU3::mapBuffers(const std::vector<IPABuffer> &buffers)

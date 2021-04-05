@@ -30,6 +30,7 @@ struct AiqInputParameters {
 	void init();
 	void reset();
 	int configureSensorParams(const CameraSensorInfo &sensorInfo);
+	void setAeAwbAfDefaults();
 	AiqInputParameters &operator=(const AiqInputParameters &other);
 
 	ia_aiq_ae_input_params aeInputParams;
