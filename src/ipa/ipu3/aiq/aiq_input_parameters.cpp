@@ -129,6 +129,54 @@ AiqInputParameters &AiqInputParameters::operator=(const AiqInputParameters &othe
 	return *this;
 }
 
+void AiqInputParameters::setAeAwbAfDefaults()
+{
+	/*Ae Params */
+	aeInputParams.num_exposures = NUM_EXPOSURES;
+	aeInputParams.frame_use = ia_aiq_frame_use_still;
+	aeInputParams.flash_mode = ia_aiq_flash_mode_off;
+	aeInputParams.operation_mode = ia_aiq_ae_operation_mode_automatic;
+	aeInputParams.metering_mode = ia_aiq_ae_metering_mode_evaluative;
+	aeInputParams.priority_mode = ia_aiq_ae_priority_mode_normal;
+	aeInputParams.flicker_reduction_mode = ia_aiq_ae_flicker_reduction_off;
+	aeInputParams.exposure_window = nullptr;
+	aeInputParams.exposure_coordinate = nullptr;
+	aeInputParams.ev_shift = 0;
+	aeInputParams.sensor_descriptor = &sensorDescriptor;
+	aeInputParams.manual_exposure_time_us = nullptr;
+	aeInputParams.manual_analog_gain = nullptr;
+	aeInputParams.manual_iso = nullptr;
+	aeInputParams.aec_features = nullptr;
+	aeInputParams.manual_limits = nullptr;
+	aeInputParams.manual_aperture_fn = -1;
+	aeInputParams.manual_dc_iris_command = ia_aiq_aperture_control_dc_iris_auto;
+	aeInputParams.exposure_distribution_priority = ia_aiq_ae_exposure_distribution_shutter;
+	aeInputParams.manual_convergence_time = -1;
+
+	/* AWB Params */
+	awbParams.frame_use = ia_aiq_frame_use_still;
+	awbParams.scene_mode = ia_aiq_awb_operation_mode_auto;
+	awbParams.manual_convergence_time = -1.0;
+	awbParams.manual_cct_range = nullptr;
+	awbParams.manual_white_coordinate = nullptr;
+
+	/* AF Params */
+	afParams = {
+		ia_aiq_frame_use_still, 0, 1500,
+		ia_aiq_af_operation_mode_auto,
+		ia_aiq_af_range_normal,
+		ia_aiq_af_metering_mode_auto,
+		ia_aiq_flash_mode_off,
+		NULL, NULL, false
+	};
+
+	/* GBCE Params */
+	gbceParams.gbce_level = ia_aiq_gbce_level_gamma_stretch;
+	gbceParams.tone_map_level = ia_aiq_tone_map_level_default;
+	gbceParams.frame_use = ia_aiq_frame_use_still;
+	gbceParams.ev_shift = 0;
+}
+
 } /* namespace aiq */
 } /* namespace ipu3 */
 } /* namespace ipa */
