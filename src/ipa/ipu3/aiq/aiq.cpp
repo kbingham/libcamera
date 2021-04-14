@@ -74,10 +74,9 @@ std::string AIQ::decodeError(ia_err err)
 
 int AIQ::init()
 {
-	/* Todo: Fix namespacing on AIQ itself */
-	ipa::ipu3::aiq::BinaryData aiqb;
-	ipa::ipu3::aiq::BinaryData nvm;
-	ipa::ipu3::aiq::BinaryData aiqd;
+	BinaryData aiqb;
+	BinaryData nvm;
+	BinaryData aiqd;
 
 	constexpr unsigned int maxGridW = 80;
 	constexpr unsigned int maxGridH = 60;
