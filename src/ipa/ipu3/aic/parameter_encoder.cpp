@@ -1221,6 +1221,11 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	ispTnr3DmemEncode(config, params);
 
 	return;
+
+	ispAwbFrEncode(config, params);		// - an assert failure
+	ispGammaCtrlEncode(config, params);	//- segfault in KBL_AIC::run()
+
+	return;
 }
 
 } /* namespace libcamera */
