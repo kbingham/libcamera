@@ -1192,18 +1192,12 @@ ispTnr3DmemEncode(aic_config *config, ipu3_uapi_params *params)
 
 void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 {
-	/*
-	 * Do not encode parameters until the algorithms are run,
-	 * or assertions will be hit
-	 */
-	return;
-
-	ispAwbFrEncode(config, params);
+	//ispAwbFrEncode(config, params); - an assert failure
 	ispAeEncode(config, params);
 	ispAwbEncode(config, params);
 	ispAfEncode(config, params);
 	ispLinVmemEncode(config, params);
-	ispGammaCtrlEncode(config, params);
+	//ispGammaCtrlEncode(config, params); - segfault in KBL_AIC::run()
 	ispCcmEncode(config, params);
 	ispCscEncode(config, params);
 	ispCdsEncode(config, params);
