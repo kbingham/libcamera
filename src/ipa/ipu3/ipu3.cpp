@@ -48,7 +48,7 @@ public:
 
 	void mapBuffers(const std::vector<IPABuffer> &buffers) override;
 	void unmapBuffers(const std::vector<unsigned int> &ids) override;
-	void processEvent(const ipa::ipu3::IPU3Event &event) override;
+	void processEvent(const IPU3Event &event) override;
 
 private:
 	void processControls(unsigned int frame, const ControlList &controls);
@@ -276,8 +276,8 @@ void IPAIPU3::parseStatistics(unsigned int frame,
 
 	aiq_.setStatistics(frame, results_, stats);
 
-	ipa::ipu3::IPU3Action op;
-	op.op = ipa::ipu3::ActionMetadataReady;
+	IPU3Action op;
+	op.op = ActionMetadataReady;
 	op.controls = ctrls;
 
 	queueFrameAction.emit(frame, op);
