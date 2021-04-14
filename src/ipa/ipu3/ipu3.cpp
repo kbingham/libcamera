@@ -257,25 +257,6 @@ void IPAIPU3::processControls([[maybe_unused]] unsigned int frame,
 	/* \todo Start processing for 'frame' based on 'controls'. */
 }
 
-static void dumpExposure(ia_aiq_ae_exposure_result *exp)
-{
-	ia_aiq_exposure_parameters *exposure = exp->exposure;
-	//ia_aiq_exposure_sensor_parameters *sensor = exp->sensor_exposure;
-
-	LOG(IPAIPU3, Info) << "Exposure Parameters: Index " << exp->exposure_index;
-	LOG(IPAIPU3, Info) << " Distance from Convergence: "
-			   << exp->distance_from_convergence << (exp->converged ? " " : " NOT ") << "Converged";
-
-	LOG(IPAIPU3, Info) << " T:" << exposure->exposure_time_us
-			   << " AG:" << exposure->analog_gain
-			   << " DG: " << exposure->digital_gain
-			   << " Apt:" << exposure->aperture_fn
-			   << " Tgt:" << exposure->total_target_exposure
-			   << " ISO: " << exposure->iso;
-
-	LOG(IPAIPU3, Info) << " Coarse - " << exp->sensor_exposure->coarse_integration_time;
-}
-
 void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 {
 	/* Prepare parameters buffer. */
@@ -304,7 +285,7 @@ void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 	 * We expect this to be moved later, and perhaps algorithsm will be run
 	 * when the statistics come in rather than when the params are filled...
 	 */
-	dumpExposure(results_.ae()->exposures);
+	aiq::dumpExposure(results_.ae()->exposures);
 
 	exposure_ = results_.ae()->exposures[0].sensor_exposure->coarse_integration_time;
 	gain_ = results_.ae()->exposures[0].sensor_exposure->analog_gain_code_global;

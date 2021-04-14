@@ -363,6 +363,28 @@ int AIQ::shadingAdapterRun(ia_aiq_sa_input_params &saParams,
 	return 0;
 }
 
+/******************************************************************************/
+LOG_DEFINE_CATEGORY(AIQDEBUG)
+
+void dumpExposure(ia_aiq_ae_exposure_result *exp)
+{
+	ia_aiq_exposure_parameters *exposure = exp->exposure;
+	//ia_aiq_exposure_sensor_parameters *sensor = exp->sensor_exposure;
+
+	LOG(AIQDEBUG, Info) << "Exposure Parameters: Index " << exp->exposure_index;
+	LOG(AIQDEBUG, Info) << " Distance from Convergence: "
+			    << exp->distance_from_convergence << (exp->converged ? " " : " NOT ") << "Converged";
+
+	LOG(AIQDEBUG, Info) << " T:" << exposure->exposure_time_us
+			    << " AG:" << exposure->analog_gain
+			    << " DG: " << exposure->digital_gain
+			    << " Apt:" << exposure->aperture_fn
+			    << " Tgt:" << exposure->total_target_exposure
+			    << " ISO: " << exposure->iso;
+
+	LOG(AIQDEBUG, Info) << " Coarse - " << exp->sensor_exposure->coarse_integration_time;
+}
+
 } /* namespace ipa::ipu3::aiq */
 
 } /* namespace libcamera */

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 __pycache__/
-build/
+build*/
 patches/
 *.patch
 *.pyc

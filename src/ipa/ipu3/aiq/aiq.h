@@ -71,6 +71,8 @@ private:
 	IPAIPU3Stats *aiqStats_;
 };
 
+void dumpExposure(ia_aiq_ae_exposure_result *exp);
+
 } /* namespace ipa::ipu3::aiq */
 
 } /* namespace libcamera */
