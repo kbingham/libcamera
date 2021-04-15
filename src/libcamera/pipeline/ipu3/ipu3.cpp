@@ -451,9 +451,18 @@ PipelineHandlerIPU3::generateConfiguration(Camera *camera, const StreamRoles &ro
 			size = sensorResolution.boundedTo(kViewfinderSize)
 					       .alignedDownTo(ImgUDevice::kOutputAlignWidth,
 							      ImgUDevice::kOutputAlignHeight);
+
+			/*
+			 * Limit the minimum size to either 640x480, or the
+			 * sensor size if it is smaller
+			 */
+			Size minSize = sensorResolution.boundedTo({ 640, 480 })
+					       .alignedDownTo(ImgUDevice::kOutputAlignWidth,
+							      ImgUDevice::kOutputAlignHeight);
+
 			pixelFormat = formats::NV12;
 			bufferCount = IPU3CameraConfiguration::kBufferCount;
-			streamFormats[pixelFormat] = { { ImgUDevice::kOutputMinSize, size } };
+			streamFormats[pixelFormat] = { { minSize, size } };
 
 			break;
 		}
