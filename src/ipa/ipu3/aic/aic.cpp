@@ -13,7 +13,7 @@
 
 #include "libcamera/internal/log.h"
 
-#include "../aiq/binary_data.h"
+#include "binary_data.h"
 #include "parameter_encoder.h"
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
@@ -57,7 +57,7 @@ int AIC::init()
 	mRuntimeParams_.input_frame_params = &mRuntimeParamsInFrameParams_;
 	mRuntimeParams_.focus_rect = &mRuntimeParamsRec_;
 
-	ipa::ipu3::aiq::BinaryData aiqb;
+	BinaryData aiqb;
 	int ret = aiqb.load("/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb");
 	if (ret) {
 		LOG(AIC, Error) << "Failed to load AIQB";
