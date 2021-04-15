@@ -13,6 +13,7 @@ ipu3_ipa_deps = [
 ipu3_ipa_includes = [
     ipa_includes,
     libipa_includes,
+    include_directories('.'),
 ]
 
 ipu3_ipa_files = files([

@@ -11,7 +11,7 @@
 
 #include <libcamera/class.h>
 
-namespace libcamera::ipa::ipu3::aiq {
+namespace libcamera::ipa::ipu3 {
 
 class BinaryData
 {
@@ -28,4 +28,4 @@ private:
 	std::vector<uint8_t> data_;
 };
 
-} /* namespace libcamera::ipa::ipu3::aiq */
+} /* namespace libcamera::ipa::ipu3 */
