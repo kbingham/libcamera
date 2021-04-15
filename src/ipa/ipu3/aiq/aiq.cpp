@@ -72,25 +72,21 @@ std::string AIQ::decodeError(ia_err err)
 	return o.str();
 }
 
-int AIQ::init()
+int AIQ::init(BinaryData &aiqb, BinaryData &nvm, BinaryData &aiqd)
 {
-	BinaryData aiqb;
-	BinaryData nvm;
-	BinaryData aiqd;
-
 	constexpr unsigned int maxGridW = 80;
 	constexpr unsigned int maxGridH = 60;
 	constexpr unsigned int maxExposures = 1;
+
+	/* \todo: No maker note provided. */
 	ia_mkn *ia_mkn = nullptr;
 
-	int ret = aiqb.load("/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb");
-	if (ret) {
-		LOG(AIQ, Error) << "Failed to load AIQB";
-		return -ENODATA;
-	}
-
+	/*
+	 * \todo: Both the AIC and the AIQ use the iaCmc_.
+	 * Can this be the same instance or do they need their own instances?
+	 */
 	iaCmc_ = ia_cmc_parser_init(aiqb.data());
-	/* Width, Height, other parameters to be set as parameters? */
+
 	aiq_ = ia_aiq_init(aiqb.data(), nvm.data(), aiqd.data(),
 			   maxGridW, maxGridH, maxExposures,
 			   iaCmc_, ia_mkn);

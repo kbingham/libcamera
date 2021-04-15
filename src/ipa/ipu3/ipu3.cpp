@@ -83,7 +83,19 @@ int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
 {
 	int ret;
 
-	LOG(IPAIPU3, Info) << "Initialising IPA IPU3 + AIQ";
+	/* Temporary mapping of the sensor name to the AIQB data file. */
+	std::map<std::string, std::string> aiqb_paths = {
+		{ "ov13858", "/usr/share/libcamera/ipa/ipu3/00ov13858.aiqb" },
+		{ "ov5670", "/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb" },
+		{ "imx258", "/etc/camera/ipu3/00imx258.aiqb" },
+	};
+
+	LOG(IPAIPU3, Info) << "Initialising IPA IPU3 for "
+			   << settings.sensorModel;
+
+	auto it = aiqb_paths.find(settings.sensorModel);
+	if (it != aiqb_paths.end())
+		LOG(IPAIPU3, Info) << "Using tuning file: " << it->second;
 
 	ret = aiq_.init();
 	if (ret)
