@@ -72,10 +72,11 @@ private:
 
 	/* Intel Library Instances. */
 	aiq::AIQ aiq_;
+	aic::AIC aic_;
+
 	/* Temporary storage until we have a FrameContext object / struct */
 	aiq::AiqInputParameters aiqInputParams_;
 	aiq::AiqResults results_;
-	aic::AIC aic_;
 };
 
 int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
