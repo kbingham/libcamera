@@ -103,10 +103,10 @@ int IPAIPU3::start()
 
 void IPAIPU3::configure(const CameraSensorInfo &sensorInfo,
 			const std::map<uint32_t, ControlInfoMap> &entityControls,
-			[[maybe_unused]] const Size &bdsOutputSize,
-			[[maybe_unused]] const Size &ifSize,
-			[[maybe_unused]] const Size &gdcSize,
-			[[maybe_unused]] const Size &cropRegion)
+			const Size &bdsOutputSize,
+			const Size &ifSize,
+			const Size &gdcSize,
+			const Size &cropRegion)
 {
 	if (entityControls.empty())
 		return;
