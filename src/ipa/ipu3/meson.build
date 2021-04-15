@@ -16,6 +16,7 @@ ipu3_ipa_includes = [
 ]
 
 ipu3_ipa_files = files([
+    'binary_data.cpp',
     'ipu3.cpp',
 ])
 

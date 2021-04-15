@@ -10,9 +10,9 @@
 #include "libcamera/internal/file.h"
 #include "libcamera/internal/log.h"
 
-namespace libcamera::ipa::ipu3::aiq {
+namespace libcamera::ipa::ipu3 {
 
-LOG_DEFINE_CATEGORY(AIQBD)
+LOG_DEFINE_CATEGORY(AIBD)
 
 /**
  * \class AIQBinaryData
@@ -33,18 +33,18 @@ int BinaryData::load(const char *filename)
 	File binary(filename);
 
 	if (!binary.exists()) {
-		LOG(AIQBD, Error) << "Failed to find file: " << filename;
+		LOG(AIBD, Error) << "Failed to find file: " << filename;
 		return -ENOENT;
 	}
 
 	if (!binary.open(File::ReadOnly)) {
-		LOG(AIQBD, Error) << "Failed to open: " << filename;
+		LOG(AIBD, Error) << "Failed to open: " << filename;
 		return -EINVAL;
 	}
 
 	ssize_t fileSize = binary.size();
 	if (fileSize < 0) {
-		LOG(AIQBD, Error) << "Failed to determine fileSize: " << filename;
+		LOG(AIBD, Error) << "Failed to determine fileSize: " << filename;
 		return -ENODATA;
 	}
 
@@ -52,16 +52,16 @@ int BinaryData::load(const char *filename)
 
 	int bytesRead = binary.read(data_);
 	if (bytesRead != fileSize) {
-		LOG(AIQBD, Error) << "Failed to read file: " << filename;
+		LOG(AIBD, Error) << "Failed to read file: " << filename;
 		return -EINVAL;
 	}
 
 	iaBinaryData_.data = data_.data();
 	iaBinaryData_.size = fileSize;
 
-	LOG(AIQBD, Info) << "Successfully loaded: " << filename;
+	LOG(AIBD, Info) << "Successfully loaded: " << filename;
 
 	return 0;
 }
 
-} /* namespace libcamera::ipa::ipu3::aiq */
+} /* namespace libcamera::ipa::ipu3 */
