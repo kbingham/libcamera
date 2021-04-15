@@ -12,7 +12,7 @@
 #include "libcamera/internal/file.h"
 #include "libcamera/internal/log.h"
 
-#include "aiq/binary_data.h"
+#include "binary_data.h"
 #include "stats/ipa_ipu3_stats.h"
 
 namespace libcamera {
