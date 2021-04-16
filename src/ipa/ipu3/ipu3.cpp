@@ -129,7 +129,7 @@ int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
 
 	aiqInputParams_.init();
 
-	return aic_.init();
+	return aic_.init(aiqb_);
 }
 
 int IPAIPU3::start()
