@@ -18,6 +18,7 @@
 
 #include "aiq_input_parameters.h"
 #include "aiq_results.h"
+#include "binary_data.h"
 
 #ifndef IPA_IPU3_AIQ_H
 #define IPA_IPU3_AIQ_H
@@ -34,7 +35,7 @@ public:
 	AIQ();
 	~AIQ();
 
-	int init();
+	int init(BinaryData &aiqb, BinaryData &nvm, BinaryData &aiqd);
 	int configure();
 	int setStatistics(unsigned int frame, aiq::AiqResults &results,
 			  const ipu3_uapi_stats_3a *stats);

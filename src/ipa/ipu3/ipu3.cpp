@@ -24,6 +24,7 @@
 /* IA AIQ Wrapper API */
 #include "aic/aic.h"
 #include "aiq/aiq.h"
+#include "binary_data.h"
 
 namespace libcamera {
 
@@ -77,6 +78,11 @@ private:
 	/* Temporary storage until we have a FrameContext object / struct */
 	aiq::AiqInputParameters aiqInputParams_;
 	aiq::AiqResults results_;
+
+	BinaryData aiqb_;
+	BinaryData nvm_;
+	BinaryData aiqd_;
+
 };
 
 int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
