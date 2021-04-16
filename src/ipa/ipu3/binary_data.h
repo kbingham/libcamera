@@ -11,6 +11,9 @@
 
 #include <libcamera/class.h>
 
+#ifndef __IPA_IPU3_BINARY_DATA__
+#define __IPA_IPU3_BINARY_DATA__
+
 namespace libcamera::ipa::ipu3 {
 
 class BinaryData
@@ -29,3 +32,6 @@ private:
 };
 
 } /* namespace libcamera::ipa::ipu3 */
+
+#endif /* __IPA_IPU3_BINARY_DATA__ */
+
