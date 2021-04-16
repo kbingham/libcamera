@@ -1147,7 +1147,11 @@ int IPU3CameraData::loadIPA()
 	ipa_->queueFrameAction.connect(this, &IPU3CameraData::queueFrameAction);
 
 	CameraSensor *sensor = cio2_.sensor();
-	ipa_->init(IPASettings{ "", sensor->model() });
+	int ret = ipa_->init(IPASettings{ "", sensor->model() });
+	if (ret) {
+		LOG(IPU3, Error) << "Failed to initialise the IPU3 IPA";
+		return ret;
+	}
 
 	return 0;
 }
