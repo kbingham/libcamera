@@ -169,6 +169,9 @@ int AIQ::run2a(unsigned int frame, aiq::AiqInputParameters &params,
 	params.paParams.exposure_params = results.ae()->exposures[0].exposure;
 	parameterAdapterRun(params.paParams, results);
 
+	// Look at how and when chrome runs the gbce.
+	//gbceRun(params.gbceParams, results);
+
 	afRun(params.afParams, results);
 
 	return 0;
