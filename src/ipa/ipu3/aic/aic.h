@@ -14,6 +14,7 @@
 #include "kbl_aic.h"
 
 #include "aiq/aiq_results.h"
+#include "binary_data.h"
 #include "ipu3_isp_pipe.h"
 
 #ifndef IPA_IPU3_AIC_H
@@ -26,7 +27,7 @@ class AIC
 public:
 	~AIC();
 
-	int init();
+	int init(BinaryData &aiqb);
 	void reset();
 	int run(ipu3_uapi_params *params);
 	aic_config_t *GetAicConfig();

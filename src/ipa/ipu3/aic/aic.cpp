@@ -40,7 +40,7 @@ AIC::~AIC()
 	delete pipe_;
 }
 
-int AIC::init()
+int AIC::init(BinaryData &aiqb)
 {
 	LOG(AIC, Debug) << "Initialising IA AIC Wrapper";
 
@@ -57,12 +57,10 @@ int AIC::init()
 	mRuntimeParams_.input_frame_params = &mRuntimeParamsInFrameParams_;
 	mRuntimeParams_.focus_rect = &mRuntimeParamsRec_;
 
-	BinaryData aiqb;
-	int ret = aiqb.load("/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb");
-	if (ret) {
-		LOG(AIC, Error) << "Failed to load AIQB";
-		return -ENODATA;
-	}
+	/*
+	 * \todo: Both the AIC and the AIQ use the iaCmc_.
+	 * Can this be the same instance or do they need their own instances?
+	 */
 	iaCmc_ = ia_cmc_parser_init(aiqb.data());
 
 	/* \todo: Initialise the mRuntimeParams with ia_aiq_frame_params before
