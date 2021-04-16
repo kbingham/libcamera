@@ -115,9 +115,6 @@ int AIQ::setStatistics(unsigned int frame, aiq::AiqResults &results,
 {
 	LOG(AIQ, Debug) << "Set Statistitcs";
 
-	(void)frame;
-	(void)stats;
-
 	/* We should give the converted statistics into the AIQ library here. */
 	ia_aiq_statistics_input_params *statParams =
 		aiqStats_->getInputStatsParams(frame, &results, stats);
