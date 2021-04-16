@@ -87,6 +87,7 @@ int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
 	std::map<std::string, std::string> aiqb_paths = {
 		{ "ov13858", "/usr/share/libcamera/ipa/ipu3/00ov13858.aiqb" },
 		{ "ov5670", "/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb" },
+		{ "ov5693", "/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb" }, /// NOT THE RIGHT TUNING FILE
 		{ "imx258", "/etc/camera/ipu3/00imx258.aiqb" },
 	};
 
