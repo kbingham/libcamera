@@ -89,7 +89,12 @@ int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
 {
 	int ret;
 
-	/* Temporary mapping of the sensor name to the AIQB data file. */
+	/*
+	 * Temporary mapping of the sensor name to the AIQB data file.
+	 *
+	 * \todo: This mapping table should be handled more generically
+	 * or through the configuration interfaces perhaps.
+	 */
 	std::map<std::string, std::string> aiqb_paths = {
 		{ "ov13858", "/usr/share/libcamera/ipa/ipu3/00ov13858.aiqb" },
 		{ "ov5670", "/usr/share/libcamera/ipa/ipu3/01ov5670.aiqb" },
@@ -101,10 +106,24 @@ int IPAIPU3::init([[maybe_unused]] const IPASettings &settings)
 			   << settings.sensorModel;
 
 	auto it = aiqb_paths.find(settings.sensorModel);
-	if (it != aiqb_paths.end())
-		LOG(IPAIPU3, Info) << "Using tuning file: " << it->second;
+	if (it == aiqb_paths.end()) {
+		LOG(IPAIPU3, Error) << "Failed to identify tuning data";
+		return -EINVAL;
+	}
 
-	ret = aiq_.init();
+	LOG(IPAIPU3, Info) << "Using tuning file: " << it->second;
+	ret = aiqb_.load(it->second.c_str());
+	if (ret) {
+		LOG(IPAIPU3, Error) << "Failed to load AIQB";
+		return -ENODATA;
+	}
+
+	/*
+	 * Todo: nvm_ and aiqd_ are left as empty nullptrs.
+	 * These need to be identified and loaded as required.
+	 */
+
+	ret = aiq_.init(aiqb_, nvm_, aiqd_);
 	if (ret)
 		return ret;
 
