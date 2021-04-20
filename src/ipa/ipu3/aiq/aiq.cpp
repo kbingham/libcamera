@@ -115,9 +115,6 @@ int AIQ::setStatistics(unsigned int frame,
 		       AiqResults &results,
 		       const ipu3_uapi_stats_3a *stats)
 {
-	LOG(AIQ, Debug) << "Set Statistics";
-
-	/* We should give the converted statistics into the AIQ library here. */
 	ia_aiq_statistics_input_params *statParams =
 		aiqStats_->getInputStatsParams(frame, &results, stats);
 
@@ -127,8 +124,7 @@ int AIQ::setStatistics(unsigned int frame,
 	if (err) {
 		LOG(AIQ, Error) << "Failed to set statistics: "
 				<< decodeError(err);
-
-		LOG(AIQ, Error) << "Not quitting";
+		return -ENODATA;
 	}
 
 	return 0;
