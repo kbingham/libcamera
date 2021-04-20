@@ -37,7 +37,8 @@ public:
 
 	int init(BinaryData &aiqb, BinaryData &nvm, BinaryData &aiqd);
 	int configure();
-	int setStatistics(unsigned int frame, aiq::AiqResults &results,
+	int setStatistics(unsigned int frame,
+			  int64_t timestamp, AiqResults &results,
 			  const ipu3_uapi_stats_3a *stats);
 	int run(unsigned int frame, aiq::AiqInputParameters &params,
 		aiq::AiqResults &results);

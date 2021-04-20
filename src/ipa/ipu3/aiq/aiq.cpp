@@ -110,7 +110,9 @@ int AIQ::configure()
 	return 0;
 }
 
-int AIQ::setStatistics(unsigned int frame, AiqResults &results,
+int AIQ::setStatistics(unsigned int frame,
+		       int64_t timestamp,
+		       AiqResults &results,
 		       const ipu3_uapi_stats_3a *stats)
 {
 	LOG(AIQ, Debug) << "Set Statistitcs";
@@ -118,6 +120,8 @@ int AIQ::setStatistics(unsigned int frame, AiqResults &results,
 	/* We should give the converted statistics into the AIQ library here. */
 	ia_aiq_statistics_input_params *statParams =
 		aiqStats_->getInputStatsParams(frame, &results, stats);
+
+	statParams->frame_timestamp = timestamp;
 
 	ia_err err = ia_aiq_statistics_set(aiq_, statParams);
 	if (err) {

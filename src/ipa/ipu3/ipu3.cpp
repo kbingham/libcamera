@@ -50,9 +50,10 @@ public:
 	void processEvent(const IPU3Event &event) override;
 
 private:
-	void processControls(unsigned int frame, const ControlList &controls);
+	void processControls(unsigned int frame, const ControlList &metadata);
 	void fillParams(unsigned int frame, ipu3_uapi_params *params);
 	void parseStatistics(unsigned int frame,
+			     const ControlList &metadata,
 			     const ipu3_uapi_stats_3a *stats);
 
 	void setControls(unsigned int frame);
@@ -229,7 +230,7 @@ void IPAIPU3::processEvent(const IPU3Event &event)
 		const ipu3_uapi_stats_3a *stats =
 			reinterpret_cast<ipu3_uapi_stats_3a *>(mem.data());
 
-		parseStatistics(event.frame, stats);
+		parseStatistics(event.frame, event.controls, stats);
 		break;
 	}
 	case EventFillParams: {
@@ -299,22 +300,26 @@ void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 }
 
 void IPAIPU3::parseStatistics(unsigned int frame,
+			      const ControlList &metadata,
 			      const ipu3_uapi_stats_3a *stats)
 {
 	ControlList ctrls(controls::controls);
 
 	/* \todo React to statistics and update internal state machine. */
-	/* \todo Add meta-data information to ctrls. */
 
 	/* *stats comes from the IPU3 hardware. We need to give this data into
 	 * the AIQ library
 	 */
 
+	ASSERT(metadata.contains(controls::SensorTimestamp));
+
+	int64_t timestamp = metadata.get(controls::SensorTimestamp);
+
 	/* todo:  We need to have map at least the timestamp of the buffer
 	 * of the statistics in to allow the library to identify how long
 	 * convergence takes. Without it = the algos will not converge. */
 
-	aiq_.setStatistics(frame, results_, stats);
+	aiq_.setStatistics(frame, timestamp, results_, stats);
 
 	IPU3Action op;
 	op.op = ActionMetadataReady;
