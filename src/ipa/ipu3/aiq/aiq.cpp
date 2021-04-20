@@ -156,8 +156,8 @@ int AIQ::run(unsigned int frame, AiqInputParameters &params,
 	return 0;
 }
 
-int AIQ::run2a(unsigned int frame, aiq::AiqInputParameters &params,
-	       aiq::AiqResults &results)
+int AIQ::run2a(unsigned int frame, AiqInputParameters &params,
+	       AiqResults &results)
 {
 	(void)frame;
 
