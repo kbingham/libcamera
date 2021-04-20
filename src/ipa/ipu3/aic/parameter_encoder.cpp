@@ -111,6 +111,7 @@ static const int16_t c[XNR3_LOOK_UP_TABLE_POINTS] = {
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 #define clamp(a, min_val, max_val) MIN(MAX((a), (min_val)), (max_val))
 
+/* AWB Filter Response */
 static void ispAwbFrEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	unsigned int coeff_sum = 0, nf_val = 1;
@@ -155,6 +156,7 @@ static void ispAwbFrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_awb_fr = 1;
 }
 
+/* Auto Exposure */
 static void ispAeEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.ae.grid_cfg.ae_en = 1;
@@ -188,6 +190,7 @@ static void ispAeEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_ae = 1;
 }
 
+/* Auto White Balance */
 static void ispAwbEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.awb.config.grid.block_height_log2 = (__u16)config->awb_2500_config.awb.grid.grid_block_height;
@@ -205,6 +208,7 @@ static void ispAwbEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_awb = 1;
 }
 
+/* Auto Focus */
 static void ispAfEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.af.filter_config.y1_coeff_0.a1 = config->af_2500_config.af.y1_coeffs.A1;
@@ -257,6 +261,7 @@ static void ispAfEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_af = 1;
 }
 
+/* Linearization parameters */
 static void ispLinVmemEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	for (unsigned int i = 0; i < LIN_SEGMENTS; i++) {
@@ -274,6 +279,7 @@ static void ispLinVmemEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.lin_vmem_params = 1;
 }
 
+/* Gamma configuration */
 static void ispGammaCtrlEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.gamma.gc_ctrl.enable = config->rgbpp_2500_config.gamma.enable;
@@ -283,6 +289,7 @@ static void ispGammaCtrlEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_gamma = 1;
 }
 
+/* Color correction matrix */
 static void ispCcmEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.ccm.coeff_m11 = config->rgbpp_2500_config.ccm.matrix_coeffs.m11;
@@ -301,6 +308,7 @@ static void ispCcmEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_ccm = 1;
 }
 
+/* Color Space Conversion Matrix */
 static void ispCscEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.csc.coeff_c11 = config->rgbpp_2500_config.csc.mat.c11;
@@ -319,6 +327,7 @@ static void ispCscEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_csc = 1;
 }
 
+/* Color Down Sample */
 static void ispCdsEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.cds.ds_c00 = (__u32)config->rgbpp_2500_config.cds.coeffs.c00;
@@ -337,6 +346,7 @@ static void ispCdsEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_cds = 1;
 }
 
+/* De-mosaic */
 static void ispDmEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.dm.dm_en = 1;
@@ -351,6 +361,7 @@ static void ispDmEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_dm = 1;
 }
 
+/* Lens shading correction */
 static void ispShdEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.shd.shd.grid.width = config->shd_2500_config.shd.grid.grid_width;
@@ -398,6 +409,7 @@ static void ispShdEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_shd = 1;
 }
 
+/* Image Enhancement Filter and Denoise */
 static void ispIefdEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	CLEAR(params->acc_param.iefd);
@@ -551,6 +563,7 @@ static void ispIefdEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_iefd = 1;
 }
 
+/* Y down scaler */
 static void ispYdsEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.yds.c00 = config->yuvp1_2500_config.yds.c00;
@@ -567,6 +580,7 @@ static void ispYdsEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_yds = 1;
 }
 
+/* Y down scaler */
 static void ispYdsC0Encode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.yds_c0.c00 = config->yuvp1_c0_2500_config.yds_c0.c00;
@@ -583,6 +597,7 @@ static void ispYdsC0Encode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_yds_c0 = 1;
 }
 
+/* Y channel down scaler */
 static void ispYds2Encode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.yds2.c00 = config->yuvp2_2500_config.yds2.c00;
@@ -599,6 +614,7 @@ static void ispYds2Encode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_yds2 = 1;
 }
 
+/* Chroma noise reduction */
 static void ispChnrEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	CLEAR(params->acc_param.chnr);
@@ -621,8 +637,8 @@ static void ispChnrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_chnr = 1;
 }
 
-static void
-ispChnrC0Encode(aic_config *config, ipu3_uapi_params *params)
+/* Chroma noise reduction */
+static void ispChnrC0Encode(aic_config *config, ipu3_uapi_params *params)
 {
 	CLEAR(params->acc_param.chnr_c0);
 
@@ -644,6 +660,7 @@ ispChnrC0Encode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_chnr_c0 = 1;
 }
 
+/* Y Edge enhancement and noise reduction */
 static void ispYEeNrEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	CLEAR(params->acc_param.y_ee_nr);
@@ -688,6 +705,7 @@ static void ispYEeNrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_y_ee_nr = 1;
 }
 
+/* Total Color Correction */
 static void ispTccEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	params->acc_param.tcc.gen_control.en = 1;
@@ -749,6 +767,7 @@ static void copyColoreRg(ipu3_uapi_anr_plane_color *to, plain_color_w_matrix_t *
 	}
 }
 
+/* Advanced Noise Reduction */
 static void ispAnrEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	CLEAR(params->acc_param.anr);
@@ -810,6 +829,7 @@ static void ispAnrEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.acc_anr = 1;
 }
 
+/* Bayer noise reduction */
 static void ispBnrEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	CLEAR(params->acc_param.bnr);
@@ -874,6 +894,7 @@ static void ispOBGEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.obgrid_param = 1;
 }
 
+/* Green disparity between Gr and Gb channel */
 static void ispBnrGreenDisparityEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	CLEAR(params->acc_param.green_disparity);
@@ -1172,8 +1193,7 @@ static void ispTnr3VmemEncode(aic_config *config, ipu3_uapi_params *params)
 	params->use.tnr3_vmem_params = 1;
 }
 
-static void
-ispTnr3DmemEncode(aic_config *config, ipu3_uapi_params *params)
+static void ispTnr3DmemEncode(aic_config *config, ipu3_uapi_params *params)
 {
 	CLEAR(params->tnr3_dmem_params);
 
