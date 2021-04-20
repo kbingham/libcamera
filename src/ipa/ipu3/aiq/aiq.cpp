@@ -163,13 +163,15 @@ int AIQ::run2a(unsigned int frame, AiqInputParameters &params,
 
 	/* Run AWB algorithms, using the config structures. */
 	aeRun(params.aeInputParams, results);
+	gbceRun(params.gbceParams, results);
+
 	awbRun(params.awbParams, results);
 
+	params.paParams.color_gains = nullptr;
 	params.paParams.awb_results = results.awb();
 	params.paParams.exposure_params = results.ae()->exposures[0].exposure;
 	parameterAdapterRun(params.paParams, results);
 
-	gbceRun(params.gbceParams, results);
 	afRun(params.afParams, results);
 
 	return 0;
