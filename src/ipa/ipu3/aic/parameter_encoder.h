@@ -11,7 +11,7 @@
 #include <ia_imaging/ia_aiq.h>
 #include <linux/intel-ipu3.h>
 
-/* We wrap the AIC common types ourselves due to excessive header trails */
+/* We wrap the AIC headers to disable compiler warnings */
 #include "kbl_aic.h"
 
 #ifndef IPA_IPU3_PARAMETER_ENCODER
