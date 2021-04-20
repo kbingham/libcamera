@@ -277,7 +277,7 @@ void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 	 */
 
 	/* Run algorithms into/using this context structure */
-	if (frame % 4 == 0)
+	if (frame % 10 == 0)
 		aiq_.run2a(frame, aiqInputParams_, results_);
 
 	aic_.updateRuntimeParams(results_);
