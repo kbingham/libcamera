@@ -17,12 +17,12 @@
 #ifndef IPA_IPU3_PARAMETER_ENCODER
 #define IPA_IPU3_PARAMETER_ENCODER
 
-namespace libcamera {
+namespace libcamera::ipa::ipu3::aic {
 
 namespace ParameterEncoder {
 void encode(aic_config *config, ipu3_uapi_params *params);
 }
 
-} /* namespace libcamera */
+} /* namespace libcamera::ipa::ipu3::aic */
 
 #endif /* IPA_IPU3_PARAMETER_ENCODER */

@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <string.h>
 
-namespace libcamera {
+namespace libcamera::ipa::ipu3::aic {
 
 /* Auto White Balance */
 #define AWB_FR_MAX_GRID_CELLS_IN_ONE_SET 32
@@ -1252,4 +1252,4 @@ void ParameterEncoder::encode(aic_config *config, ipu3_uapi_params *params)
 	return;
 }
 
-} /* namespace libcamera */
+} /* namespace libcamera::ipa::ipu3::aic */
