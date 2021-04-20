@@ -12,7 +12,7 @@
 #include "IPU3AICCommon.h"
 #include "Pipe.h"
 
-namespace libcamera {
+namespace libcamera::ipa::ipu3::aic {
 
 #define NUM_ISP_PIPES 1
 
@@ -47,6 +47,6 @@ private:
 	aic_config AicConfig; /* Config to driver */
 };
 
-} /* namespace libcamera */
+} /* namespace libcamera::ipa::ipu3::aic */
 
 #endif /* IPU3ISPPIPE_H */

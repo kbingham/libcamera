@@ -9,7 +9,7 @@
 
 #include "libcamera/internal/log.h"
 
-namespace libcamera {
+namespace libcamera::ipa::ipu3::aic {
 
 LOG_DEFINE_CATEGORY(IPU3ISPPipe)
 
@@ -232,5 +232,5 @@ aic_config *IPU3ISPPipe::GetAicConfig()
 	return &AicConfig;
 }
 
-} /* namespace libcamera */
+} /* namespace libcamera::ipa::ipu3::aic */
 
