@@ -110,7 +110,7 @@ int AIQ::configure()
 	return 0;
 }
 
-int AIQ::setStatistics(unsigned int frame, aiq::AiqResults &results,
+int AIQ::setStatistics(unsigned int frame, AiqResults &results,
 		       const ipu3_uapi_stats_3a *stats)
 {
 	LOG(AIQ, Debug) << "Set Statistitcs";
@@ -136,8 +136,8 @@ int AIQ::setStatistics(unsigned int frame, aiq::AiqResults &results,
  * might run asycnronously, or after receipt of statistics, with the filling
  * of the parameter buffer being the only part handled when called for.
  */
-int AIQ::run(unsigned int frame, aiq::AiqInputParameters &params,
-	     aiq::AiqResults &results)
+int AIQ::run(unsigned int frame, AiqInputParameters &params,
+	     AiqResults &results)
 {
 	(void)frame;
 	(void)params;
@@ -175,7 +175,7 @@ int AIQ::run2a(unsigned int frame, aiq::AiqInputParameters &params,
 	return 0;
 }
 
-int AIQ::afRun(ia_aiq_af_input_params &afParams, aiq::AiqResults &results)
+int AIQ::afRun(ia_aiq_af_input_params &afParams, AiqResults &results)
 {
 	ia_aiq_af_results *afResults = nullptr;
 
@@ -205,7 +205,7 @@ int AIQ::afRun(ia_aiq_af_input_params &afParams, aiq::AiqResults &results)
 }
 
 int AIQ::afBracketRun(ia_aiq_af_bracket_input_params &afBracketParams,
-		      aiq::AiqResults &results)
+		      AiqResults &results)
 {
 	ia_aiq_af_bracket_results *afBracketResults = nullptr;
 	ia_err err = ia_aiq_af_bracket(aiq_, &afBracketParams, &afBracketResults);
@@ -229,7 +229,7 @@ int AIQ::afBracketRun(ia_aiq_af_bracket_input_params &afBracketParams,
 }
 
 /* Global Brightness and Contrast Enhancement */
-int AIQ::gbceRun(ia_aiq_gbce_input_params &gbceParams, aiq::AiqResults &results)
+int AIQ::gbceRun(ia_aiq_gbce_input_params &gbceParams, AiqResults &results)
 {
 	ia_aiq_gbce_results *gbceResults = nullptr;
 
@@ -252,7 +252,7 @@ int AIQ::gbceRun(ia_aiq_gbce_input_params &gbceParams, aiq::AiqResults &results)
 	return 0;
 }
 
-int AIQ::aeRun(ia_aiq_ae_input_params &aeParams, aiq::AiqResults &results)
+int AIQ::aeRun(ia_aiq_ae_input_params &aeParams, AiqResults &results)
 {
 	ia_aiq_ae_results *aeResults = nullptr;
 	ia_err err = ia_aiq_ae_run(aiq_, &aeParams, &aeResults);
@@ -275,7 +275,7 @@ int AIQ::aeRun(ia_aiq_ae_input_params &aeParams, aiq::AiqResults &results)
 	return 0;
 }
 
-int AIQ::awbRun(ia_aiq_awb_input_params &awbParams, aiq::AiqResults &results)
+int AIQ::awbRun(ia_aiq_awb_input_params &awbParams, AiqResults &results)
 {
 	/* Todo: Determine if this is required, or can be a nullptr */
 	ia_aiq_awb_results awb_result_alloc = {};
@@ -300,7 +300,7 @@ int AIQ::awbRun(ia_aiq_awb_input_params &awbParams, aiq::AiqResults &results)
 	return 0;
 }
 
-int AIQ::dsdRun(ia_aiq_dsd_input_params &dsdParams, aiq::AiqResults &results)
+int AIQ::dsdRun(ia_aiq_dsd_input_params &dsdParams, AiqResults &results)
 {
 	ia_aiq_scene_mode detectedSceneMode;
 	ia_err err = ia_aiq_dsd_run(aiq_, &dsdParams, &detectedSceneMode);
@@ -316,7 +316,7 @@ int AIQ::dsdRun(ia_aiq_dsd_input_params &dsdParams, aiq::AiqResults &results)
 }
 
 int AIQ::parameterAdapterRun(ia_aiq_pa_input_params &paParams,
-			     aiq::AiqResults &results)
+			     AiqResults &results)
 {
 	ia_aiq_pa_results *paResults = nullptr;
 	ia_err err = ia_aiq_pa_run(aiq_, &paParams, &paResults);
@@ -339,7 +339,7 @@ int AIQ::parameterAdapterRun(ia_aiq_pa_input_params &paParams,
 }
 
 int AIQ::shadingAdapterRun(ia_aiq_sa_input_params &saParams,
-			   aiq::AiqResults &results)
+			   AiqResults &results)
 {
 	ia_aiq_sa_results *saResults = nullptr;
 	ia_err err = ia_aiq_sa_run(aiq_, &saParams, &saResults);

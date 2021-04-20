@@ -47,22 +47,17 @@ public:
 private:
 	std::string decodeError(ia_err err);
 
-	int aeRun(ia_aiq_ae_input_params &aeParams,
-		  aiq::AiqResults &results);
-	int afRun(ia_aiq_af_input_params &afParams,
-		  aiq::AiqResults &results);
+	int aeRun(ia_aiq_ae_input_params &aeParams, AiqResults &results);
+	int afRun(ia_aiq_af_input_params &afParams, AiqResults &results);
 	int afBracketRun(ia_aiq_af_bracket_input_params &afBracketParams,
-			 aiq::AiqResults &results);
-	int awbRun(ia_aiq_awb_input_params &awbParams,
-		   aiq::AiqResults &results);
-	int dsdRun(ia_aiq_dsd_input_params &dsdParams,
-		   aiq::AiqResults &results);
-	int gbceRun(ia_aiq_gbce_input_params &gbceParams,
-		    aiq::AiqResults &results);
+			 AiqResults &results);
+	int awbRun(ia_aiq_awb_input_params &awbParams, AiqResults &results);
+	int dsdRun(ia_aiq_dsd_input_params &dsdParams, AiqResults &results);
+	int gbceRun(ia_aiq_gbce_input_params &gbceParams, AiqResults &results);
 	int parameterAdapterRun(ia_aiq_pa_input_params &paParams,
-				aiq::AiqResults &results);
+				AiqResults &results);
 	int shadingAdapterRun(ia_aiq_sa_input_params &saParams,
-			      aiq::AiqResults &results);
+			      AiqResults &results);
 
 	ia_aiq *aiq_;
 	ia_cmc_t *iaCmc_;
