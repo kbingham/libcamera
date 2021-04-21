@@ -294,9 +294,10 @@ int AIQ::awbRun(ia_aiq_awb_input_params &awbParams, AiqResults &results)
 	}
 
 	if (awbResults) {
-		LOG(AIQ, Info) << "Final R/G: " << awbResults->final_r_per_g << "\n"
-			       << "Final B/G: " << awbResults->final_b_per_g << "\n"
-			       << "ConvergenceDistance. : " << awbResults->distance_from_convergence;
+		LOG(AIQ, Info)
+			<< "AWB: Final R/G: " << awbResults->final_r_per_g
+			<< " B/G: " << awbResults->final_b_per_g
+			<< " ConvergenceDistance. : " << awbResults->distance_from_convergence;
 
 		results.setAwb(awbResults);
 	} else {
