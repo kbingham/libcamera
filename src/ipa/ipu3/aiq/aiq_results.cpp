@@ -168,11 +168,11 @@ void AiqResults::setGbce(ia_aiq_gbce_results *gbce)
 	if (gbce->gamma_lut_size > 0) {
 		gbce_.gamma_lut_size = gbce->gamma_lut_size;
 
-		STDCOPY(gbce_.r_gamma_lut, gbce->r_gamma_lut,
+		STDCOPY((int8_t *)gbce_.r_gamma_lut, (int8_t *)gbce->r_gamma_lut,
 			gbce->gamma_lut_size * sizeof(float));
-		STDCOPY(gbce_.b_gamma_lut, gbce->b_gamma_lut,
+		STDCOPY((int8_t *)gbce_.b_gamma_lut, (int8_t *)gbce->b_gamma_lut,
 			gbce->gamma_lut_size * sizeof(float));
-		STDCOPY(gbce_.g_gamma_lut, gbce->g_gamma_lut,
+		STDCOPY((int8_t *)gbce_.g_gamma_lut, (int8_t *)gbce->g_gamma_lut,
 			gbce->gamma_lut_size * sizeof(float));
 	} else {
 		LOG(AIQResults, Error) << "Not copying Gamma LUT channels";
@@ -180,7 +180,7 @@ void AiqResults::setGbce(ia_aiq_gbce_results *gbce)
 
 	if (gbce->tone_map_lut_size > 0) {
 		gbce_.tone_map_lut_size = gbce->tone_map_lut_size;
-		STDCOPY(gbce_.tone_map_lut, gbce->tone_map_lut,
+		STDCOPY((int8_t *)gbce_.tone_map_lut, (int8_t *)gbce->tone_map_lut,
 			gbce->tone_map_lut_size * sizeof(float));
 	} else {
 		LOG(AIQResults, Error) << "Tone Mapping Gain LUT";
