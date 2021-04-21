@@ -185,7 +185,7 @@ void AiqResults::setGbce(ia_aiq_gbce_results *gbce)
 		STDCOPY((int8_t *)gbce_.tone_map_lut, (int8_t *)gbce->tone_map_lut,
 			gbce->tone_map_lut_size * sizeof(float));
 	} else {
-		LOG(AIQResults, Error) << "Tone Mapping Gain LUT";
+		LOG(AIQResults, Error) << "Not copying Tone Mapping Gain LUT";
 	}
 }
 
