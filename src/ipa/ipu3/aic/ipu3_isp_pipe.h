@@ -26,7 +26,6 @@ class IPU3ISPPipe : public ISPPipe
 {
 public:
 	IPU3ISPPipe();
-	virtual ~IPU3ISPPipe();
 
 public:
 	// This function configures the HW/FW pipe via CSS interface

@@ -36,15 +36,13 @@ AIC::~AIC()
 {
 	if (iaCmc_)
 		ia_cmc_parser_deinit(iaCmc_);
-
-	delete pipe_;
 }
 
 int AIC::init(BinaryData &aiqb)
 {
 	LOG(AIC, Debug) << "Initialising IA AIC Wrapper";
 
-	pipe_ = new IPU3ISPPipe();
+	pipe_ = std::make_unique<IPU3ISPPipe>();
 
 	CLEAR(mRuntimeParamsOutFrameParams_);
 	CLEAR(mRuntimeParamsResCfgParams_);
@@ -62,13 +60,17 @@ int AIC::init(BinaryData &aiqb)
 	 * Can this be the same instance or do they need their own instances?
 	 */
 	iaCmc_ = ia_cmc_parser_init(aiqb.data());
+	if (iaCmc_ == nullptr) {
+		LOG(AIC, Error) << "Failed to initialise CMC Parser";
+		return -EINVAL;
+	}
 
 	/* \todo: Initialise the mRuntimeParams with ia_aiq_frame_params before
 	 * constructing the KBL_AIC.
 	 * In CrOS, GraphConfig::getSensorFrameParams provides all these
 	 * details. Start looking from ParameterWorker::configure()
 	 */
-	ISPPipe *pipe = static_cast<ISPPipe *>(pipe_);
+	ISPPipe *pipe = static_cast<ISPPipe *>(pipe_.get());
 	skyCam_ = std::make_unique<KBL_AIC>(&pipe, 1, iaCmc_, aiqb.data(),
 					    mRuntimeParams_, 0, 0);
 

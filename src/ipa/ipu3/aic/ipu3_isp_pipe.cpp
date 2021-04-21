@@ -21,10 +21,6 @@ IPU3ISPPipe::IPU3ISPPipe()
 	CLEAR(AicConfig);
 }
 
-IPU3ISPPipe::~IPU3ISPPipe()
-{
-}
-
 void IPU3ISPPipe::SetPipeConfig(const aic_output_t pipe_config)
 {
 	LOG(IPU3ISPPipe, Info) << "Setting Pipe Config";

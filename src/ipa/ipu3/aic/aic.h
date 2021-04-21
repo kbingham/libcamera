@@ -39,6 +39,7 @@ public:
 private:
 	/** \todo: Only a single AIC_MODE is supported currently. */
 	std::unique_ptr<KBL_AIC> skyCam_;
+	std::unique_ptr<IPU3ISPPipe> pipe_;
 
 	ia_cmc_t *iaCmc_;
 
@@ -51,8 +52,6 @@ private:
 	aic_input_frame_parameters_t mRuntimeParamsInFrameParams_;
 	ia_rectangle mRuntimeParamsRec_;
 	IPU3AICRuntimeParams mRuntimeParams_;
-
-	IPU3ISPPipe *pipe_;
 };
 
 } /* namespace libcamera::ipa::ipu3::aic */
