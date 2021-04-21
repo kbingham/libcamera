@@ -86,6 +86,10 @@ int AIQ::init(BinaryData &aiqb, BinaryData &nvm, BinaryData &aiqd)
 	 * Can this be the same instance or do they need their own instances?
 	 */
 	iaCmc_ = ia_cmc_parser_init(aiqb.data());
+	if (iaCmc_ == nullptr) {
+		LOG(AIQ, Error) << "Failed to initialise CMC Parser";
+		return -EINVAL;
+	}
 
 	aiq_ = ia_aiq_init(aiqb.data(), nvm.data(), aiqd.data(),
 			   maxGridW, maxGridH, maxExposures,
