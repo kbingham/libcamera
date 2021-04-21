@@ -287,7 +287,8 @@ void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 	 * We expect this to be moved later, and perhaps algorithsm will be run
 	 * when the statistics come in rather than when the params are filled...
 	 */
-	aiq::dumpExposure(results_.ae()->exposures);
+	if (frame % 10 == 0)
+		aiq::dumpExposure(results_.ae()->exposures);
 
 	exposure_ = results_.ae()->exposures[0].sensor_exposure->coarse_integration_time;
 	gain_ = results_.ae()->exposures[0].sensor_exposure->analog_gain_code_global;
