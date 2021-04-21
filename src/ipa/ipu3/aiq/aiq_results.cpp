@@ -166,6 +166,8 @@ void AiqResults::setGbce(ia_aiq_gbce_results *gbce)
 	ASSERT(gbce);
 
 	if (gbce->gamma_lut_size > 0) {
+		ASSERT(gbce->gamma_lut_size <= MAX_GAMMA_LUT_SIZE);
+
 		gbce_.gamma_lut_size = gbce->gamma_lut_size;
 
 		STDCOPY((int8_t *)gbce_.r_gamma_lut, (int8_t *)gbce->r_gamma_lut,
