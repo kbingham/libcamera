@@ -23,7 +23,6 @@ IPU3ISPPipe::IPU3ISPPipe()
 
 void IPU3ISPPipe::SetPipeConfig(const aic_output_t pipe_config)
 {
-	LOG(IPU3ISPPipe, Info) << "Setting Pipe Config";
 	AicOutput = pipe_config;
 
 	if (AicOutput.lin_2500_config)
@@ -118,7 +117,7 @@ void IPU3ISPPipe::dump()
 		LOG(IPU3ISPPipe, Debug)
 			<< "AicOutput.awb_2500_config->awb.grid.grid_width: "
 			<< (int)AicOutput.awb_2500_config->awb.grid.grid_width;
-		LOG(IPU3ISPPipe, Info)
+		LOG(IPU3ISPPipe, Debug)
 			<< "AicOutput.awb_2500_config->awb.grid.grid_x_start: "
 			<< AicOutput.awb_2500_config->awb.grid.grid_x_start;
 		LOG(IPU3ISPPipe, Debug)
