@@ -377,10 +377,10 @@ void dumpExposure(ia_aiq_ae_exposure_result *exp)
 	ia_aiq_exposure_parameters *exposure = exp->exposure;
 	//ia_aiq_exposure_sensor_parameters *sensor = exp->sensor_exposure;
 
-	LOG(AIQDEBUG, Debug) << " Distance from Convergence: "
+	LOG(AIQDEBUG, Debug) << "AE: Convergence: "
 			     << exp->distance_from_convergence << (exp->converged ? " " : " NOT ") << "Converged";
 
-	LOG(AIQDEBUG, Debug) << " T:" << exposure->exposure_time_us
+	LOG(AIQDEBUG, Debug) << "AE T:" << exposure->exposure_time_us
 			     << " AG:" << exposure->analog_gain
 			     << " DG: " << exposure->digital_gain
 			     << " Apt:" << exposure->aperture_fn
