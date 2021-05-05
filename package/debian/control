@@ -1,0 +1,15 @@
+Package: libcamera-custom
+Section: libdevel
+Architecture: any
+Replaces: libcamera0,
+          libcamera-dev,
+          libcamera-doc,
+          libcamera-tools
+Version: 0.0.0
+Maintainer: libcamera Developers <libcamera-devel@lists.libcamera.org>
+Description: complex camera support library (development files)
+ libcamera is a complex camera support library which handles low-level
+ control of the camera devices, providing a unified higher-level
+ programming interface to the applications.
+ .
+ This package provides a full install of a custom build
