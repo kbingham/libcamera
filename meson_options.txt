@@ -40,6 +40,12 @@ option('pipelines',
         choices : ['ipu3', 'raspberrypi', 'rkisp1', 'simple', 'uvcvideo', 'vimc'],
         description : 'Select which pipeline handlers to include')
 
+option('packaging',
+        type : 'array',
+        choices : ['gentoo', 'debian'],
+        value : [],
+        description : 'Select additional packaging support')
+
 option('qcam',
         type : 'feature',
         value : 'auto',
