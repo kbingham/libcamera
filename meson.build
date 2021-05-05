@@ -236,6 +236,9 @@ subdir('src')
 subdir('Documentation')
 subdir('test')
 
+# Finally support any packaging capabilty integrated into the build system
+subdir('package')
+
 if not meson.is_cross_build()
     kernel_version_req = '>= 5.0.0'
     kernel_version = run_command('uname', '-r', check: true).stdout().strip()
@@ -263,6 +266,7 @@ py_mod.find_installation('python3', modules: py_modules)
 summary({
             'Enabled pipelines': pipelines,
             'Enabled IPA modules': enabled_ipa_modules,
+            'Packaging support' : packaging,
             'Tracing support': tracing_enabled,
             'Android support': android_enabled,
             'GStreamer support': gst_enabled,
