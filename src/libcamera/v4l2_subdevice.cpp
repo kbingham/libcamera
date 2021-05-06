@@ -751,7 +751,7 @@ V4L2Subdevice::fromEntityName(const MediaDevice *media,
 
 std::string V4L2Subdevice::logPrefix() const
 {
-	return "'" + entity_->name() + "'";
+	return deviceNode() + ": '" + entity_->name() + "'";
 }
 
 std::vector<unsigned int> V4L2Subdevice::enumPadCodes(unsigned int pad)
