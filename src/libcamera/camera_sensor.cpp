@@ -493,6 +493,9 @@ int CameraSensor::initProperties()
 		properties_.set(properties::Rotation, propertyValue);
 	}
 
+
+	properties_.set(properties::Rotation, 180);
+
 	properties_.set(properties::PixelArraySize, pixelArraySize_);
 	properties_.set(properties::PixelArrayActiveAreas, { activeArea_ });
 
