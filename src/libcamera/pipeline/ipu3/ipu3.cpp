@@ -20,6 +20,7 @@
 #include <libcamera/request.h>
 #include <libcamera/stream.h>
 
+#include "libcamera/internal/bayer_format.h"
 #include "libcamera/internal/camera_sensor.h"
 #include "libcamera/internal/delayed_controls.h"
 #include "libcamera/internal/device_enumerator.h"
@@ -564,6 +565,15 @@ int PipelineHandlerIPU3::configure(Camera *camera, CameraConfiguration *c)
 		ret = cio2->sensor()->setControls(&sensorCtrls);
 		if (ret)
 			return ret;
+
+		/*
+		 * The output of the CIO2 is directly affected by the rotation
+		 * which changes the bayer ordering.
+		 * Update the cio2Format before applying to the IMGU input.
+		 */
+		BayerFormat bayer = BayerFormat::fromV4L2PixelFormat(cio2Format.fourcc);
+		bayer = bayer.transform(config->combinedTransform_);
+		cio2Format.fourcc = bayer.toV4L2PixelFormat();
 	}
 
 	/*
