@@ -96,6 +96,10 @@ if libudev.found()
     ])
 endif
 
+if (cc.has_header_symbol('unistd.h', 'issetugid'))
+    config_h.set('HAVE_ISSETUGID', 1)
+endif
+
 control_sources = []
 
 foreach source : control_source_files
