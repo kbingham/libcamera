@@ -59,9 +59,14 @@ subdir('ipa')
 subdir('pipeline')
 subdir('proxy')
 
+null_dep = dependency('', required : false)
+
 libatomic = cc.find_library('atomic', required : false)
-libdl = cc.find_library('dl')
-libgnutls = cc.find_library('gnutls', required : true)
+libdl = null_dep
+if not cc.has_function('dlopen')
+    libdl = cc.find_library('dl')
+endif
+libgnutls = cc.find_library('gnutls', required : false)
 libudev = dependency('libudev', required : false)
 
 if libgnutls.found()
