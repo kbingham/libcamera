@@ -354,15 +354,8 @@ CameraHalConfig::CameraHalConfig()
  */
 int CameraHalConfig::parseConfigurationFile()
 {
-	std::filesystem::path filePath = LIBCAMERA_SYSCONF_DIR;
-	filePath /= "camera_hal.yaml";
-	if (!std::filesystem::is_regular_file(filePath)) {
-		LOG(HALConfig, Debug)
-			<< "Configuration file: \"" << filePath << "\" not found";
-		return -ENOENT;
-	}
-
-	FILE *fh = fopen(filePath.c_str(), "r");
+	const char *filePath = LIBCAMERA_SYSCONF_DIR "/camera_hal.yaml";
+	FILE *fh = fopen(filePath, "r");
 	if (!fh) {
 		int ret = -errno;
 		LOG(HALConfig, Error) << "Failed to open configuration file "
