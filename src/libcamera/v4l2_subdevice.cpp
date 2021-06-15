@@ -335,6 +335,7 @@ std::string V4L2Subdevice::Routing::toString() const
 V4L2Subdevice::V4L2Subdevice(const MediaEntity *entity)
 	: V4L2Device(entity->deviceNode()), entity_(entity)
 {
+	LOG(V4L2, Info) << "Using " + deviceNode();
 }
 
 V4L2Subdevice::~V4L2Subdevice()
@@ -751,7 +752,7 @@ V4L2Subdevice::fromEntityName(const MediaDevice *media,
 
 std::string V4L2Subdevice::logPrefix() const
 {
-	return deviceNode() + ": '" + entity_->name() + "'";
+	return "'" + entity_->name() + "'";
 }
 
 std::vector<unsigned int> V4L2Subdevice::enumPadCodes(unsigned int pad)
