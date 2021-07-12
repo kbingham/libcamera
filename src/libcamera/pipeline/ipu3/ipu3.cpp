@@ -1352,18 +1352,6 @@ void IPU3CameraData::cio2BufferReady(FrameBuffer *buffer)
 
 	info->effectiveSensorControls = delayedCtrls_->get(buffer->metadata().sequence);
 
-	{ // Debug only
-		static uint64_t lastFrameTimestamp = 0;
-
-		double fps = buffer->metadata().timestamp - lastFrameTimestamp;
-		fps = lastFrameTimestamp != 0 && fps ? 1000000000.0 / fps : 0.0;
-		lastFrameTimestamp = buffer->metadata().timestamp;
-
-		LOG(IPU3, Info)
-			<< "CIO2 Complete: Frame " << buffer->metadata().sequence
-			<< ": fps " << fps;
-	}
-
 	if (request->findBuffer(&rawStream_))
 		pipe()->completeBuffer(request, buffer);
 
