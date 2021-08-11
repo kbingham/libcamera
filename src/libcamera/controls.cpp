@@ -524,7 +524,7 @@ ControlInfo::ControlInfo(Span<const ControlValue> values,
  * The minimum value will always be false, and the maximum always true. The
  * default value is \a def.
  */
-ControlInfo::ControlInfo(std::set<bool> values, bool def)
+ControlInfo::ControlInfo([[maybe_unused]] std::set<bool> values, [[maybe_unused]] bool def)
 	: min_(false), max_(true), def_(def), values_({ false, true })
 {
 	assert(values.count(def) && values.size() == 2);

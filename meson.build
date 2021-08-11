@@ -64,11 +64,6 @@ if cc.get_id() == 'clang'
 
     # Use libc++ by default if available instead of libstdc++ when compiling
     # with clang.
-    if cc.find_library('libc++', required: false).found()
-        cpp_arguments += [
-            '-stdlib=libc++',
-        ]
-    endif
 
     cpp_arguments += [
         '-Wextra-semi',
