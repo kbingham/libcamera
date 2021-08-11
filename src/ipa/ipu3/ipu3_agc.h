@@ -16,7 +16,7 @@
 
 #include <libcamera/geometry.h>
 
-#include "libipa/algorithm.h"
+#include "algorithms/algorithm.h"
 
 namespace libcamera {
 
