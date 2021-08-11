@@ -42,7 +42,6 @@ subdir('v4l2_subdevice')
 subdir('v4l2_videodevice')
 
 public_tests = [
-    {'name': 'camera-manager', 'sources': ['camera-manager.cpp']},
     {'name': 'color-space', 'sources': ['color-space.cpp']},
     {'name': 'geometry', 'sources': ['geometry.cpp']},
     {'name': 'public-api', 'sources': ['public-api.cpp']},
