@@ -10,7 +10,7 @@ TestSkip=77
 cam=${1:-src/cam/cam}
 
 if [ ! -e "$cam" ] ; then
-	nok "1 - failed to find cam utility."
+	echo "Failed to find cam utility."
 	exit $TestFail
 fi
 
@@ -30,7 +30,7 @@ do
 	"$cam" -c "$i" -C10
 	ret=$?
 	if [ $ret != 0 ] ; then
-		echo "" "$i - $cam returned $ret"
+		echo "$i - $cam returned $ret"
 		continue
 	fi
 done;
