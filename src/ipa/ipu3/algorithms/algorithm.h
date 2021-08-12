@@ -26,6 +26,8 @@ public:
 	{
 		return 0;
 	}
+
+	virtual void prepare([[maybe_unused]] IPAContext &context, [[maybe_unused]] ipu3_uapi_params &params) {}
 };
 
 } /* namespace ipa::ipu3 */

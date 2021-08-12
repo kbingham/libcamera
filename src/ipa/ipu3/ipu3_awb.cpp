@@ -160,7 +160,6 @@ void IPU3Awb::initialise(ipu3_uapi_params &params, const Size &bdsOutputSize, st
 	params.acc_param.awb.config.rgbs_thr_r = 8191;
 	params.acc_param.awb.config.rgbs_thr_gb = 8191;
 	params.acc_param.awb.config.rgbs_thr_b = 8191 | IPU3_UAPI_AWB_RGBS_THR_B_EN | IPU3_UAPI_AWB_RGBS_THR_B_INCL_SAT;
-	params.acc_param.awb.config.grid = bdsGrid;
 	awbGrid_ = bdsGrid;
 
 	params.use.acc_bnr = 1;

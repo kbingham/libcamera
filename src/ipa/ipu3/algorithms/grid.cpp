@@ -78,6 +78,12 @@ int Grid::configure(IPAContext &context, const IPAConfigInfo &configInfo)
 	return 0;
 }
 
+void Grid::prepare(IPAContext &context, ipu3_uapi_params &params)
+{
+	/* Update the IPU3 parameters with new calculated grid */
+	params.acc_param.awb.config.grid = context.configuration.grid.bdsGrid;
+}
+
 } /* namespace ipa::ipu3::algorithms */
 
 } /* namespace libcamera */

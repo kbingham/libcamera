@@ -19,6 +19,7 @@ public:
 	~Grid() = default;
 
 	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
+	void prepare(IPAContext &context, ipu3_uapi_params &params) override;
 };
 
 } /* namespace ipa::ipu3::algorithms */

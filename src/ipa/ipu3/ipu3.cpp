@@ -236,6 +236,9 @@ void IPAIPU3::processControls([[maybe_unused]] unsigned int frame,
 
 void IPAIPU3::fillParams(unsigned int frame, ipu3_uapi_params *params)
 {
+	for (auto const &algo : algorithms_)
+		algo->prepare(context_, params_);
+
 	if (agcAlgo_->updateControls())
 		awbAlgo_->updateWbParameters(params_, agcAlgo_->gamma());
 
