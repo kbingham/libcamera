@@ -14,16 +14,18 @@
 
 #include <libcamera/control_ids.h>
 #include <libcamera/framebuffer.h>
+#include <libcamera/request.h>
+
 #include <libcamera/ipa/ipa_interface.h>
 #include <libcamera/ipa/ipa_module_info.h>
 #include <libcamera/ipa/ipu3_ipa_interface.h>
-#include <libcamera/request.h>
 
 #include "libcamera/internal/mapped_framebuffer.h"
 
+#include "libipa/camera_sensor_helper.h"
+
 #include "ipu3_agc.h"
 #include "ipu3_awb.h"
-#include "libipa/camera_sensor_helper.h"
 
 static constexpr uint32_t kMaxCellWidthPerSet = 160;
 static constexpr uint32_t kMaxCellHeightPerSet = 56;
