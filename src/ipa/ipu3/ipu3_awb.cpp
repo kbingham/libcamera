@@ -108,25 +108,6 @@ static const struct ipu3_uapi_bnr_static_config imguCssBnrDefaults = {
 	.opt_center_sqr = { 419904, 133956 },
 };
 
-/* Default settings for Auto White Balance replicated from the Kernel*/
-static const struct ipu3_uapi_awb_config_s imguCssAwbDefaults = {
-	.rgbs_thr_gr = 8191,
-	.rgbs_thr_r = 8191,
-	.rgbs_thr_gb = 8191,
-	.rgbs_thr_b = 8191 | IPU3_UAPI_AWB_RGBS_THR_B_EN | IPU3_UAPI_AWB_RGBS_THR_B_INCL_SAT,
-	.grid = {
-		.width = 160,
-		.height = 36,
-		.block_width_log2 = 3,
-		.block_height_log2 = 4,
-		.height_per_slice = 1, /* Overridden by kernel. */
-		.x_start = 0,
-		.y_start = 0,
-		.x_end = 0,
-		.y_end = 0,
-	},
-};
-
 /* Default color correction matrix defined as an identity matrix */
 static const struct ipu3_uapi_ccm_mat_config imguCssCcmDefault = {
 	8191, 0, 0, 0,
@@ -175,10 +156,12 @@ IPU3Awb::~IPU3Awb()
 void IPU3Awb::initialise(ipu3_uapi_params &params, const Size &bdsOutputSize, struct ipu3_uapi_grid_config &bdsGrid)
 {
 	params.use.acc_awb = 1;
-	params.acc_param.awb.config = imguCssAwbDefaults;
-
+	params.acc_param.awb.config.rgbs_thr_gr = 8191;
+	params.acc_param.awb.config.rgbs_thr_r = 8191;
+	params.acc_param.awb.config.rgbs_thr_gb = 8191;
+	params.acc_param.awb.config.rgbs_thr_b = 8191 | IPU3_UAPI_AWB_RGBS_THR_B_EN | IPU3_UAPI_AWB_RGBS_THR_B_INCL_SAT;
+	params.acc_param.awb.config.grid = bdsGrid;
 	awbGrid_ = bdsGrid;
-	params.acc_param.awb.config.grid = awbGrid_;
 
 	params.use.acc_bnr = 1;
 	params.acc_param.bnr = imguCssBnrDefaults;

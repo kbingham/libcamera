@@ -24,11 +24,10 @@
 
 #include "libipa/camera_sensor_helper.h"
 
+#include "algorithms/algorithm.h"
+#include "algorithms/grid.h"
 #include "ipu3_agc.h"
 #include "ipu3_awb.h"
-
-static constexpr uint32_t kMaxCellWidthPerSet = 160;
-static constexpr uint32_t kMaxCellHeightPerSet = 56;
 
 namespace libcamera {
 
@@ -81,10 +80,12 @@ private:
 	/* Interface to the Camera Helper */
 	std::unique_ptr<CameraSensorHelper> camHelper_;
 
-	/* Local parameter storage */
-	struct ipu3_uapi_params params_;
+	/* Maintain the algorithms used by the IPA */
+	std::list<std::unique_ptr<ipa::ipu3::Algorithm>> algorithms_;
 
-	struct ipu3_uapi_grid_config bdsGrid_;
+	/* Local parameter storage */
+	struct IPAContext context_;
+	struct ipu3_uapi_params params_;
 };
 
 int IPAIPU3::init(const IPASettings &settings)
@@ -95,6 +96,9 @@ int IPAIPU3::init(const IPASettings &settings)
 		return -ENODEV;
 	}
 
+	/* Construct our Algorithms */
+	algorithms_.emplace_back(new algorithms::Grid());
+
 	return 0;
 }
 
@@ -103,56 +107,6 @@ int IPAIPU3::start()
 	setControls(0);
 
 	return 0;
-}
-
-/**
- * This function calculates a grid for the AWB algorithm in the IPU3 firmware.
- * Its input is the BDS output size calculated in the ImgU.
- * It is limited for now to the simplest method: find the lesser error
- * with the width/height and respective log2 width/height of the cells.
- *
- * \todo The frame is divided into cells which can be 8x8 => 128x128.
- * As a smaller cell improves the algorithm precision, adapting the
- * x_start and y_start parameters of the grid would provoke a loss of
- * some pixels but would also result in more accurate algorithms.
- */
-void IPAIPU3::calculateBdsGrid(const Size &bdsOutputSize)
-{
-	uint32_t minError = std::numeric_limits<uint32_t>::max();
-	Size best;
-	Size bestLog2;
-	bdsGrid_ = {};
-
-	for (uint32_t widthShift = 3; widthShift <= 7; ++widthShift) {
-		uint32_t width = std::min(kMaxCellWidthPerSet,
-					  bdsOutputSize.width >> widthShift);
-		width = width << widthShift;
-		for (uint32_t heightShift = 3; heightShift <= 7; ++heightShift) {
-			int32_t height = std::min(kMaxCellHeightPerSet,
-						  bdsOutputSize.height >> heightShift);
-			height = height << heightShift;
-			uint32_t error  = std::abs(static_cast<int>(width - bdsOutputSize.width))
-							+ std::abs(static_cast<int>(height - bdsOutputSize.height));
-
-			if (error > minError)
-				continue;
-
-			minError = error;
-			best.width = width;
-			best.height = height;
-			bestLog2.width = widthShift;
-			bestLog2.height = heightShift;
-		}
-	}
-
-	bdsGrid_.width = best.width >> bestLog2.width;
-	bdsGrid_.block_width_log2 = bestLog2.width;
-	bdsGrid_.height = best.height >> bestLog2.height;
-	bdsGrid_.block_height_log2 = bestLog2.height;
-
-	LOG(IPAIPU3, Debug) << "Best grid found is: ("
-			    << (int)bdsGrid_.width << " << " << (int)bdsGrid_.block_width_log2 << ") x ("
-			    << (int)bdsGrid_.height << " << " << (int)bdsGrid_.block_height_log2 << ")";
 }
 
 int IPAIPU3::configure(const IPAConfigInfo &configInfo)
@@ -194,15 +148,21 @@ int IPAIPU3::configure(const IPAConfigInfo &configInfo)
 
 	defVBlank_ = itVBlank->second.def().get<int32_t>();
 
+	/* Clean context and IPU3 parameters at configuration */
 	params_ = {};
+	context_ = {};
 
-	calculateBdsGrid(configInfo.bdsOutputSize);
+	for (auto const &algo : algorithms_) {
+		int ret = algo->configure(context_, configInfo);
+		if (ret)
+			return ret;
+	}
 
 	awbAlgo_ = std::make_unique<IPU3Awb>();
-	awbAlgo_->initialise(params_, configInfo.bdsOutputSize, bdsGrid_);
+	awbAlgo_->initialise(params_, context_.configuration.grid.bdsOutputSize, context_.configuration.grid.bdsGrid);
 
 	agcAlgo_ = std::make_unique<IPU3Agc>();
-	agcAlgo_->initialise(bdsGrid_, sensorInfo_);
+	agcAlgo_->initialise(context_.configuration.grid.bdsGrid, sensorInfo_);
 
 	return 0;
 }

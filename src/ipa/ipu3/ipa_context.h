@@ -11,12 +11,20 @@
 
 #include <linux/intel-ipu3.h>
 
+#include <libcamera/geometry.h>
+
 namespace libcamera {
 
 namespace ipa::ipu3 {
 
 /* Fixed configuration of the IPA */
 struct IPAConfiguration {
+	struct Grid {
+		/* Bayer Down Scaler grid plane config used by the kernel */
+		ipu3_uapi_grid_config bdsGrid;
+		/* BDS output size configured by the pipeline handler */
+		Size bdsOutputSize;
+	} grid;
 };
 
 /*
