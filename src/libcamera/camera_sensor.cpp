@@ -216,19 +216,26 @@ int CameraSensor::validateSensorDriver()
 {
 	int err = 0;
 
+	struct v4l2_cid {
+		const uint32_t id;
+		const char *name;
+	};
+
+	#define V4L2_CID(x) { x, #x }
+
 	/*
 	 * Optional controls are used to register optional sensor properties. If
 	 * not present, some values will be defaulted.
 	 */
-	static constexpr uint32_t optionalControls[] = {
-		V4L2_CID_CAMERA_SENSOR_ROTATION,
+	static constexpr v4l2_cid optionalControls[] = {
+		V4L2_CID(V4L2_CID_CAMERA_SENSOR_ROTATION),
 	};
 
 	const ControlIdMap &controls = subdev_->controls().idmap();
-	for (uint32_t ctrl : optionalControls) {
-		if (!controls.count(ctrl))
+	for (auto &ctrl : optionalControls) {
+		if (!controls.count(ctrl.id))
 			LOG(CameraSensor, Debug)
-				<< "Optional V4L2 control " << utils::hex(ctrl)
+				<< "Optional V4L2 control " << ctrl.name
 				<< " not supported";
 	}
 
@@ -236,14 +243,14 @@ int CameraSensor::validateSensorDriver()
 	 * Recommended controls are similar to optional controls, but will
 	 * become mandatory in the near future. Be loud if they're missing.
 	 */
-	static constexpr uint32_t recommendedControls[] = {
-		V4L2_CID_CAMERA_ORIENTATION,
+	static constexpr v4l2_cid recommendedControls[] = {
+		V4L2_CID(V4L2_CID_CAMERA_ORIENTATION),
 	};
 
-	for (uint32_t ctrl : recommendedControls) {
-		if (!controls.count(ctrl)) {
+	for (auto &ctrl : recommendedControls) {
+		if (!controls.count(ctrl.id)) {
 			LOG(CameraSensor, Warning)
-				<< "Recommended V4L2 control " << utils::hex(ctrl)
+				<< "Recommended V4L2 control " << ctrl.name
 				<< " not supported";
 			err = -EINVAL;
 		}
@@ -322,19 +329,21 @@ int CameraSensor::validateSensorDriver()
 	 * For raw sensors, make sure the sensor driver supports the controls
 	 * required by the CameraSensor class.
 	 */
-	static constexpr uint32_t mandatoryControls[] = {
-		V4L2_CID_ANALOGUE_GAIN,
-		V4L2_CID_EXPOSURE,
-		V4L2_CID_HBLANK,
-		V4L2_CID_PIXEL_RATE,
-		V4L2_CID_VBLANK,
+	static constexpr v4l2_cid mandatoryControls[] = {
+		V4L2_CID(V4L2_CID_ANALOGUE_GAIN),
+		V4L2_CID(V4L2_CID_EXPOSURE),
+		V4L2_CID(V4L2_CID_HBLANK),
+		V4L2_CID(V4L2_CID_PIXEL_RATE),
+		V4L2_CID(V4L2_CID_VBLANK),
 	};
 
+	#undef V4L2_CID
+
 	err = 0;
-	for (uint32_t ctrl : mandatoryControls) {
-		if (!controls.count(ctrl)) {
+	for (auto &ctrl : mandatoryControls) {
+		if (!controls.count(ctrl.id)) {
 			LOG(CameraSensor, Error)
-				<< "Mandatory V4L2 control " << utils::hex(ctrl)
+				<< "Mandatory V4L2 control " << ctrl.name
 				<< " not available";
 			err = -EINVAL;
 		}
