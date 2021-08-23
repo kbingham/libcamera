@@ -11,6 +11,10 @@
 
 #include <libcamera/base/log.h>
 
+/**
+ * \file awb.h
+ */
+
 namespace libcamera {
 
 namespace ipa::ipu3::algorithms {
@@ -19,6 +23,35 @@ LOG_DEFINE_CATEGORY(IPU3Awb)
 
 static constexpr uint32_t kMinZonesCounted = 16;
 static constexpr uint32_t kMinGreenLevelInZone = 32;
+
+/**
+ * \class Awb
+ * \brief A Grey world white balance correction algorithm
+ *
+ * The Grey World algorithm assumes that the scene, in average, is neutral grey.
+ * Reference: Lam, Edmund & Fung, George. (2008). Automatic White Balancing in
+ * Digital Photography. 10.1201/9781420054538.ch10.
+ *
+ * The IPU3 generates statistics from the Bayer Down Scaler output into a grid
+ * defined in the ipu3_uapi_awb_config_s structure.
+ *
+ * For example, when the BDS outputs a frame of 2592x1944, the grid may be
+ * configured to 81x30 cells each with a size of 32x64 pixels.
+ * We then have an average of 2048 R, G and B pixels per cell.
+ *
+ * The AWB algorithm uses a fixed grid size of kAwbStatsSizeX x kAwbStatsSizeY.
+ * Each of this new grid cell will be called a zone.
+ *
+ * Before calculating the gains, we will convert the statistics from the BDS
+ * grid to an internal grid configuration in generateAwbStats.
+ * As part of converting the statistics to an internal grid, the saturation
+ * flag from the originating grid cell is used to decide if the zone contains
+ * saturated pixels or not, making the zone relevant or not.
+ * A saturated zone will be excluded from the calculation.
+ *
+ * The Grey World algorithm will then estimate the red and blue gains to apply, and
+ * store the results in the metadata.
+ */
 
 /**
  * \struct Accumulator
