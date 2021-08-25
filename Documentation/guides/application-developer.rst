@@ -7,6 +7,23 @@ This tutorial shows how to create a C++ application that uses libcamera to
 interface with a camera on a system, capture frames from it for 3 seconds, and
 write metadata about the frames to standard out.
 
+We will start with checking our required dependencies are available, and
+generating our build files using Meson. Then progressively implement our
+'simple-cam' application, testing as we go.
+
+To implement our application we will create a CameraManager, and use it to
+report the cameras available in the system, and then acquire the first camera.
+
+We will configure the camera, and validate its configuration, then allocate
+buffers in prepration for capturing.
+
+We will set up our event handling and use an event loop to manage asynchronous
+activities, and create requests populated with the buffers we have allocated
+before starting the camera and queuing all requests.
+
+Our event loop will run for three seconds processing frames that complete,
+before we stop the camera and clean up all of our resources.
+
 Build and run instructions
 --------------------------
 
