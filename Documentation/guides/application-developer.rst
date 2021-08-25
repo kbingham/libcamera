@@ -7,6 +7,87 @@ This tutorial shows how to create a C++ application that uses libcamera to
 interface with a camera on a system, capture frames from it for 3 seconds, and
 write metadata about the frames to standard out.
 
+Build and run instructions
+--------------------------
+
+To build the application, we recommend that you use the `Meson build system`_
+which is also the official build system of the libcamera library.
+
+Make sure both ``meson`` and ``libcamera`` are installed in your system. Please
+refer to your distribution documentation to install meson and install the most
+recent version of libcamera from the `git repository`_. You would also need to
+install the ``pkg-config`` tool to correctly identify the libcamera.so object
+install location in the system.
+
+.. _Meson build system: https://mesonbuild.com/
+.. _git repository: https://git.libcamera.org/libcamera/libcamera.git/
+
+Dependencies
+~~~~~~~~~~~~
+
+The test application presented here depends on the libcamera library to be
+available in a path that meson can identify. The libcamera install procedure
+performed using the ``ninja install`` command may by default deploy the
+libcamera components in the ``/usr/local/lib`` path, or a package manager may
+install it to ``/usr/lib`` depending on your distribution. If meson is unable to
+find the location of the libcamera installation, you may need to instruct meson
+to look into a specific path when searching for ``libcamera.so`` by setting the
+``PKG_CONFIG_PATH`` environment variable to the right location.
+
+Adjust the following command to use the ``pkgconfig`` directory where libcamera
+has been installed in your system.
+
+.. code:: shell
+
+   export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
+
+Verify that ``pkg-config`` can identify the ``libcamera`` library with
+
+.. code:: shell
+
+   $ pkg-config --libs --cflags libcamera
+     -I/usr/local/include/libcamera -L/usr/local/lib -lcamera -lcamera-base
+
+``meson`` can alternatively use ``cmake`` to locate packages, please refer to
+the ``meson`` documentation if you prefer to use it in place of ``pkgconfig``
+
+Build file
+~~~~~~~~~~
+
+With the dependencies correctly identified, prepare a ``meson.build`` build file
+to be placed in the same directory where the application lives. You can
+name your application as you like, but be sure to update the following snippet
+accordingly. In this example, the application file has been named
+``simple-cam.cpp``.
+
+.. code::
+
+   project('simple-cam', 'cpp')
+
+   simple_cam = executable('simple-cam',
+       'simple-cam.cpp',
+       dependencies: dependency('libcamera', required : true))
+
+The ``dependencies`` line instructs meson to ask ``pkgconfig`` (or ``cmake``) to
+locate the ``libcamera`` library,  which the test application will be
+dynamically linked against.
+
+With the build file in place, compile and run the application with:
+
+.. code:: shell
+
+   $ meson build
+   $ cd build
+   $ ninja
+   $ ./simple-cam
+
+It is possible to increase the library debug output by using environment
+variables which control the library log filtering system:
+
+.. code:: shell
+
+   $ LIBCAMERA_LOG_LEVELS=0 ./simple-cam
+
 Application skeleton
 --------------------
 
@@ -555,83 +636,3 @@ uses, so needs to do the following:
 In this instance the CameraManager will automatically be deleted by the
 unique_ptr implementation when it goes out of scope.
 
-Build and run instructions
---------------------------
-
-To build the application, we recommend that you use the `Meson build system`_
-which is also the official build system of the libcamera library.
-
-Make sure both ``meson`` and ``libcamera`` are installed in your system. Please
-refer to your distribution documentation to install meson and install the most
-recent version of libcamera from the `git repository`_. You would also need to
-install the ``pkg-config`` tool to correctly identify the libcamera.so object
-install location in the system.
-
-.. _Meson build system: https://mesonbuild.com/
-.. _git repository: https://git.libcamera.org/libcamera/libcamera.git/
-
-Dependencies
-~~~~~~~~~~~~
-
-The test application presented here depends on the libcamera library to be
-available in a path that meson can identify. The libcamera install procedure
-performed using the ``ninja install`` command may by default deploy the
-libcamera components in the ``/usr/local/lib`` path, or a package manager may
-install it to ``/usr/lib`` depending on your distribution. If meson is unable to
-find the location of the libcamera installation, you may need to instruct meson
-to look into a specific path when searching for ``libcamera.so`` by setting the
-``PKG_CONFIG_PATH`` environment variable to the right location.
-
-Adjust the following command to use the ``pkgconfig`` directory where libcamera
-has been installed in your system.
-
-.. code:: shell
-
-   export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
-
-Verify that ``pkg-config`` can identify the ``libcamera`` library with
-
-.. code:: shell
-
-   $ pkg-config --libs --cflags libcamera
-     -I/usr/local/include/libcamera -L/usr/local/lib -lcamera -lcamera-base
-
-``meson`` can alternatively use ``cmake`` to locate packages, please refer to
-the ``meson`` documentation if you prefer to use it in place of ``pkgconfig``
-
-Build file
-~~~~~~~~~~
-
-With the dependencies correctly identified, prepare a ``meson.build`` build file
-to be placed in the same directory where the application lives. You can
-name your application as you like, but be sure to update the following snippet
-accordingly. In this example, the application file has been named
-``simple-cam.cpp``.
-
-.. code::
-
-   project('simple-cam', 'cpp')
-
-   simple_cam = executable('simple-cam',
-       'simple-cam.cpp',
-       dependencies: dependency('libcamera', required : true))
-
-The ``dependencies`` line instructs meson to ask ``pkgconfig`` (or ``cmake``) to
-locate the ``libcamera`` library,  which the test application will be
-dynamically linked against.
-
-With the build file in place, compile and run the application with:
-
-.. code:: shell
-
-   $ meson build
-   $ cd build
-   $ ninja
-   $ ./simple-cam
-
-It is possible to increase the library debug output by using environment
-variables which control the library log filtering system:
-
-.. code:: shell
-
-   $ LIBCAMERA_LOG_LEVELS=0 ./simple-cam
