@@ -89,7 +89,8 @@ The ``dependencies`` line instructs meson to ask ``pkgconfig`` (or ``cmake``) to
 locate the ``libcamera`` library,  which the test application will be
 dynamically linked against.
 
-With the build file in place, compile and run the application with:
+With the build file in place, we will be able to compile and run the application
+as follows:
 
 .. code:: shell
 
@@ -468,6 +469,16 @@ signal to handle it in the application code.
 .. code:: cpp
 
    camera->requestCompleted.connect(requestComplete);
+
+and create a ``requestComplete`` function matching the slot signature outside of
+the `main()` function:
+
+.. code:: cpp
+
+   static void requestComplete(Request *request)
+   {
+       // Code to follow
+   }
 
 For this example application, only the ``Camera::requestCompleted`` signal gets
 handled and the matching ``requestComplete`` slot function outputs information
