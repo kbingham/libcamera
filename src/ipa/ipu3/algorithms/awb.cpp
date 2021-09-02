@@ -75,13 +75,13 @@ static constexpr uint32_t kMinGreenLevelInZone = 32;
  * \var Accumulator::counted
  * \brief Number of unsaturated cells used to calculate the sums
  *
- * \var Accumulator::rSum
+ * \var Accumulator::sum::red
  * \brief Sum of the average red values of each unsaturated cell in the zone
  *
- * \var Accumulator::gSum
+ * \var Accumulator::sum::green
  * \brief Sum of the average green values of each unsaturated cell in the zone
  *
- * \var Accumulator::bSum
+ * \var Accumulator::sum::blue
  * \brief Sum of the average blue values of each unsaturated cell in the zone
  */
 
@@ -206,10 +206,10 @@ void Awb::generateZones(std::vector<RGB> &zones)
 		RGB zone;
 		double counted = awbStats_[i].counted;
 		if (counted >= kMinZonesCounted) {
-			zone.G = awbStats_[i].gSum / counted;
+			zone.G = awbStats_[i].sum.green / counted;
 			if (zone.G >= kMinGreenLevelInZone) {
-				zone.R = awbStats_[i].rSum / counted;
-				zone.B = awbStats_[i].bSum / counted;
+				zone.R = awbStats_[i].sum.red / counted;
+				zone.B = awbStats_[i].sum.blue / counted;
 				zones.push_back(zone);
 			}
 		}
@@ -242,9 +242,9 @@ void Awb::generateAwbStats(const ipu3_uapi_stats_3a *stats,
 				/* The cell is not saturated, use the current cell */
 				awbStats_[awbRegionPosition].counted++;
 				uint32_t greenValue = currentCell->greenRedAvg + currentCell->greenBlueAvg;
-				awbStats_[awbRegionPosition].gSum += greenValue / 2;
-				awbStats_[awbRegionPosition].rSum += currentCell->redAvg;
-				awbStats_[awbRegionPosition].bSum += currentCell->blueAvg;
+				awbStats_[awbRegionPosition].sum.green += greenValue / 2;
+				awbStats_[awbRegionPosition].sum.red += currentCell->redAvg;
+				awbStats_[awbRegionPosition].sum.blue += currentCell->blueAvg;
 			}
 		}
 	}
@@ -253,9 +253,9 @@ void Awb::generateAwbStats(const ipu3_uapi_stats_3a *stats,
 void Awb::clearAwbStats()
 {
 	for (unsigned int i = 0; i < kAwbStatsSizeX * kAwbStatsSizeY; i++) {
-		awbStats_[i].bSum = 0;
-		awbStats_[i].rSum = 0;
-		awbStats_[i].gSum = 0;
+		awbStats_[i].sum.blue = 0;
+		awbStats_[i].sum.red = 0;
+		awbStats_[i].sum.green = 0;
 		awbStats_[i].counted = 0;
 	}
 }
