@@ -38,6 +38,7 @@ struct IPAFrameContext {
 	} awb;
 
 	struct {
+		double gamma;
 		struct ipu3_uapi_gamma_corr_lut gammaCorrection;
 	} toneMapping;
 };
