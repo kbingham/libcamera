@@ -409,6 +409,18 @@ void IPAIPU3::calculateBdsGrid(const Size &bdsOutputSize)
 			    << (int)bdsGrid.height << " << " << (int)bdsGrid.block_height_log2 << ")";
 }
 
+/**
+ * \brief Configure the IPU3 IPA.
+ * \param[in] configInfo The IPA configuration data, received from the pipeline
+ * handler
+ *
+ * Calculate the best grid for the statistics based on the Pipeline Handler BDS
+ * output, and parse the minimum and maximum exposure and analogue gain control
+ * values.
+ *
+ * All algorithm modules are called to allow them to prepare the
+ * \a IPASessionConfiguration structure for the \a IPAContext.
+ */
 int IPAIPU3::configure(const IPAConfigInfo &configInfo)
 {
 	if (configInfo.entityControls.empty()) {
