@@ -345,6 +345,8 @@ int IPAIPU3::start()
 }
 
 /**
+ * \brief Calculate a grid for the AWB statistics
+ *
  * This function calculates a grid for the AWB algorithm in the IPU3 firmware.
  * Its input is the BDS output size calculated in the ImgU.
  * It is limited for now to the simplest method: find the lesser error
@@ -364,16 +366,24 @@ void IPAIPU3::calculateBdsGrid(const Size &bdsOutputSize)
 	/* Set the BDS output size in the IPAConfiguration structure */
 	context_.configuration.grid.bdsOutputSize = bdsOutputSize;
 
-	for (uint32_t widthShift = 3; widthShift <= 7; ++widthShift) {
+	/*
+	 * The log2 of the width and height of each cell is limited by the ImgU
+	 * in the interval [3, 7] according to the kernel header.
+	 */
+	constexpr uint32_t kCellMin = 3;
+	constexpr uint32_t kCellMax = 7;
+
+	for (uint32_t widthShift = kCellMin; widthShift <= kCellMax; ++widthShift) {
 		uint32_t width = std::min(kMaxCellWidthPerSet,
 					  bdsOutputSize.width >> widthShift);
 		width = width << widthShift;
-		for (uint32_t heightShift = 3; heightShift <= 7; ++heightShift) {
+
+		for (uint32_t heightShift = kCellMin; heightShift <= kCellMax; ++heightShift) {
 			int32_t height = std::min(kMaxCellHeightPerSet,
 						  bdsOutputSize.height >> heightShift);
 			height = height << heightShift;
 			uint32_t error  = std::abs(static_cast<int>(width - bdsOutputSize.width))
-							+ std::abs(static_cast<int>(height - bdsOutputSize.height));
+					+ std::abs(static_cast<int>(height - bdsOutputSize.height));
 
 			if (error > minError)
 				continue;
