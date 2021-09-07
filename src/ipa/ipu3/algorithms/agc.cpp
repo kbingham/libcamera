@@ -96,9 +96,10 @@ void Agc::processBrightness(const ipu3_uapi_stats_3a *stats,
 			 * We observed a bit shift which makes the value 160 to be 32 in the stats grid.
 			 * Use the one passed at init time.
 			 */
-			if (stats->awb_raw_buffer.meta_data[i + 4 + j * grid.width] == 0) {
-				uint8_t Gr = stats->awb_raw_buffer.meta_data[i + 0 + j * grid.width];
-				uint8_t Gb = stats->awb_raw_buffer.meta_data[i + 3 + j * grid.width];
+			const ipu3_uapi_awb_set_item *currentCell = &stats->awb_raw_buffer.meta_data[i + j * grid.width];
+			if (currentCell->sat_ratio == 0) {
+				uint8_t Gr = currentCell->Gr_avg;
+				uint8_t Gb = currentCell->Gb_avg;
 				hist[(Gr + Gb) / 2]++;
 				count++;
 			}

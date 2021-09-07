@@ -234,17 +234,16 @@ void Awb::generateAwbStats(const ipu3_uapi_stats_3a *stats,
 			uint32_t cellY = ((cellPosition / grid.width) / regionHeight) % kAwbStatsSizeY;
 
 			uint32_t awbRegionPosition = cellY * kAwbStatsSizeX + cellX;
-			cellPosition *= 8;
 
 			/* Cast the initial IPU3 structure to simplify the reading */
-			Ipu3AwbCell *currentCell = reinterpret_cast<Ipu3AwbCell *>(const_cast<uint8_t *>(&stats->awb_raw_buffer.meta_data[cellPosition]));
-			if (currentCell->satRatio == 0) {
+			const ipu3_uapi_awb_set_item *currentCell = &stats->awb_raw_buffer.meta_data[cellPosition];
+			if (currentCell->sat_ratio == 0) {
 				/* The cell is not saturated, use the current cell */
 				awbStats_[awbRegionPosition].counted++;
-				uint32_t greenValue = currentCell->greenRedAvg + currentCell->greenBlueAvg;
+				uint32_t greenValue = currentCell->Gr_avg + currentCell->Gb_avg;
 				awbStats_[awbRegionPosition].sum.green += greenValue / 2;
-				awbStats_[awbRegionPosition].sum.red += currentCell->redAvg;
-				awbStats_[awbRegionPosition].sum.blue += currentCell->blueAvg;
+				awbStats_[awbRegionPosition].sum.red += currentCell->R_avg;
+				awbStats_[awbRegionPosition].sum.blue += currentCell->B_avg;
 			}
 		}
 	}
