@@ -48,7 +48,7 @@ static constexpr uint32_t knumHistogramBins = 256;
 static constexpr double kEvGainTarget = 0.5;
 
 /* A cell is 8 bytes and contains averages for RGB values and saturation ratio */
-static constexpr uint8_t kCellSize = 8;
+static constexpr uint8_t kCellSize = sizeof(ipu3_uapi_awb_set_item);
 
 Agc::Agc()
 	: frameCount_(0), lastFrame_(0), iqMean_(0.0), lineDuration_(0s),
