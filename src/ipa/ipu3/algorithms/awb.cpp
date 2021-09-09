@@ -220,30 +220,30 @@ void Awb::generateZones(std::vector<RGB> &zones)
 void Awb::generateAwbStats(const ipu3_uapi_stats_3a *stats,
 			   const ipu3_uapi_grid_config &grid)
 {
-	uint32_t regionWidth = round(grid.width / static_cast<double>(kAwbStatsSizeX));
-	uint32_t regionHeight = round(grid.height / static_cast<double>(kAwbStatsSizeY));
+	uint32_t cellsPerZoneX = round(grid.width / static_cast<double>(kAwbStatsSizeX));
+	uint32_t cellsPerZoneY = round(grid.height / static_cast<double>(kAwbStatsSizeY));
 
 	/*
 	 * Generate a (kAwbStatsSizeX x kAwbStatsSizeY) array from the IPU3 grid which is
 	 * (grid.width x grid.height).
 	 */
-	for (unsigned int j = 0; j < kAwbStatsSizeY * regionHeight; j++) {
-		for (unsigned int i = 0; i < kAwbStatsSizeX * regionWidth; i++) {
-			uint32_t cellPosition = j * grid.width + i;
-			uint32_t cellX = (cellPosition / regionWidth) % kAwbStatsSizeX;
-			uint32_t cellY = ((cellPosition / grid.width) / regionHeight) % kAwbStatsSizeY;
+	for (unsigned int cellY = 0; cellY < kAwbStatsSizeY * cellsPerZoneY; cellY++) {
+		for (unsigned int cellX = 0; cellX < kAwbStatsSizeX * cellsPerZoneX; cellX++) {
+			uint32_t cellPosition = cellY * grid.width + cellX;
+			uint32_t zoneX = cellX / cellsPerZoneX;
+			uint32_t zoneY = cellY / cellsPerZoneY;
 
-			uint32_t awbRegionPosition = cellY * kAwbStatsSizeX + cellX;
+			uint32_t awbZonePosition = zoneY * kAwbStatsSizeX + zoneX;
 
 			/* Cast the initial IPU3 structure to simplify the reading */
 			const ipu3_uapi_awb_set_item *currentCell = &stats->awb_raw_buffer.meta_data[cellPosition];
 			if (currentCell->sat_ratio == 0) {
 				/* The cell is not saturated, use the current cell */
-				awbStats_[awbRegionPosition].counted++;
+				awbStats_[awbZonePosition].counted++;
 				uint32_t greenValue = currentCell->Gr_avg + currentCell->Gb_avg;
-				awbStats_[awbRegionPosition].sum.green += greenValue / 2;
-				awbStats_[awbRegionPosition].sum.red += currentCell->R_avg;
-				awbStats_[awbRegionPosition].sum.blue += currentCell->B_avg;
+				awbStats_[awbZonePosition].sum.green += greenValue / 2;
+				awbStats_[awbZonePosition].sum.red += currentCell->R_avg;
+				awbStats_[awbZonePosition].sum.blue += currentCell->B_avg;
 			}
 		}
 	}
