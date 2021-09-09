@@ -84,7 +84,6 @@ void Agc::processBrightness(const ipu3_uapi_stats_3a *stats,
 	uint32_t startY = topleftY * grid.width << grid.block_width_log2;
 	uint32_t endX = (startX + (aeRegion.size().width >> grid.block_width_log2)) << grid.block_width_log2;
 	uint32_t i, j;
-	uint32_t count = 0;
 
 	uint32_t hist[knumHistogramBins] = { 0 };
 	for (j = topleftY;
@@ -101,7 +100,6 @@ void Agc::processBrightness(const ipu3_uapi_stats_3a *stats,
 				uint8_t Gr = currentCell->Gr_avg;
 				uint8_t Gb = currentCell->Gb_avg;
 				hist[(Gr + Gb) / 2]++;
-				count++;
 			}
 		}
 	}
