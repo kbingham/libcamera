@@ -23,4 +23,7 @@ enum {
 	OptStrictFormats = 257,
 	OptMetadata = 258,
 	OptCaptureScript = 259,
+#ifdef HAVE_KMS
+	OptListDisplays = 258,
+#endif
 };

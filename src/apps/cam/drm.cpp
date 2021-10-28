@@ -191,15 +191,18 @@ Connector::Connector(Device *dev, const drmModeConnector *connector)
 	switch (connector->connection) {
 	case DRM_MODE_CONNECTED:
 		status_ = Status::Connected;
+		status_str_ = "connected";
 		break;
 
 	case DRM_MODE_DISCONNECTED:
 		status_ = Status::Disconnected;
+		status_str_ = "disconnected";
 		break;
 
 	case DRM_MODE_UNKNOWNCONNECTION:
 	default:
 		status_ = Status::Unknown;
+		status_str_ = "unknown";
 		break;
 	}
 

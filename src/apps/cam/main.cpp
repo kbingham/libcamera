@@ -19,6 +19,11 @@
 #include "../common/stream_options.h"
 
 #include "camera_session.h"
+
+#ifdef HAVE_KMS
+#include "drm.h"
+#endif
+
 #include "main.h"
 
 using namespace libcamera;
@@ -138,6 +143,7 @@ int CamApp::parseOptions(int argc, char *argv[])
 			 "Display viewfinder through DRM/KMS on specified connector",
 			 "display", ArgumentOptional, "connector", false,
 			 OptCamera);
+	parser.addOption(OptListDisplays, OptionNone, "List all displays", "list-displays");
 #endif
 	parser.addOption(OptFile, OptionString,
 			 "Write captured frames to disk\n"
@@ -215,7 +221,19 @@ int CamApp::run()
 		}
 	}
 
-	/* 2. Create the camera sessions. */
+#ifdef HAVE_KMS
+	/* 2. List all displays. */
+	if (options_.isSet(OptListDisplays)) {
+		DRM::Device dev;
+		if (dev.init() >= 0) {
+			std::cout << "Available displays:" << std::endl;
+			for (const DRM::Connector &conn : dev.connectors())
+				std::cout << "name: " << conn.name() << " status: " << conn.status_str() << std::endl;
+		}
+	}
+#endif
+
+	/* 3. Create the camera sessions. */
 	std::vector<std::unique_ptr<CameraSession>> sessions;
 
 	if (options_.isSet(OptCamera)) {
@@ -242,7 +260,7 @@ int CamApp::run()
 		}
 	}
 
-	/* 3. Print camera information. */
+	/* 4. Print camera information. */
 	if (options_.isSet(OptListControls) ||
 	    options_.isSet(OptListProperties) ||
 	    options_.isSet(OptInfo)) {
@@ -256,7 +274,7 @@ int CamApp::run()
 		}
 	}
 
-	/* 4. Start capture. */
+	/* 5. Start capture. */
 	for (const auto &session : sessions) {
 		if (!session->options().isSet(OptCapture))
 			continue;
@@ -270,7 +288,7 @@ int CamApp::run()
 		loopUsers_++;
 	}
 
-	/* 5. Enable hotplug monitoring. */
+	/* 6. Enable hotplug monitoring. */
 	if (options_.isSet(OptMonitor)) {
 		std::cout << "Monitoring new hotplug and unplug events" << std::endl;
 		std::cout << "Press Ctrl-C to interrupt" << std::endl;
@@ -284,7 +302,7 @@ int CamApp::run()
 	if (loopUsers_)
 		loop_.exec();
 
-	/* 6. Stop capture. */
+	/* 7. Stop capture. */
 	for (const auto &session : sessions) {
 		if (!session->options().isSet(OptCapture))
 			continue;

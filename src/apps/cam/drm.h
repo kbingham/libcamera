@@ -187,6 +187,7 @@ public:
 	const std::string &name() const { return name_; }
 
 	Status status() const { return status_; }
+	const std::string &status_str() const { return status_str_; }
 
 	const std::vector<const Encoder *> &encoders() const { return encoders_; }
 	const std::vector<Mode> &modes() const { return modes_; }
@@ -194,6 +195,7 @@ public:
 private:
 	uint32_t type_;
 	std::string name_;
+	std::string status_str_;
 	Status status_;
 	std::vector<const Encoder *> encoders_;
 	std::vector<Mode> modes_;
