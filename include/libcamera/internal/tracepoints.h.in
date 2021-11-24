@@ -6,6 +6,12 @@
  *
  * This file is auto-generated. Do not edit.
  */
+
+/*
+ * This header is included multiple times to support tracepoint construction.
+ * pragma once can not be used here.
+ */
+
 #ifndef __LIBCAMERA_INTERNAL_TRACEPOINTS_H__
 #define __LIBCAMERA_INTERNAL_TRACEPOINTS_H__
 
