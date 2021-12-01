@@ -149,12 +149,14 @@ public:
 	Crtc(Device *dev, const drmModeCrtc *crtc, unsigned int index);
 
 	unsigned int index() const { return index_; }
+	uint32_t clock() const { return crtc_->mode.clock; }
 	const std::vector<const Plane *> &planes() const { return planes_; }
 
 private:
 	friend Device;
 
 	unsigned int index_;
+	const drmModeCrtc *crtc_;
 	std::vector<const Plane *> planes_;
 };
 

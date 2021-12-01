@@ -129,7 +129,7 @@ std::unique_ptr<Blob> Mode::toBlob(Device *dev) const
 }
 
 Crtc::Crtc(Device *dev, const drmModeCrtc *crtc, unsigned int index)
-	: Object(dev, crtc->crtc_id, Object::TypeCrtc), index_(index)
+	: Object(dev, crtc->crtc_id, Object::TypeCrtc), index_(index), crtc_(crtc)
 {
 }
 

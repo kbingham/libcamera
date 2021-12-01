@@ -257,6 +257,10 @@ int KMSSink::selectPipeline(const libcamera::PixelFormat &format)
 	 */
 	for (const DRM::Encoder *encoder : connector_->encoders()) {
 		for (const DRM::Crtc *crtc : encoder->possibleCrtcs()) {
+			if (!crtc->clock()) {
+				continue;
+			}
+
 			for (const DRM::Plane *plane : crtc->planes()) {
 				if (plane->type() != DRM::Plane::TypePrimary)
 					continue;
