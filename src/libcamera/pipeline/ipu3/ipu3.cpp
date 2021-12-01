@@ -1350,7 +1350,10 @@ void IPU3CameraData::cio2BufferReady(FrameBuffer *buffer)
 	request->metadata().set(controls::SensorSequence,
 				buffer->metadata().sequence);
 
-	info->effectiveSensorControls = delayedCtrls_->get(buffer->metadata().sequence);
+	/* Store the CIO2 sequence number to track capture sequences. */
+	info->cio2Sequence = buffer->metadata().sequence;
+
+	info->effectiveSensorControls = delayedCtrls_->get(info->cio2Sequence);
 
 	if (request->findBuffer(&rawStream_))
 		pipe()->completeBuffer(request, buffer);

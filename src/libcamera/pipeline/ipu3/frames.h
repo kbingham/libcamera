@@ -32,6 +32,7 @@ public:
 	struct Info {
 		unsigned int id;
 		Request *request;
+		unsigned int cio2Sequence;
 
 		FrameBuffer *rawBuffer;
 		FrameBuffer *paramBuffer;
