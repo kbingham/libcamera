@@ -30,6 +30,7 @@
 #include <libcamera/framebuffer.h>
 #include <libcamera/geometry.h>
 #include <libcamera/pixel_format.h>
+#include <libcamera/sequence.h>
 
 #include "libcamera/internal/formats.h"
 #include "libcamera/internal/v4l2_device.h"
@@ -286,6 +287,7 @@ private:
 
 	State state_;
 	std::optional<unsigned int> firstFrame_;
+	Sequence monotonicObserver_;
 
 	Timer watchdog_;
 	utils::Duration watchdogDuration_;

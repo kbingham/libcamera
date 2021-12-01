@@ -1824,6 +1824,14 @@ FrameBuffer *V4L2VideoDevice::dequeueBuffer()
 	}
 	metadata.sequence -= firstFrame_.value();
 
+	/*
+	 * Observe the buffer sequence number on capture devices to check for
+	 * frame drops.
+	 */
+	int drops = monotonicObserver_.update(buf.sequence);
+	if (drops)
+		LOG(V4L2, Warning) << "Dropped " << drops << " frames";
+
 	unsigned int numV4l2Planes = multiPlanar ? buf.length : 1;
 
 	if (numV4l2Planes != buffer->planes().size()) {
@@ -1907,6 +1915,8 @@ int V4L2VideoDevice::streamOn()
 			<< "Failed to start streaming: " << strerror(-ret);
 		return ret;
 	}
+
+	monotonicObserver_.reset();
 
 	state_ = State::Streaming;
 	if (watchdogDuration_ && !queuedBuffers_.empty())
