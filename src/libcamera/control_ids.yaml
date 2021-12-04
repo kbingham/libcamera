@@ -694,6 +694,14 @@ controls:
             Continuous AF is paused. No further state changes or lens movements
             will occur until the AfPauseResume control is sent.
 
+  - SensorSequence:
+      type: int64_t
+      description: |
+        The monotonic sequence number from the sensor.
+
+        Any break in the sequence number is an indication of frame drop or error
+        in the captured stream.
+
   # ----------------------------------------------------------------------------
   # Draft controls section
 
