@@ -2036,6 +2036,7 @@ void RPiCameraData::unicamBufferDequeue(FrameBuffer *buffer)
 		 * as it does not receive the FrameBuffer object.
 		 */
 		ctrl.set(controls::SensorTimestamp, buffer->metadata().timestamp);
+		ctrl.set(controls::SensorSequence, buffer->metadata().sequence);
 		bayerQueue_.push({ buffer, std::move(ctrl), delayContext });
 	} else {
 		embeddedQueue_.push(buffer);
@@ -2283,7 +2284,8 @@ void RPiCameraData::fillRequestMetadata(const ControlList &bufferControls,
 {
 	request->metadata().set(controls::SensorTimestamp,
 				bufferControls.get(controls::SensorTimestamp).value_or(0));
-
+	request->metadata().set(controls::SensorSequence,
+				bufferControls.get(controls::SensorSequence).value_or(0));
 	request->metadata().set(controls::ScalerCrop, scalerCrop_);
 }
 

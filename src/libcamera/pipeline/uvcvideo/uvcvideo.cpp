@@ -704,6 +704,8 @@ void UVCCameraData::bufferReady(FrameBuffer *buffer)
 	/* \todo Use the UVC metadata to calculate a more precise timestamp */
 	request->metadata().set(controls::SensorTimestamp,
 				buffer->metadata().timestamp);
+	request->metadata().set(controls::SensorSequence,
+				buffer->metadata().sequence);
 
 	pipe()->completeBuffer(request, buffer);
 	pipe()->completeRequest(request);

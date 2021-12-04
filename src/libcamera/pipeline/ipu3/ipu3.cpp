@@ -1324,13 +1324,15 @@ void IPU3CameraData::cio2BufferReady(FrameBuffer *buffer)
 	}
 
 	/*
-	 * Record the sensor's timestamp in the request metadata.
+	 * Record the sensor's timestamp and sequence in the request metadata.
 	 *
 	 * \todo The sensor timestamp should be better estimated by connecting
 	 * to the V4L2Device::frameStart signal.
 	 */
 	request->metadata().set(controls::SensorTimestamp,
 				buffer->metadata().timestamp);
+	request->metadata().set(controls::SensorSequence,
+				buffer->metadata().sequence);
 
 	info->effectiveSensorControls = delayedCtrls_->get(buffer->metadata().sequence);
 

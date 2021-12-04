@@ -767,9 +767,10 @@ void SimpleCameraData::bufferReady(FrameBuffer *buffer)
 	}
 
 	/*
-	 * Record the sensor's timestamp in the request metadata. The request
-	 * needs to be obtained from the user-facing buffer, as internal
-	 * buffers are free-wheeling and have no request associated with them.
+	 * Record the sensor's timestamp and sequence in the request metadata.
+	 * The request needs to be obtained from the user-facing buffer, as
+	 * internal buffers are free-wheeling and have no request associated
+	 * with them.
 	 *
 	 * \todo The sensor timestamp should be better estimated by connecting
 	 * to the V4L2Device::frameStart signal if the platform provides it.
@@ -786,9 +787,12 @@ void SimpleCameraData::bufferReady(FrameBuffer *buffer)
 		}
 	}
 
-	if (request)
+	if (request) {
 		request->metadata().set(controls::SensorTimestamp,
 					buffer->metadata().timestamp);
+		request->metadata().set(controls::SensorSequence,
+					buffer->metadata().sequence);
+	}
 
 	/*
 	 * Queue the captured and the request buffer to the converter if format
