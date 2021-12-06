@@ -393,6 +393,10 @@ void CameraSession::processRequest(Request *request)
 	     << std::setw(6) << std::setfill('0') << ts / 1000 % 1000000
 	     << " (" << std::fixed << std::setprecision(2) << fps << " fps)";
 
+	uint64_t sequence = request->metadata().get(controls::SensorSequence).value_or(0);
+	info << " [" << std::setw(6) << std::setfill('0')
+	     << sequence << "]";
+
 	for (const auto &[stream, buffer] : buffers) {
 		const FrameMetadata &metadata = buffer->metadata();
 
@@ -412,6 +416,11 @@ void CameraSession::processRequest(Request *request)
 		if (!sink_->processRequest(request))
 			requeue = false;
 	}
+
+	/* Handle basic frame drop detection and reporting. */
+	unsigned int drops = dropObserver_.update(sequence);
+	if (drops)
+		info << " *" << drops << " frame drops detected* ";
 
 	std::cout << info.str() << std::endl;
 

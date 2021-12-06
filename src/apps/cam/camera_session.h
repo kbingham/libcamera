@@ -19,6 +19,7 @@
 #include <libcamera/framebuffer.h>
 #include <libcamera/framebuffer_allocator.h>
 #include <libcamera/request.h>
+#include <libcamera/sequence.h>
 #include <libcamera/stream.h>
 
 #include "../common/options.h"
@@ -68,6 +69,7 @@ private:
 	unsigned int cameraIndex_;
 
 	uint64_t last_;
+	libcamera::Sequence dropObserver_;
 
 	unsigned int queueCount_;
 	unsigned int captureCount_;
