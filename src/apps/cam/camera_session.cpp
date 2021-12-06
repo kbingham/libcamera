@@ -377,10 +377,11 @@ void CameraSession::processRequest(Request *request)
 	const Request::BufferMap &buffers = request->buffers();
 
 	/*
-	 * Compute the frame rate. The timestamp is arbitrarily retrieved from
-	 * the first buffer, as all buffers should have matching timestamps.
+	 * Compute the frame rate. The timestamp is retrieved from the
+	 * SensorTimestamp property, though all streams should have the
+	 * same timestamp.
 	 */
-	uint64_t ts = buffers.begin()->second->metadata().timestamp;
+	uint64_t ts = request->metadata().get(controls::SensorTimestamp).value_or(0);
 	double fps = ts - last_;
 	fps = last_ != 0 && fps ? 1000000000.0 / fps : 0.0;
 	last_ = ts;
