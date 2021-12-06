@@ -16,6 +16,7 @@
 #include <libcamera/framebuffer.h>
 #include <libcamera/framebuffer_allocator.h>
 #include <libcamera/request.h>
+#include <libcamera/sequence.h>
 #include <libcamera/stream.h>
 
 #include <QElapsedTimer>
@@ -125,6 +126,7 @@ private:
 	QMutex mutex_; /* Protects freeBuffers_, doneQueue_, and freeQueue_ */
 
 	uint64_t lastBufferTime_;
+	libcamera::Sequence dropObserver_;
 	QElapsedTimer frameRateInterval_;
 	uint32_t previousFrames_;
 	uint32_t framesCaptured_;

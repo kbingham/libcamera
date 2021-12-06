@@ -12,6 +12,7 @@
 #include <string>
 
 #include <libcamera/camera_manager.h>
+#include <libcamera/control_ids.h>
 #include <libcamera/version.h>
 
 #include <QCoreApplication>
@@ -508,6 +509,7 @@ int MainWindow::startCapture()
 	previousFrames_ = 0;
 	framesCaptured_ = 0;
 	lastBufferTime_ = 0;
+	dropObserver_.reset();
 
 	ret = camera_->start();
 	if (ret) {
@@ -714,6 +716,24 @@ void MainWindow::processCapture()
 			return;
 
 		request = doneQueue_.dequeue();
+	}
+
+	/* Parse the request metadata for useful information */
+	for (const auto &ctrl : request->metadata()) {
+		const int id = ctrl.first;
+		const ControlValue &value = ctrl.second;
+
+		if (id == controls::SensorSequence) {
+			/* Handle basic frame drop detection and reporting. */
+			int64_t sequence = value.get<int64_t>();
+
+			unsigned int drops = dropObserver_.update(sequence);
+			if (drops)
+				qInfo() << "sequence: [" << sequence << "] *"
+					<< drops << " frame drops detected *";
+		}
+
+		/* \todo Handle all/other metadata types here. */
 	}
 
 	/* Process buffers. */
