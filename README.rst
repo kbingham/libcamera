@@ -196,3 +196,26 @@ This can be solved in two ways:
 2) If a version of meson which is different from the system-wide version is
 already installed, uninstall that meson using pip3, and install again without
 the --user argument.
+
+Projects that use libcamera
+---------------------------
+
+libcamera-apps (RPi Support)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ - https://github.com/raspberrypi/libcamera-apps
+
+Constatus
+~~~~~~~~~
+ - https://github.com/folkertvanheusden/constatus
+ - https://vanheusden.com/constatus/
+
+erasta
+~~~~~~
+ - https://github.com/erasta/libcamera-apps
+ working on a per-frame control capture to handle multiple
+ / different gains/exposure per frame.
+
+simpler-cam
+~~~~~~~~~~~
+ - https://github.com/atalkingegg/simpler-both
+   A sample app exploring capturing with libcamera and using openCV.
