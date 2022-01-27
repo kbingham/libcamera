@@ -96,6 +96,23 @@ static const char *log_severity_name(LogSeverity severity)
 		return "UNKWN";
 }
 
+static const std::string &log_severity_emojis(LogSeverity severity)
+{
+	static const std::string emojis[] = {
+		"🪲 ", // DEBUG
+		"ℹ️ ", // INFO
+		"⚠️ ", // WARNING
+		"🔥 ", // ERROR
+		"🆘 ", // FATAL
+		"🤔 ", // Unknown
+	};
+
+	if (static_cast<unsigned int>(severity) < std::size(emojis))
+		return emojis[severity];
+	else
+		return emojis[std::size(emojis) - 1];
+}
+
 /**
  * \brief Log output
  *
@@ -238,7 +255,6 @@ void LogOutput::write(const LogMessage &msg)
 		str += msg.msg();
 		writeSyslog(severity, str);
 		break;
-	case LoggingTargetStream:
 	case LoggingTargetFile:
 		str = "[" + utils::time_point_to_string(msg.timestamp()) + "] ["
 		    + std::to_string(Thread::currentId()) + "] "
@@ -250,6 +266,13 @@ void LogOutput::write(const LogMessage &msg)
 		str += resetColor + msg.msg();
 		writeStream(str);
 		break;
+	case LoggingTargetStream:
+		str = "[" + utils::time_point_to_string(msg.timestamp()) + "] ["
+		    + std::to_string(Thread::currentId()) + "] "
+		    + log_severity_emojis(msg.severity()) + " "
+		    + msg.category().name() + " " + msg.fileInfo() + " "
+		    + msg.msg();
+		writeStream(str);
 	default:
 		break;
 	}
