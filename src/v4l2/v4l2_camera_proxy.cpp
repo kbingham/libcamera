@@ -18,6 +18,8 @@
 #include <unistd.h>
 
 #include <libcamera/camera.h>
+#include <libcamera/controls.h>
+#include <libcamera/control_ids.h>
 #include <libcamera/formats.h>
 
 #include <libcamera/base/log.h>
@@ -33,6 +35,7 @@
 #define KERNEL_VERSION(a, b, c) (((a) << 16) + ((b) << 8) + (c))
 
 using namespace libcamera;
+using namespace std::literals::chrono_literals;
 
 LOG_DECLARE_CATEGORY(V4L2Compat)
 
@@ -755,6 +758,52 @@ int V4L2CameraProxy::vidioc_streamoff(V4L2CameraFile *file, int *arg)
 	return ret;
 }
 
+int V4L2CameraProxy::vidioc_g_param(V4L2CameraFile *file, struct v4l2_streamparm *arg)
+{
+	LOG(V4L2Compat, Debug)
+		<< "[" << file->description() << "] " << __func__ << "()";
+
+	if (!validateBufferType(arg->type))
+		return -EINVAL;
+
+	/* This should query the camera directly to determine the current frame rate.
+	 * But I'm not sure it's something we can actually do right now - so it
+	 * might need either extending in the camera configuration, or we would have
+	 * to remember the settings we set (which is probably more like how you
+	 * had this by getting the control list back, but that won't be valid
+	 * once they've been set - so we'll need to cache the values...)
+	 */
+
+	return vcam_->getControls();
+}
+
+int V4L2CameraProxy::vidioc_s_param(V4L2CameraFile *file, struct v4l2_streamparm *arg)
+{
+	LOG(V4L2Compat, Debug)
+		<< "[" << file->description() << "] " << __func__ << "()";
+
+	if (!validateBufferType(arg->type))
+		return -EINVAL;
+
+	ControlList ctrls;
+	struct v4l2_captureparm *param = &arg->parm.capture;
+
+	utils::Duration frameDuration = 1s * param->timeperframe.numerator
+				      / param->timeperframe.denominator;
+
+	/*
+	 * Todo: It would be nice if setting controls with a time component
+	 * could be set with a duration, to ensure the units are not mixed.
+	 * For now, calculate with a Duration, and then convert to micros
+	 * to set the control.
+	 */
+	int64_t uDuration = frameDuration.get<std::micro>();
+
+	ctrls.set(controls::FrameDurationLimits, { uDuration, uDuration } );
+
+	return vcam_->setControls(ctrls);
+}
+
 const std::set<unsigned long> V4L2CameraProxy::supportedIoctls_ = {
 	VIDIOC_QUERYCAP,
 	VIDIOC_ENUM_FRAMESIZES,
@@ -775,6 +824,8 @@ const std::set<unsigned long> V4L2CameraProxy::supportedIoctls_ = {
 	VIDIOC_EXPBUF,
 	VIDIOC_STREAMON,
 	VIDIOC_STREAMOFF,
+	VIDIOC_S_PARM,
+	VIDIOC_G_PARM,
 };
 
 int V4L2CameraProxy::ioctl(V4L2CameraFile *file, unsigned long request, void *arg)
@@ -851,6 +902,12 @@ int V4L2CameraProxy::ioctl(V4L2CameraFile *file, unsigned long request, void *ar
 		break;
 	case VIDIOC_STREAMOFF:
 		ret = vidioc_streamoff(file, static_cast<int *>(arg));
+		break;
+	case VIDIOC_S_PARM:
+		ret = vidioc_s_param(file, static_cast<struct v4l2_streamparm *>(arg));
+		break;
+	case VIDIOC_G_PARM:
+		ret = vidioc_g_param(file, static_cast<struct v4l2_streamparm *>(arg));
 		break;
 	default:
 		ret = -ENOTTY;

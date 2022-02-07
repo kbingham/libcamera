@@ -12,13 +12,15 @@
 
 #include <libcamera/base/log.h>
 
+#include <libcamera/control_ids.h>
+
 using namespace libcamera;
 
 LOG_DECLARE_CATEGORY(V4L2Compat)
 
 V4L2Camera::V4L2Camera(std::shared_ptr<Camera> camera)
-	: camera_(camera), isRunning_(false), bufferAllocator_(nullptr),
-	  efd_(-1), bufferAvailableCount_(0)
+	: camera_(camera), controls_(controls::controls), isRunning_(false),
+	  bufferAllocator_(nullptr), efd_(-1), bufferAvailableCount_(0)
 {
 	camera_->requestCompleted.connect(this, &V4L2Camera::requestComplete);
 }
@@ -157,6 +159,30 @@ int V4L2Camera::validateConfiguration(const PixelFormat &pixelFormat,
 	return 0;
 }
 
+int V4L2Camera::setControls(ControlList &ctrls)
+{
+	/*
+	 * ReviewNotes: We might instead just expose the controls_ through
+	 * an accessor helper ... not sure which is best yet. But I'm not
+	 * sure I can see enough reason to have a dedicated setControls()
+	 * here at the moment, as it will only do this operation and it
+	 * has no return value?
+	 */
+	controls_.merge(std::move(ctrls));
+
+	return 0;
+}
+
+int V4L2Camera::getControls()
+{
+	/*
+	 * ReviewNotes:  This needs to actually ask the camera what settings are
+	 * current. It might be more complicated, so lets sort out setting first
+	 */
+
+	return 0;
+}
+
 int V4L2Camera::allocBuffers(unsigned int count)
 {
 	Stream *stream = config_->at(0).stream();
@@ -203,9 +229,11 @@ int V4L2Camera::streamOn()
 	if (isRunning_)
 		return 0;
 
-	int ret = camera_->start();
+	int ret = camera_->start(&controls_);
 	if (ret < 0)
 		return ret == -EACCES ? -EBUSY : ret;
+
+	controls_.clear();
 
 	isRunning_ = true;
 
@@ -265,6 +293,13 @@ int V4L2Camera::qbuf(unsigned int index)
 		pendingRequests_.push_back(request);
 		return 0;
 	}
+
+	/*
+	 * Any controls that are set while running, need to be applied
+	 * through the next available request sent to the camera.
+	 */
+	request->controls().merge(std::move(controls_));
+	/* or controls_.clear(), if we can't std::move() them in to the list */
 
 	ret = camera_->queueRequest(request);
 	if (ret < 0) {
