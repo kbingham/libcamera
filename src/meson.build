@@ -33,6 +33,7 @@ subdir('android')
 subdir('ipa')
 
 subdir('apps')
+subdir('pinhole')
 
 subdir('gstreamer')
 subdir('py')

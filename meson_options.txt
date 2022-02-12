@@ -35,6 +35,11 @@ option('lc-compliance',
         value : 'auto',
         description : 'Compile the lc-compliance test application')
 
+option('pinhole',
+        type : 'feature',
+        value : 'auto',
+        description : 'Compile the pinhole GTK camera application')
+
 option('pipelines',
         type : 'array',
         value : ['auto'],
