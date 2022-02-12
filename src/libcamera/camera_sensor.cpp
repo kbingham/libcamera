@@ -209,7 +209,7 @@ int CameraSensor::init()
 			return ret;
 	}
 
-	return applyTestPatternMode(controls::draft::TestPatternModeEnum::TestPatternModeOff);
+	return 0;
 }
 
 int CameraSensor::validateSensorDriver()
@@ -416,6 +416,9 @@ void CameraSensor::initTestPatternModes()
 
 		testPatternModes_.push_back(it->second);
 	}
+
+	/* Initialise the sensor with test patterns disabled. */
+	applyTestPatternMode(controls::draft::TestPatternModeEnum::TestPatternModeOff);
 }
 
 int CameraSensor::initProperties()
