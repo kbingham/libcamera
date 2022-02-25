@@ -1733,7 +1733,7 @@ struct v4l2_ext_control {
 		struct v4l2_ctrl_mpeg2_picture *p_mpeg2_picture;
 		struct v4l2_ctrl_mpeg2_quantisation *p_mpeg2_quantisation;
 		void *ptr;
-	};
+	} __attribute__ ((packed));
 } __attribute__ ((packed));
 
 struct v4l2_ext_controls {
