@@ -3,6 +3,11 @@
     "target": "bcm2835",
     "algorithms": [
         {
+            "iob.af":
+            {
+            }
+        },
+        {
             "rpi.black_level":
             {
                 "black_level": 4096
