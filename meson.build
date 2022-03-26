@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: CC0-1.0
 
 project('libcamera', 'c', 'cpp',
-    meson_version : '>= 0.56',
+    meson_version : '>= 0.57',
     version : '0.0.4',
     default_options : [
         'werror=true',
@@ -256,3 +256,19 @@ summary({
         },
         section : 'Configuration',
         bool_yn : true)
+
+summary({
+	    'libsdl2' : libsdl2,
+	    'libevent_pthreads' : libevent,
+	    'libdrm' : libdrm,
+	    'libudev' : libudev,
+	    'QT5' : qt5_dep,
+	    'tiff' : libtiff,
+	    'glib' : glib_dep,
+	    'gtest' : libgtest,
+	    'gstreamer' : gstreamer_dep,
+	    'gstvideo_dep' : gstvideo_dep,
+	    'gstallocator_dep' : gstallocator_dep,
+        },
+	section : 'Optional Dependencies',
+	bool_yn : true)
