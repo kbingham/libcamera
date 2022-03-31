@@ -96,6 +96,13 @@ public:
 		return *this;
 	}
 
+	Size &clamp(const Size &minimum, const Size &maximum)
+	{
+		width = std::clamp(width, minimum.width, maximum.width);
+		height = std::clamp(height, minimum.height, maximum.height);
+		return *this;
+	}
+
 	Size &growBy(const Size &margins)
 	{
 		width += margins.width;
@@ -141,6 +148,15 @@ public:
 		return {
 			std::max(width, expand.width),
 			std::max(height, expand.height)
+		};
+	}
+
+	__nodiscard constexpr Size clampedTo(const Size &minimum,
+					     const Size &maximum) const
+	{
+		return {
+			std::clamp(width, minimum.width, maximum.width),
+			std::clamp(height, minimum.height, maximum.height)
 		};
 	}
 

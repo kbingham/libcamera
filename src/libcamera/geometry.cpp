@@ -188,6 +188,19 @@ const std::string Size::toString() const
  */
 
 /**
+ * \fn Size::clamp(const Size &minimum, const Size &maximum)
+ * \brief Clamp the size to be within the dimensions of both the \a minimum and
+ * \a maximum values.
+ * \param[in] minimum The minimum size
+ * \param[in] maximum The maximum size
+ *
+ * This function constrains and clamps the width and height of the size to be
+ * within the limits of the \a minimum and \a maximum sizes given.
+ *
+ * \return A reference to this object
+ */
+
+/**
  * \fn Size::growBy(const Size &margins)
  * \brief Grow the size by \a margins in place
  * \param[in] margins The margins to add to the size
@@ -243,6 +256,16 @@ const std::string Size::toString() const
  * \param[in] expand The minimum size
  * \return A Size whose width and height are the maximum of the width and
  * height of this size and the \a expand size
+ */
+
+/**
+ * \fn Size::clampedTo(const Size &minimum, const Size &maximum)
+ * \brief Clamp the size to be within the dimensions of both the \a minimum and
+ * \a maximum values
+ * \param[in] minimum The minimum size
+ * \param[in] maximum The maximum size
+ * \return A Size whose width and height are clamped to be within the limits of
+ * the \a minimum and \a maximum sizes given.
  */
 
 /**

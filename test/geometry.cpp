@@ -104,7 +104,7 @@ protected:
 
 		/*
 		 * Test alignDownTo(), alignUpTo(), boundTo(), expandTo(),
-		 * growBy() and shrinkBy()
+		 * clamp(), growBy() and shrinkBy()
 		 */
 		Size s(50, 50);
 
@@ -129,6 +129,18 @@ protected:
 		s.expandTo({ 50, 50 });
 		if (s != Size(50, 50)) {
 			cout << "Size::expandTo() test failed" << endl;
+			return TestFail;
+		}
+
+		s.clamp({ 80, 120 }, { 160, 240 });
+		if (s != Size(80, 120)) {
+			cout << "Size::clamp (minium) test failed" << endl;
+			return TestFail;
+		}
+
+		s.clamp({ 20, 30 }, { 50, 50 });
+		if (s != Size(50, 50)) {
+			cout << "Size::clamp (maximum) test failed" << endl;
 			return TestFail;
 		}
 
@@ -160,7 +172,7 @@ protected:
 
 		/*
 		 * Test alignedDownTo(), alignedUpTo(), boundedTo(),
-		 * expandedTo(), grownBy() and shrunkBy()
+		 * expandedTo(), clampedTo(), grownBy() and shrunkBy()
 		 */
 		if (Size(0, 0).alignedDownTo(16, 8) != Size(0, 0) ||
 		    Size(1, 1).alignedDownTo(16, 8) != Size(0, 0) ||
@@ -187,6 +199,14 @@ protected:
 		    Size(200, 50).expandedTo({ 100, 100 }) != Size(200, 100) ||
 		    Size(50, 200).expandedTo({ 100, 100 }) != Size(100, 200)) {
 			cout << "Size::expandedTo() test failed" << endl;
+			return TestFail;
+		}
+
+		if (Size(0, 0).clampedTo({ 60, 40 }, { 80, 90 }) != Size(60, 40) ||
+		    Size(100, 100).clampedTo({ 60, 40 }, { 80, 90 }) != Size(80, 90) ||
+		    Size(30, 100).clampedTo({ 60, 40 }, { 80, 90 }) != Size(60, 90) ||
+		    Size(100, 30).clampedTo({ 60, 40 }, { 80, 90 }) != Size(80, 40)) {
+			cout << "Size::clampedTo() test failed" << endl;
 			return TestFail;
 		}
 
