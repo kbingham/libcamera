@@ -64,6 +64,7 @@ internal_tests = [
     {'name': 'object-delete', 'sources': ['object-delete.cpp']},
     {'name': 'object-invoke', 'sources': ['object-invoke.cpp']},
     {'name': 'pixel-format', 'sources': ['pixel-format.cpp']},
+    {'name': 'sequence', 'sources': ['sequence.cpp']},
     {'name': 'shared-fd', 'sources': ['shared-fd.cpp']},
     {'name': 'signal-threads', 'sources': ['signal-threads.cpp']},
     {'name': 'threads', 'sources': 'threads.cpp', 'dependencies': [libthreads]},
