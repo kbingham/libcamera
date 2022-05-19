@@ -38,6 +38,8 @@
 #include "algorithms/tone_mapping.h"
 #include "libipa/camera_sensor_helper.h"
 
+#include "ipa_context.h"
+
 /* Minimum grid width, expressed as a number of cells */
 static constexpr uint32_t kMinGridWidth = 16;
 /* Maximum grid width, expressed as a number of cells */
@@ -456,8 +458,7 @@ int IPAIPU3::configure(const IPAConfigInfo &configInfo,
 
 	/* Clean IPAActiveState at each reconfiguration. */
 	context_.activeState = {};
-	IPAFrameContext initFrameContext;
-	context_.frameContexts.fill(initFrameContext);
+	context_.frameContexts.clear();
 
 	if (!validateSensorControls()) {
 		LOG(IPAIPU3, Error) << "Sensor control validation failed.";
@@ -569,7 +570,7 @@ void IPAIPU3::processStatsBuffer(const uint32_t frame,
 	const ipu3_uapi_stats_3a *stats =
 		reinterpret_cast<ipu3_uapi_stats_3a *>(mem.data());
 
-	IPAFrameContext &frameContext = context_.frameContexts[frame % kMaxFrameContexts];
+	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
 
 	if (frameContext.frame != frame)
 		LOG(IPAIPU3, Warning) << "Frame " << frame << " does not match its frame context";
@@ -618,7 +619,11 @@ void IPAIPU3::processStatsBuffer(const uint32_t frame,
 void IPAIPU3::queueRequest(const uint32_t frame, const ControlList &controls)
 {
 	/* \todo Start processing for 'frame' based on 'controls'. */
-	context_.frameContexts[frame % kMaxFrameContexts] = { frame, controls };
+	IPAFrameContext &frameContext = context_.frameContexts.initialise(frame);
+
+	/* \todo Implement queueRequest to each algorithm. */
+	(void)frameContext;
+	(void)controls;
 }
 
 /**
