@@ -162,6 +162,7 @@ void Request::Private::cancel()
  */
 void Request::Private::reuse()
 {
+	error_ = Request::NoError;
 	sequence_ = 0;
 	cancelled_ = false;
 	prepared_ = false;
@@ -284,6 +285,21 @@ void Request::Private::notifierActivated(FrameBuffer *buffer)
 	emitPrepareCompleted();
 }
 
+/**
+ * \brief Update the error flags of the Request
+ * \param[in] flags Flags to apply on the Request
+ *
+ * Apply \a flags to the Request to report to the application when the Request
+ * completes.
+ *
+ * Setting an Error flag does not cause a Request to fail, and once set it can
+ * only be cleared by the application destroying the Request or calling reuse().
+ */
+void Request::Private::setErrorFlags(ErrorFlags flags)
+{
+	error_ |= flags;
+}
+
 void Request::Private::timeout()
 {
 	/* A timeout can only happen if there are fences not yet signalled. */
@@ -316,6 +332,22 @@ void Request::Private::timeout()
  * Don't reuse buffers
  * \var Request::ReuseBuffers
  * Reuse the buffers that were previously added by addBuffer()
+ */
+
+/**
+ * \enum Request::ErrorFlag
+ * Flags to report non-fatal errors
+ * \var Request::NoError
+ * No error
+ * \var Request::ControlError
+ * Control Error. At least on control was not able to be applied to the device.
+ * The application should compare the metadata to the requested control values
+ * to check which controls weren't applied.
+ */
+
+/**
+ * \typedef Request::ErrorFlags
+ * The error state of the request defined by \a Request::ErrorFlag
  */
 
 /**
@@ -559,6 +591,20 @@ uint32_t Request::sequence() const
  *
  * \return The request completion status
  */
+
+/**
+ * \brief Retrieve the error flags
+ *
+ * The request could complete with non-fatal error. The completion status will
+ * indicate success. This function returns the non-fatal errors that the
+ * request completed with
+ *
+ * \return Flags of non-fatal errors that the request completed with
+ */
+Request::ErrorFlags Request::error() const
+{
+	return _d()->error_;
+}
 
 /**
  * \brief Check if a request has buffers yet to be completed

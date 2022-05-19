@@ -38,6 +38,7 @@ public:
 	void complete();
 	void cancel();
 	void reuse();
+	void setErrorFlags(ErrorFlags flags);
 
 	void prepare(std::chrono::milliseconds timeout = 0ms);
 	Signal<> prepared;
@@ -59,6 +60,8 @@ private:
 	std::unordered_set<FrameBuffer *> pending_;
 	std::map<FrameBuffer *, std::unique_ptr<EventNotifier>> notifiers_;
 	std::unique_ptr<Timer> timer_;
+
+	ErrorFlags error_;
 };
 
 } /* namespace libcamera */

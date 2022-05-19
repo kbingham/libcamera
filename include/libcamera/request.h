@@ -15,6 +15,7 @@
 #include <unordered_set>
 
 #include <libcamera/base/class.h>
+#include <libcamera/base/flags.h>
 #include <libcamera/base/signal.h>
 
 #include <libcamera/controls.h>
@@ -43,6 +44,13 @@ public:
 		ReuseBuffers = (1 << 0),
 	};
 
+	enum ErrorFlag {
+		NoError = 0,
+		ControlError = (1 << 0),
+	};
+
+	using ErrorFlags = Flags<ErrorFlag>;
+
 	using BufferMap = std::map<const Stream *, FrameBuffer *>;
 
 	Request(Camera *camera, uint64_t cookie = 0);
@@ -60,6 +68,7 @@ public:
 	uint32_t sequence() const;
 	uint64_t cookie() const { return cookie_; }
 	Status status() const { return status_; }
+	ErrorFlags error() const;
 
 	bool hasPendingBuffers() const;
 
