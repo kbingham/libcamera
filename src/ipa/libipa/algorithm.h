@@ -11,6 +11,7 @@
 
 namespace libcamera {
 
+class ControlList;
 class YamlObject;
 
 namespace ipa {
@@ -33,6 +34,14 @@ public:
 			      [[maybe_unused]] const typename Module::Config &configInfo)
 	{
 		return 0;
+	}
+
+
+	virtual void queueRequest([[maybe_unused]] typename Module::Context &context,
+				  [[maybe_unused]] const uint32_t frame,
+				  [[maybe_unused]] typename Module::FrameContext &frameContext,
+				  [[maybe_unused]] const ControlList &controls)
+	{
 	}
 
 	virtual void prepare([[maybe_unused]] typename Module::Context &context,
