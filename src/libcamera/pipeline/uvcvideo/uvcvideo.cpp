@@ -26,6 +26,7 @@
 #include "libcamera/internal/device_enumerator.h"
 #include "libcamera/internal/media_device.h"
 #include "libcamera/internal/pipeline_handler.h"
+#include "libcamera/internal/request.h"
 #include "libcamera/internal/sysfs.h"
 #include "libcamera/internal/v4l2_videodevice.h"
 
@@ -373,8 +374,10 @@ int PipelineHandlerUVC::queueRequestDevice(Camera *camera, Request *request)
 	}
 
 	int ret = processControls(data, request);
-	if (ret < 0)
-		return ret;
+	if (ret < 0) {
+		LOG(UVC, Error) << "Failed to process controls";
+		request->_d()->setErrorFlags(Request::ControlError);
+	}
 
 	ret = data->video_->queueBuffer(buffer);
 	if (ret < 0)
