@@ -28,7 +28,9 @@ public:
 	~Agc() = default;
 
 	int configure(IPAContext &context, const IPACameraSensorInfo &configInfo) override;
-	void prepare(IPAContext &context, rkisp1_params_cfg *params) override;
+	void prepare(IPAContext &context, unsigned int frame,
+		     RKISP1FrameContext &frameContext,
+		     rkisp1_params_cfg *params) override;
 	void process(IPAContext &context, RKISP1FrameContext &frameContext,
 		     const rkisp1_stat_buffer *stats) override;
 

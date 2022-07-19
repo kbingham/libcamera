@@ -18,7 +18,9 @@ class BlackLevelCorrection : public Algorithm
 public:
 	BlackLevelCorrection();
 
-	void prepare(IPAContext &context, ipu3_uapi_params *params) override;
+	void prepare(IPAContext &context, unsigned int frame,
+		     IPU3FrameContext &frameContext,
+		     ipu3_uapi_params *params) override;
 };
 
 } /* namespace ipa::ipu3::algorithms */

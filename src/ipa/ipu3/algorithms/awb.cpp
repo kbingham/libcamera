@@ -430,7 +430,10 @@ constexpr uint16_t Awb::gainValue(double gain)
 /**
  * \copydoc libcamera::ipa::Algorithm::prepare
  */
-void Awb::prepare(IPAContext &context, ipu3_uapi_params *params)
+void Awb::prepare(IPAContext &context,
+		  [[maybe_unused]] unsigned int frame,
+		  [[maybe_unused]] IPU3FrameContext &frameContext,
+		  ipu3_uapi_params *params)
 {
 	/*
 	 * Green saturation thresholds are reduced because we are using the

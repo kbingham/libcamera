@@ -322,7 +322,10 @@ void Agc::process(IPAContext &context,
 /**
  * \copydoc libcamera::ipa::Algorithm::prepare
  */
-void Agc::prepare(IPAContext &context, rkisp1_params_cfg *params)
+void Agc::prepare(IPAContext &context,
+		  [[maybe_unused]] unsigned int frame,
+		  [[maybe_unused]] RKISP1FrameContext &frameContext,
+		  rkisp1_params_cfg *params)
 {
 	if (context.activeState.frameCount > 0)
 		return;

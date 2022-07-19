@@ -275,6 +275,8 @@ void IPARkISP1::queueRequest([[maybe_unused]] const uint32_t frame,
 
 void IPARkISP1::fillParamsBuffer(const uint32_t frame, const uint32_t bufferId)
 {
+	RKISP1FrameContext &frameContext = context_.frameContexts.get(frame);
+
 	rkisp1_params_cfg *params =
 		reinterpret_cast<rkisp1_params_cfg *>(
 			mappedBuffers_.at(bufferId).planes()[0].data());
@@ -283,7 +285,7 @@ void IPARkISP1::fillParamsBuffer(const uint32_t frame, const uint32_t bufferId)
 	memset(params, 0, sizeof(*params));
 
 	for (auto const &algo : algorithms())
-		algo->prepare(context_, params);
+		algo->prepare(context_, frame, frameContext, params);
 
 	paramsBufferReady.emit(frame);
 	context_.activeState.frameCount++;

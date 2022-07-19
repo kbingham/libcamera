@@ -36,6 +36,8 @@ public:
 	}
 
 	virtual void prepare([[maybe_unused]] typename Module::Context &context,
+			     [[maybe_unused]] unsigned int frame,
+			     [[maybe_unused]] typename Module::FrameContext &frameContext,
 			     [[maybe_unused]] typename Module::Params *params)
 	{
 	}
