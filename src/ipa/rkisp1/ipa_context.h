@@ -72,6 +72,8 @@ struct RKISP1FrameContext : public IPAFrameContext {
 struct IPAContext {
 	IPASessionConfiguration configuration;
 	IPAActiveState activeState;
+
+	FCQueue<RKISP1FrameContext> frameContexts;
 };
 
 } /* namespace ipa::rkisp1 */

@@ -205,7 +205,9 @@ int IPARkISP1::configure([[maybe_unused]] const IPACameraSensorInfo &info,
 		<< " Gain: " << minGain << "-" << maxGain;
 
 	/* Clean context at configuration */
-	context_ = {};
+	context_.configuration = {};
+	context_.activeState = {};
+	context_.frameContexts.clear();
 
 	/* Set the hardware revision for the algorithms. */
 	context_.configuration.hw.revision = hwRevision_;
@@ -290,6 +292,8 @@ void IPARkISP1::fillParamsBuffer(const uint32_t frame, const uint32_t bufferId)
 void IPARkISP1::processStatsBuffer(const uint32_t frame, const uint32_t bufferId,
 				   const ControlList &sensorControls)
 {
+	RKISP1FrameContext &frameContext = context_.frameContexts.get(frame);
+
 	const rkisp1_stat_buffer *stats =
 		reinterpret_cast<rkisp1_stat_buffer *>(
 			mappedBuffers_.at(bufferId).planes()[0].data());
@@ -300,9 +304,6 @@ void IPARkISP1::processStatsBuffer(const uint32_t frame, const uint32_t bufferId
 		camHelper_->gain(sensorControls.get(V4L2_CID_ANALOGUE_GAIN).get<int32_t>());
 
 	unsigned int aeState = 0;
-
-	/* \todo Obtain the frame context to pass to process from the FCQueue */
-	RKISP1FrameContext frameContext;
 
 	for (auto const &algo : algorithms())
 		algo->process(context_, frameContext, stats);
