@@ -570,7 +570,7 @@ void IPAIPU3::processStatsBuffer(const uint32_t frame,
 	const ipu3_uapi_stats_3a *stats =
 		reinterpret_cast<ipu3_uapi_stats_3a *>(mem.data());
 
-	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
+	IPU3FrameContext &frameContext = context_.frameContexts.get(frame);
 
 	if (frameContext.frame != frame)
 		LOG(IPAIPU3, Warning) << "Frame " << frame << " does not match its frame context";
@@ -583,7 +583,7 @@ void IPAIPU3::processStatsBuffer(const uint32_t frame,
 	ControlList ctrls(controls::controls);
 
 	for (auto const &algo : algorithms_)
-		algo->process(context_, &frameContext, stats);
+		algo->process(context_, frameContext, stats);
 
 	setControls(frame);
 
@@ -619,7 +619,7 @@ void IPAIPU3::processStatsBuffer(const uint32_t frame,
 void IPAIPU3::queueRequest(const uint32_t frame, const ControlList &controls)
 {
 	/* \todo Start processing for 'frame' based on 'controls'. */
-	IPAFrameContext &frameContext = context_.frameContexts.initialise(frame);
+	IPU3FrameContext &frameContext = context_.frameContexts.initialise(frame);
 
 	/* \todo Implement queueRequest to each algorithm. */
 	(void)frameContext;

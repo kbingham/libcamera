@@ -29,7 +29,7 @@ public:
 
 	int configure(IPAContext &context, const IPACameraSensorInfo &configInfo) override;
 	void prepare(IPAContext &context, rkisp1_params_cfg *params) override;
-	void process(IPAContext &context, IPAFrameContext *frameContext,
+	void process(IPAContext &context, RKISP1FrameContext &frameContext,
 		     const rkisp1_stat_buffer *stats) override;
 
 private:

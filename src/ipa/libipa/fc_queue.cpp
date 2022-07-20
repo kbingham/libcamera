@@ -56,6 +56,27 @@ namespace ipa {
  */
 
 /**
+ * \struct IPAFrameContext
+ * \brief Context for a frame
+ *
+ * The frame context stores data specific to a single frame processed by the
+ * IPA. Each frame processed by the IPA has a context associated with it,
+ * accessible through the Frame Context Queue.
+ *
+ * Fields in the frame context should reflect values and controls associated
+ * with the specific frame as requested by the application, and as configured by
+ * the hardware. Fields can be read by algorithms to determine if they should
+ * update any specific action for this frame, and finally to update the metadata
+ * control lists when the frame is fully completed.
+ *
+ * \var IPAFrameContext::frame
+ * \brief The frame number
+ *
+ * \var IPAFrameContext::error
+ * \brief The error flags associated with the frame
+ */
+
+/**
  * \fn FCQueue::clear()
  * \brief Reinitialise all data on the queue
  *

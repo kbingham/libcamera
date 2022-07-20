@@ -19,7 +19,7 @@ namespace libcamera {
 
 namespace ipa::ipu3 {
 
-using Module = ipa::Module<IPAContext, IPAFrameContext, IPAConfigInfo,
+using Module = ipa::Module<IPAContext, IPU3FrameContext, IPAConfigInfo,
 			   ipu3_uapi_params, ipu3_uapi_stats_3a>;
 
 } /* namespace ipa::ipu3 */

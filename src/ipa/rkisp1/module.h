@@ -19,7 +19,7 @@ namespace libcamera {
 
 namespace ipa::rkisp1 {
 
-using Module = ipa::Module<IPAContext, IPAFrameContext, IPACameraSensorInfo,
+using Module = ipa::Module<IPAContext, RKISP1FrameContext, IPACameraSensorInfo,
 			   rkisp1_params_cfg, rkisp1_stat_buffer>;
 
 } /* namespace ipa::rkisp1 */

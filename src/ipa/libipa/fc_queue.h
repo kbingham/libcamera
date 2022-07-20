@@ -13,6 +13,7 @@
 #include <libcamera/base/log.h>
 
 #include <libcamera/controls.h>
+#include <libcamera/request.h>
 
 namespace libcamera {
 
@@ -26,6 +27,11 @@ namespace ipa {
  * \todo Should be larger than ISP delay + sensor delay
  */
 static constexpr uint32_t kMaxFrameContexts = 16;
+
+struct IPAFrameContext {
+	unsigned int frame;
+	Request::ErrorFlags error;
+};
 
 template<typename FrameContext>
 class FCQueue : public std::array<FrameContext, kMaxFrameContexts>

@@ -420,7 +420,8 @@ bool Af::afIsOutOfFocus(IPAContext context)
  *
  * [1] Hill Climbing Algorithm, https://en.wikipedia.org/wiki/Hill_climbing
  */
-void Af::process(IPAContext &context, [[maybe_unused]] IPAFrameContext *frameContext,
+void Af::process(IPAContext &context,
+		 [[maybe_unused]] IPU3FrameContext &frameContext,
 		 const ipu3_uapi_stats_3a *stats)
 {
 	/* Evaluate the AF buffer length */

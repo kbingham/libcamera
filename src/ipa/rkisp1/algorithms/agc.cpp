@@ -281,7 +281,7 @@ double Agc::measureBrightness(const rkisp1_cif_isp_hist_stat *hist) const
  * new exposure and gain for the scene.
  */
 void Agc::process(IPAContext &context,
-		  [[maybe_unused]] IPAFrameContext *frameContext,
+		  [[maybe_unused]] RKISP1FrameContext &frameContext,
 		  const rkisp1_stat_buffer *stats)
 {
 	const rkisp1_cif_isp_stat *params = &stats->params;

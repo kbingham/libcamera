@@ -73,8 +73,7 @@ struct IPAActiveState {
 	} toneMapping;
 };
 
-struct IPAFrameContext {
-	uint32_t frame;
+struct IPU3FrameContext : public IPAFrameContext {
 
 	struct {
 		uint32_t exposure;
@@ -86,7 +85,7 @@ struct IPAContext {
 	IPASessionConfiguration configuration;
 	IPAActiveState activeState;
 
-	FCQueue<IPAFrameContext> frameContexts;
+	FCQueue<IPU3FrameContext> frameContexts;
 };
 
 } /* namespace ipa::ipu3 */
