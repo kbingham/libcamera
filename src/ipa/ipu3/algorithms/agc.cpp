@@ -317,6 +317,7 @@ double Agc::estimateLuminance(IPAActiveState &activeState,
 /**
  * \brief Process IPU3 statistics, and run AGC operations
  * \param[in] context The shared IPA context
+ * \param[in] frame The current frame sequence number
  * \param[in] frameContext The current frame context
  * \param[in] stats The IPU3 statistics and ISP results
  *
@@ -324,6 +325,7 @@ double Agc::estimateLuminance(IPAActiveState &activeState,
  * new exposure and gain for the scene.
  */
 void Agc::process(IPAContext &context,
+		  [[maybe_unused]] unsigned int frame,
 		  IPU3FrameContext &frameContext,
 		  const ipu3_uapi_stats_3a *stats)
 {

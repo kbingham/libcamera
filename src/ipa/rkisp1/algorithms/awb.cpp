@@ -123,6 +123,7 @@ void Awb::prepare(IPAContext &context,
  * \copydoc libcamera::ipa::Algorithm::process
  */
 void Awb::process([[maybe_unused]] IPAContext &context,
+		  [[maybe_unused]] unsigned int frame,
 		  [[maybe_unused]] RKISP1FrameContext &frameCtx,
 		  const rkisp1_stat_buffer *stats)
 {

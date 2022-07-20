@@ -21,7 +21,8 @@ public:
 	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
 	void prepare(IPAContext &context, unsigned int frame,
 		     IPU3FrameContext &frameContext, ipu3_uapi_params *params) override;
-	void process(IPAContext &context, IPU3FrameContext &frameContext,
+	void process(IPAContext &context, unsigned int frame,
+		     IPU3FrameContext &frameContext,
 		     const ipu3_uapi_stats_3a *stats) override;
 
 private:
