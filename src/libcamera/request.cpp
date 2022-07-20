@@ -339,10 +339,15 @@ void Request::Private::timeout()
  * Flags to report non-fatal errors
  * \var Request::NoError
  * No error
+ *
  * \var Request::ControlError
  * Control Error. At least on control was not able to be applied to the device.
  * The application should compare the metadata to the requested control values
  * to check which controls weren't applied.
+ *
+ * \var Request::PFCError
+ * A per-frame-control error has occured. Controls that were expected to be set
+ * during the processing of this request were not processed in time.
  */
 
 /**

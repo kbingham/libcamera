@@ -47,6 +47,7 @@ public:
 	enum ErrorFlag {
 		NoError = 0,
 		ControlError = (1 << 0),
+		PFCError = (1 << 1),
 	};
 
 	using ErrorFlags = Flags<ErrorFlag>;
