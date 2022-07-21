@@ -165,6 +165,7 @@ void Request::Private::cancel()
  */
 void Request::Private::reset()
 {
+	errors_ = Request::NoError;
 	sequence_ = 0;
 	cancelled_ = false;
 	prepared_ = false;
@@ -287,6 +288,21 @@ void Request::Private::notifierActivated(FrameBuffer *buffer)
 	emitPrepareCompleted();
 }
 
+/**
+ * \brief Update the error flags of the Request
+ * \param[in] error Error flags to apply on the Request
+ *
+ * Flag \a error in the Request which will get reported to the application when
+ * the Request completes.
+ *
+ * Setting an error flag does not cause a Request to fail, and once set it can
+ * only be cleared by the application destroying the Request or calling reuse().
+ */
+void Request::Private::setError(Errors error)
+{
+	errors_ |= error;
+}
+
 void Request::Private::timeout()
 {
 	/* A timeout can only happen if there are fences not yet signalled. */
@@ -319,6 +335,25 @@ void Request::Private::timeout()
  * Don't reuse buffers
  * \var Request::ReuseBuffers
  * Reuse the buffers that were previously added by addBuffer()
+ */
+
+/**
+ * \enum Request::ErrorFlag
+ * Flags to report errors on a completed request
+ *
+ * \var Request::NoError
+ * No error. The Request completed succesfully and all its buffer contain
+ * valid data
+ *
+ * \var Request::ControlError
+ * Control Error. At least one control was not applied correctly to the camera.
+ * The application should compare the metadata to the requested control values
+ * to check which controls weren't applied.
+ */
+
+/**
+ * \typedef Request::Errors
+ * The error state of the request defined by \a Request::ErrorFlag
  */
 
 /**
@@ -555,13 +590,42 @@ uint32_t Request::sequence() const
  * \brief Retrieve the request completion status
  *
  * The request status indicates whether the request has completed successfully
- * or with an error. When requests are created and before they complete the
- * request status is set to RequestPending, and is updated at completion time
- * to RequestComplete. If a request is cancelled at capture stop before it has
- * completed, its status is set to RequestCancelled.
+ * or has been cancelled before being processed.
+ *
+ * Requests are created with their status set to RequestPending. When
+ * a Request is successfully processed and completed by the Camera its
+ * status is set to RequestComplete. If a Request is cancelled before
+ * being processed, for example because the Camera has been stopped
+ * before the request is completed, its status is set to RequestCancelled.
+ *
+ * Successfully completed requests can complete with errors. Applications shall
+ * inspect the error mask returned by Request::error() before accessing buffers
+ * and data associated with a completed request.
  *
  * \return The request completion status
  */
+
+/**
+ * \brief Retrieve the mask of error flags associated with a completed request
+ *
+ * The request could complete with errors, which indicate failures in
+ * completing correctly parts of the request submitted by the application.
+ *
+ * The possible failure reasons are defined by the error flags defined
+ * by Request::ErrorFlag and application are expected to retrieve the
+ * mask of error flags by using this function before accessing the
+ * buffers and data associated with a completed request.
+ *
+ * Error conditions reported through this function do not change the
+ * request completion status retrieved through Request::status() which
+ * indicates if the Request has been processed or not.
+ *
+ * \return A mask of error identifier with which the request was completed
+ */
+Request::Errors Request::error() const
+{
+	return _d()->errors_;
+}
 
 /**
  * \brief Check if a request has buffers yet to be completed

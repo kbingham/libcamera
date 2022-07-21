@@ -42,6 +42,8 @@ public:
 	void prepare(std::chrono::milliseconds timeout = 0ms);
 	Signal<> prepared;
 
+	void setError(Errors error);
+
 private:
 	friend class PipelineHandler;
 	friend std::ostream &operator<<(std::ostream &out, const Request &r);
@@ -59,6 +61,8 @@ private:
 	std::unordered_set<FrameBuffer *> pending_;
 	std::map<FrameBuffer *, std::unique_ptr<EventNotifier>> notifiers_;
 	std::unique_ptr<Timer> timer_;
+
+	Errors errors_;
 };
 
 } /* namespace libcamera */
