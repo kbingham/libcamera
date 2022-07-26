@@ -43,6 +43,9 @@ OptionsParser::Options parseOptions(int argc, char *argv[])
 			 "Set configuration of a camera stream", "stream", true);
 	parser.addOption(OptVerbose, OptionNone,
 			 "Print verbose log messages", "verbose");
+	parser.addOption(OptCaptureScript, OptionString,
+			 "Load a capture session configuration script from a file",
+			 "script", ArgumentRequired, "script");
 
 	OptionsParser::Options options = parser.parse(argc, argv);
 	if (options.isSet(OptHelp))
