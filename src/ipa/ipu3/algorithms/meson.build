@@ -5,5 +5,6 @@ ipu3_ipa_algorithms = files([
     'agc.cpp',
     'awb.cpp',
     'blc.cpp',
+    'shd.cpp',
     'tone_mapping.cpp',
 ])
