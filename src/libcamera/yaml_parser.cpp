@@ -676,7 +676,7 @@ int YamlParserContext::parseDictionaryOrList(YamlObject::Type type,
 	 * Add a safety counter to make sure we don't loop indefinitely in case
 	 * the YAML file is malformed.
 	 */
-	for (unsigned int sentinel = 1000; sentinel; sentinel--) {
+	for (unsigned int sentinel = 10000; sentinel; sentinel--) {
 		auto evt = nextEvent();
 		if (!evt)
 			return -EINVAL;
@@ -690,7 +690,7 @@ int YamlParserContext::parseDictionaryOrList(YamlObject::Type type,
 	}
 
 	LOG(YamlParser, Error) << "The YAML file contains a List or Dictionary"
-				  " whose size exceeds the parser's limit (1000)";
+				  " whose size exceeds the parser's limit (10000)";
 
 	return -EINVAL;
 }
