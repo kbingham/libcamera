@@ -19,7 +19,6 @@
 #include <QFileDialog>
 #include <QImage>
 #include <QImageWriter>
-#include <QInputDialog>
 #include <QMutexLocker>
 #include <QStandardPaths>
 #include <QStringList>
@@ -30,6 +29,7 @@
 
 #include "../cam/image.h"
 
+#include "cam_select_dialog.h"
 #include "dng_writer.h"
 #ifndef QT_NO_OPENGL
 #include "viewfinder_gl.h"
@@ -290,24 +290,13 @@ void MainWindow::switchCamera(int index)
 
 std::string MainWindow::chooseCamera()
 {
-	QStringList cameras;
-	bool result;
+	if (!cameraSelectorDialog_)
+		cameraSelectorDialog_ = new CameraSelectorDialog(cm_, this);
 
-	/* If only one camera is available, use it automatically. */
-	if (cm_->cameras().size() == 1)
-		return cm_->cameras()[0]->id();
-
-	/* Present a dialog box to pick a camera. */
-	for (const std::shared_ptr<Camera> &cam : cm_->cameras())
-		cameras.append(QString::fromStdString(cam->id()));
-
-	QString id = QInputDialog::getItem(this, "Select Camera",
-					   "Camera:", cameras, 0,
-					   false, &result);
-	if (!result)
+	if (cameraSelectorDialog_->exec() == QDialog::Accepted)
+		return cameraSelectorDialog_->getCameraId();
+	else
 		return std::string();
-
-	return id.toStdString();
 }
 
 int MainWindow::openCamera()

@@ -23,11 +23,13 @@
 #include <QMainWindow>
 #include <QMutex>
 #include <QObject>
+#include <QPointer>
 #include <QQueue>
 #include <QTimer>
 
 #include "../cam/stream_options.h"
 
+#include "cam_select_dialog.h"
 #include "viewfinder.h"
 
 class QAction;
@@ -98,6 +100,8 @@ private:
 
 	QString title_;
 	QTimer titleTimer_;
+
+	QPointer<CameraSelectorDialog> cameraSelectorDialog_;
 
 	/* Options */
 	const OptionsParser::Options &options_;
