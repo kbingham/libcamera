@@ -595,6 +595,9 @@ void MainWindow::processHotplug(HotplugEvent *e)
 
 	if (event == HotplugEvent::HotPlug) {
 		cameraCombo_->addItem(QString::fromStdString(camera->id()));
+
+		if (cameraSelectorDialog_)
+			cameraSelectorDialog_->cameraAdded(camera);
 	} else if (event == HotplugEvent::HotUnplug) {
 		/* Check if the currently-streaming camera is removed. */
 		if (camera == camera_.get()) {
@@ -606,6 +609,9 @@ void MainWindow::processHotplug(HotplugEvent *e)
 
 		int camIndex = cameraCombo_->findText(QString::fromStdString(camera->id()));
 		cameraCombo_->removeItem(camIndex);
+
+		if (cameraSelectorDialog_)
+			cameraSelectorDialog_->cameraRemoved(camera);
 	}
 }
 

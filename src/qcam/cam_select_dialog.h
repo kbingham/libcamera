@@ -29,6 +29,10 @@ public:
 
 	std::string getCameraId();
 
+	/* Hotplug / Unplug Support. */
+	void cameraAdded(libcamera::Camera *camera);
+
+	void cameraRemoved(libcamera::Camera *camera);
 private:
 	libcamera::CameraManager *cm_;
 
