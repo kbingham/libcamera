@@ -15,6 +15,7 @@ endif
 qcam_enabled = true
 
 qcam_sources = files([
+    '../cam/capture_script.cpp',
     '../cam/image.cpp',
     '../cam/options.cpp',
     '../cam/stream_options.cpp',
@@ -39,6 +40,7 @@ qcam_resources = files([
 qcam_deps = [
     libatomic,
     libcamera_public,
+    libyaml,
     qt5_dep,
 ]
 

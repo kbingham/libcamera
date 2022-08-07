@@ -20,8 +20,8 @@
 #include <QString>
 
 CameraSelectorDialog::CameraSelectorDialog(libcamera::CameraManager *cameraManager,
-					   QWidget *parent)
-	: QDialog(parent), cm_(cameraManager)
+					   bool isScriptRunning, QWidget *parent)
+	: QDialog(parent), cm_(cameraManager), isScriptRunning_(isScriptRunning)
 {
 	/* Use a QFormLayout for the dialog. */
 	QFormLayout *camSelectDialogLayout = new QFormLayout(this);
@@ -42,6 +42,16 @@ CameraSelectorDialog::CameraSelectorDialog(libcamera::CameraManager *cameraManag
 				cameraIdComboBox_->currentText().toStdString()));
 		});
 
+	captureScriptButton_ = new QPushButton;
+	connect(captureScriptButton_, &QPushButton::clicked,
+		this, &CameraSelectorDialog::handleCaptureScriptButton);
+
+	/* Display the action that would be performed when button is clicked. */
+	if (isScriptRunning_)
+		captureScriptButton_->setText("Stop");
+	else
+		captureScriptButton_->setText("Open");
+
 	/* Setup the QDialogButton Box */
 	QDialogButtonBox *dialogButtonBox =
 		new QDialogButtonBox(QDialogButtonBox::Ok |
@@ -56,6 +66,7 @@ CameraSelectorDialog::CameraSelectorDialog(libcamera::CameraManager *cameraManag
 	camSelectDialogLayout->addRow("Camera: ", cameraIdComboBox_);
 	camSelectDialogLayout->addRow("Location: ", cameraLocation_);
 	camSelectDialogLayout->addRow("Model: ", cameraModel_);
+	camSelectDialogLayout->addRow("Capture Script: ", captureScriptButton_);
 	camSelectDialogLayout->addWidget(dialogButtonBox);
 }
 
@@ -111,4 +122,36 @@ void CameraSelectorDialog::updateCamInfo(const std::shared_ptr<libcamera::Camera
 				    .value_or("Unknown");
 
 	cameraModel_->setText(QString::fromStdString(model));
+}
+
+/* Capture script support. */
+void CameraSelectorDialog::handleCaptureScriptButton()
+{
+	if (isScriptRunning_) {
+		Q_EMIT stopCaptureScript();
+		isScriptRunning_ = false;
+		captureScriptButton_->setText("Open");
+	} else {
+		scriptPath_ = QFileDialog::getOpenFileName(this, "Run Capture Script",
+							   QDir::currentPath(), "Capture Script (*.yaml)")
+				      .toStdString();
+
+		if (!scriptPath_.empty())
+			captureScriptButton_->setText("Loaded");
+	}
+}
+
+void CameraSelectorDialog::informScriptReset()
+{
+	qInfo("informed of script reset");
+	isScriptRunning_ = false;
+	scriptPath_.clear();
+	captureScriptButton_->setText("Open");
+}
+
+void CameraSelectorDialog::informScriptRunning(std::string scriptPath)
+{
+	isScriptRunning_ = true;
+	scriptPath_ = scriptPath;
+	captureScriptButton_->setText("Stop");
 }

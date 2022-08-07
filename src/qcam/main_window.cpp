@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <iomanip>
+#include <memory>
 #include <string>
 
 #include <libcamera/camera_manager.h>
@@ -19,6 +20,7 @@
 #include <QFileDialog>
 #include <QImage>
 #include <QImageWriter>
+#include <QMessageBox>
 #include <QMutexLocker>
 #include <QStandardPaths>
 #include <QStringList>
@@ -150,6 +152,9 @@ MainWindow::MainWindow(CameraManager *cm, const OptionsParser::Options &options)
 		quit();
 		return;
 	}
+
+	/* Start capture script. */
+	loadCaptureScript();
 
 	startStopAction_->setChecked(true);
 }
@@ -290,14 +295,61 @@ void MainWindow::switchCamera()
 	startStopAction_->setChecked(true);
 }
 
+void MainWindow::stopCaptureScript()
+{
+	if (script_) {
+		script_.reset();
+		cameraSelectorDialog_->informScriptReset();
+	}
+}
+
+void MainWindow::loadCaptureScript()
+{
+	if (scriptPath_.empty() || camera_ == nullptr)
+		return;
+
+	script_ = std::make_unique<CaptureScript>(camera_, scriptPath_);
+
+	/*
+	 * If we are already capturing, stop so we don't have stuck image
+	 * in viewfinder.
+	 */
+	bool wasCapturing = isCapturing_;
+	if (isCapturing_)
+		toggleCapture(false);
+
+	if (!script_->valid()) {
+		script_.reset();
+		if (cameraSelectorDialog_)
+			cameraSelectorDialog_->informScriptReset();
+
+		QMessageBox::critical(this, "Invalid Script",
+				      "Couldn't load the capture script");
+
+	} else
+		cameraSelectorDialog_->informScriptRunning(scriptPath_);
+
+	/* Start capture again if we were capturing before. */
+	if (wasCapturing)
+		toggleCapture(true);
+}
+
 std::string MainWindow::chooseCamera()
 {
+	bool scriptRunning = script_ != nullptr;
+
 	if (!cameraSelectorDialog_)
-		cameraSelectorDialog_ = new CameraSelectorDialog(cm_, this);
+		cameraSelectorDialog_ = new CameraSelectorDialog(cm_, scriptRunning, this);
+
+	connect(cameraSelectorDialog_, &CameraSelectorDialog::stopCaptureScript,
+		this, &MainWindow::stopCaptureScript);
 
 	if (cameraSelectorDialog_->exec() == QDialog::Accepted) {
 		std::string cameraId = cameraSelectorDialog_->getCameraId();
 		cameraSelectButton_->setText(QString::fromStdString(cameraId));
+
+		scriptPath_ = cameraSelectorDialog_->getCaptureScript();
+		loadCaptureScript();
 
 		return cameraId;
 	} else
@@ -505,6 +557,7 @@ int MainWindow::startCapture()
 	previousFrames_ = 0;
 	framesCaptured_ = 0;
 	lastBufferTime_ = 0;
+	queueCount_ = 0;
 
 	ret = camera_->start();
 	if (ret) {
@@ -784,5 +837,10 @@ void MainWindow::renderComplete(FrameBuffer *buffer)
 
 int MainWindow::queueRequest(Request *request)
 {
+	if (script_)
+		request->controls() = script_->frameControls(queueCount_);
+
+	queueCount_++;
+
 	return camera_->queueRequest(request);
 }
