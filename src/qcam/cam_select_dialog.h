@@ -18,26 +18,26 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFileDialog>
+#include <QFont>
 #include <QFormLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QString>
+#include <QVBoxLayout>
+#include <QWidget>
 
 class CameraSelectorDialog : public QDialog
 {
 	Q_OBJECT
 public:
 	CameraSelectorDialog(libcamera::CameraManager *cameraManager,
-			     bool isScriptRunning, QWidget *parent);
+			     bool isScriptRunning, std::string scriptPath, QWidget *parent);
 
 	~CameraSelectorDialog() = default;
 
 	std::string getCameraId();
 
-	std::string getCaptureScript()
-	{
-		return scriptPath_;
-	}
+	std::string getCaptureScript();
 
 	/* Hotplug / Unplug Support. */
 	void cameraAdded(libcamera::Camera *camera);
@@ -65,5 +65,8 @@ private:
 	QComboBox *cameraIdComboBox_;
 	QLabel *cameraLocation_;
 	QLabel *cameraModel_;
+
+	QVBoxLayout *captureWidgetLayout_;
 	QPushButton *captureScriptButton_;
+	QLabel *scriptPathLabel_ = new QLabel;
 };

@@ -339,7 +339,8 @@ std::string MainWindow::chooseCamera()
 	bool scriptRunning = script_ != nullptr;
 
 	if (!cameraSelectorDialog_)
-		cameraSelectorDialog_ = new CameraSelectorDialog(cm_, scriptRunning, this);
+		cameraSelectorDialog_ = new CameraSelectorDialog(cm_, scriptRunning,
+								 scriptPath_, this);
 
 	connect(cameraSelectorDialog_, &CameraSelectorDialog::stopCaptureScript,
 		this, &MainWindow::stopCaptureScript);
