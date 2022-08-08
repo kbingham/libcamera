@@ -41,10 +41,13 @@ LensShadingCorrection::LensShadingCorrection()
 {
 }
 
+// Make this std::optional to support .value_or();
 static Size getSize(const YamlObject &tuningData,
 		    const char *prop)
 {
-	std::vector<double> data = tuningData[prop].getList<double>().value_or(std::vector<double>{});
+	std::vector<double> data = tuningData[prop]
+					.getList<double>()
+					.value_or(std::vector<double>{});
 
 	if (data.size() != 2)
 		return Size(0, 0);
@@ -135,10 +138,15 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
  * channel and enable the corresponding ImgU block processing.
  */
 void LensShadingCorrection::prepare([[maybe_unused]] IPAContext &context,
-			      ipu3_uapi_params *params)
+				    unsigned int frame,
+				    IPAFrameContext &frameContext,
+				    ipu3_uapi_params *params)
 {
 	if (initialized_)
 		return;
+
+	(void)frame;
+	(void)frameContext;
 
 	ipu3_uapi_shd_config_static *shd = &params->acc_param.shd.shd;
 	ipu3_uapi_shd_lut *shd_lut = &params->acc_param.shd.shd_lut;
@@ -184,20 +192,27 @@ void LensShadingCorrection::prepare([[maybe_unused]] IPAContext &context,
 
 	/* Prepare the tables */
 
+	LOG(IPU3SHD, Info)
+	       	<< "Current colour temperature is " 
+		<< context.activeState.awb.temperatureK;
+
+	const componentData_t &set = sets_[0];
+
 	unsigned int pos = 0;
 	for (unsigned int s = 0; s < grid->height / grid->grid_height_per_slice; s++) {
 		for (unsigned int c = 0; c < grid->width * grid->grid_height_per_slice; c++) {
-			if (pos >= bData_.size()) {
-				LOG(IPU3SHD, Error) << "Reached the end of the tables: " << pos;
+			if (pos >= set.r.size()) {
+				LOG(IPU3SHD, Error)
+					<< "Reached the end of the tables: " << pos;
 				break;
 			}
 
-			LOG(IPU3SHD, Error) << rData_[pos];
+			LOG(IPU3SHD, Error) << set.r[pos];
 
-			shd_lut->sets[s].r_and_gr[c].r = rData_[pos];
-			shd_lut->sets[s].r_and_gr[c].gr = grData_[pos];
-			shd_lut->sets[s].gb_and_b[c].gb = gbData_[pos];
-			shd_lut->sets[s].gb_and_b[c].b = bData_[pos];
+			shd_lut->sets[s].r_and_gr[c].r = set.r[pos];
+			shd_lut->sets[s].r_and_gr[c].gr = set.gr[pos];
+			shd_lut->sets[s].gb_and_b[c].gb = set.gb[pos];
+			shd_lut->sets[s].gb_and_b[c].b = set.b[pos];
 			pos++;
 		}
 	}
