@@ -81,6 +81,13 @@ private:
 			return 0;
 		}
 
+		bool enabled = algoData["enabled"].get<bool>().value_or(true);
+		if (!enabled) {
+			LOG(IPAModuleAlgo, Info)
+				<< "Algorithm '" << name << "' is disabled";
+			return 0;
+		}
+
 		int ret = algo->init(context, algoData);
 		if (ret) {
 			LOG(IPAModuleAlgo, Error)
