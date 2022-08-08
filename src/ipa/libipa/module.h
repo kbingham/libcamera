@@ -78,7 +78,7 @@ private:
 		if (!algo) {
 			LOG(IPAModuleAlgo, Error)
 				<< "Algorithm '" << name << "' not found";
-			return -EINVAL;
+			return 0;
 		}
 
 		int ret = algo->init(context, algoData);
