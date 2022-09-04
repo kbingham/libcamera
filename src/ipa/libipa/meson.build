@@ -6,6 +6,7 @@ libipa_headers = files([
     'fc_queue.h',
     'histogram.h',
     'module.h',
+    'pixel.h',
 ])
 
 libipa_sources = files([
@@ -14,6 +15,7 @@ libipa_sources = files([
     'fc_queue.cpp',
     'histogram.cpp',
     'module.cpp',
+    'pixel.cpp',
 ])
 
 libipa_includes = include_directories('..')
