@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 
+# SPDX-License-Identifier: Apache-2.0
+# https://github.com/fsaintjacques/semver-tool
+
 set -o errexit -o nounset -o pipefail
 
 NAT='0|[1-9][0-9]*'
