@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Support debugging libcamera commands and applications.
+
+# We default to enabling the most debug
+# (that's why we're being used right)
+
+FILTER="*"
+LEVEL="0"
+STRACE=""
+
+while [[ $# -gt 0 ]]
+do
+case $1 in
+    -x)
+        set -x;
+        shift;
+        ;;
+    -s|--strace)
+	STRACE="strace -e ioctl -f --"
+	shift;
+	;;
+    -f|--filter)
+        FILTER="$2";
+	shift; shift;
+        ;;
+    -l|--level)
+	LEVEL="$2";
+	shift; shift;
+        ;;
+    -h|--help)
+	echo "The following filters are available:"
+	git grep "^LOG_DEFINE_CATEGORY" | \
+		awk -F '[()]' '{print $2}' | \
+		sort
+	exit
+	;;
+    *|--)  # unknown option, The rest belongs to the command
+	break;
+        ;;
+esac
+done
+
+LIBCAMERA_LOG_LEVELS=$FILTER:$LEVEL $STRACE "${@}"
