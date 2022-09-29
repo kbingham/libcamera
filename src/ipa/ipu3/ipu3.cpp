@@ -168,7 +168,7 @@ protected:
 private:
 	void updateControls(const IPACameraSensorInfo &sensorInfo,
 			    const ControlInfoMap &sensorControls,
-			    ControlInfoMap *ipaControls);
+			    ControlInfoMap::Map &controls);
 	void updateSessionConfiguration(const ControlInfoMap &sensorControls);
 
 	void setControls(unsigned int frame);
@@ -178,6 +178,8 @@ private:
 
 	ControlInfoMap sensorCtrls_;
 	ControlInfoMap lensCtrls_;
+
+	ControlInfoMap::Map ipaControls_;
 
 	IPACameraSensorInfo sensorInfo_;
 
@@ -300,8 +302,6 @@ int IPAIPU3::init(const IPASettings &settings,
 		  const ControlInfoMap &sensorControls,
 		  ControlInfoMap *ipaControls)
 {
-	ControlInfoMap::Map controls{};
-
 	camHelper_ = CameraSensorHelperFactoryBase::create(settings.sensorModel);
 	if (camHelper_ == nullptr) {
 		LOG(IPAIPU3, Error)
@@ -347,9 +347,9 @@ int IPAIPU3::init(const IPASettings &settings,
 		return ret;
 
 	/* Initialize sensor specific controls. */
-	updateControls(sensorInfo, sensorControls, controls);
+	updateControls(sensorInfo, sensorControls, ipaControls_);
 
-	*ipaControls = ControlInfoMap(std::move(controls), controls::controls);
+	*ipaControls = ControlInfoMap(ipaControls_, controls::controls);
 
 	return 0;
 }
@@ -491,7 +491,8 @@ int IPAIPU3::configure(const IPAConfigInfo &configInfo,
 	calculateBdsGrid(configInfo.bdsOutputSize);
 
 	/* Update the camera controls using the new sensor settings. */
-	updateControls(sensorInfo_, sensorCtrls_, ipaControls);
+	updateControls(sensorInfo_, sensorCtrls_, ipaControls_);
+	*ipaControls = ControlInfoMap(ipaControls_, controls::controls);
 
 	/* Update the IPASessionConfiguration using the sensor settings. */
 	updateSessionConfiguration(sensorCtrls_);
