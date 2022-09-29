@@ -242,9 +242,8 @@ void IPAIPU3::updateSessionConfiguration(const ControlInfoMap &sensorControls)
  */
 void IPAIPU3::updateControls(const IPACameraSensorInfo &sensorInfo,
 			     const ControlInfoMap &sensorControls,
-			     ControlInfoMap *ipaControls)
+			     ControlInfoMap::Map &controls)
 {
-	ControlInfoMap::Map controls{};
 	double lineDuration = context_.configuration.sensor.lineDuration.get<std::micro>();
 
 	/*
@@ -287,7 +286,6 @@ void IPAIPU3::updateControls(const IPACameraSensorInfo &sensorInfo,
 							       frameDurations[1],
 							       frameDurations[2]);
 
-	*ipaControls = ControlInfoMap(std::move(controls), controls::controls);
 }
 
 /**
@@ -302,6 +300,8 @@ int IPAIPU3::init(const IPASettings &settings,
 		  const ControlInfoMap &sensorControls,
 		  ControlInfoMap *ipaControls)
 {
+	ControlInfoMap::Map controls{};
+
 	camHelper_ = CameraSensorHelperFactoryBase::create(settings.sensorModel);
 	if (camHelper_ == nullptr) {
 		LOG(IPAIPU3, Error)
@@ -346,8 +346,10 @@ int IPAIPU3::init(const IPASettings &settings,
 	if (ret)
 		return ret;
 
-	/* Initialize controls. */
-	updateControls(sensorInfo, sensorControls, ipaControls);
+	/* Initialize sensor specific controls. */
+	updateControls(sensorInfo, sensorControls, controls);
+
+	*ipaControls = ControlInfoMap(std::move(controls), controls::controls);
 
 	return 0;
 }
