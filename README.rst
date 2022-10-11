@@ -119,6 +119,49 @@ setting the ``LIBCAMERA_LOG_LEVELS`` environment variable:
 
     :~$ LIBCAMERA_LOG_LEVELS=*:DEBUG cam -l
 
+Running the unit tests
+~~~~~~~~~~~~~~~~~~~~~~
+
+When submitting patches, it is recommeded to run the unit tests. To use the
+unit test framework, virtual test drivers are required to be loaded.
+
+The unit tests rely on kernel drivers which produce virtual devices. These can
+be either built into the kernel, or provided as modules (=y or =m):
+
+.. code::
+
+    CONFIG_MEDIA_TEST_SUPPORT=y
+    CONFIG_V4L_TEST_DRIVERS=y
+
+    CONFIG_VIDEO_VIM2M=m
+    CONFIG_VIDEO_VIMC=m
+    CONFIG_VIDEO_VIVID=m
+
+If the kernel provides the test drivers as modules - they need to be loaded
+before running the tests:
+
+.. code::
+
+    sudo modprobe vimc
+    sudo modprobe vivid
+    sudo modprobe vim2m
+
+Make sure your build configuration has tests enabled:
+
+.. code::
+
+    meson build -Dtest=true
+
+Enabling 'test=true' will implcitly add test pipeline handlers including the
+VIMC pipeline handler to the build configuration.
+
+Then the tests can be run with
+
+.. code::
+
+  ninja -C build test
+
+
 Using GStreamer plugin
 ~~~~~~~~~~~~~~~~~~~~~~
 
