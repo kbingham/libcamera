@@ -176,6 +176,7 @@ pipelines_support = {
     'simple':       arch_arm,
     'uvcvideo':     ['any'],
     'vimc':         ['test'],
+    'fake':         ['test'],
 }
 
 if pipelines.contains('all')
