@@ -172,7 +172,9 @@ G_DEFINE_TYPE_WITH_CODE(GstLibcameraProvider, gst_libcamera_provider,
 static GList *
 gst_libcamera_provider_probe(GstDeviceProvider *provider)
 {
+#ifndef GST_DISABLE_GST_DEBUG
 	GstLibcameraProvider *self = GST_LIBCAMERA_PROVIDER(provider);
+#endif
 	std::shared_ptr<CameraManager> cm;
 	GList *devices = nullptr;
 	gint ret;
