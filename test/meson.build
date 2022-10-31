@@ -69,6 +69,7 @@ internal_tests = [
     {'name': 'threads', 'sources': 'threads.cpp', 'dependencies': [libthreads]},
     {'name': 'timer', 'sources': ['timer.cpp']},
     {'name': 'timer-thread', 'sources': ['timer-thread.cpp']},
+    {'name': 'udma-allocator', 'sources': ['udma-allocator.cpp']},
     {'name': 'unique-fd', 'sources': ['unique-fd.cpp']},
     {'name': 'utils', 'sources': ['utils.cpp']},
     {'name': 'yaml-parser', 'sources': ['yaml-parser.cpp']},

@@ -39,6 +39,7 @@ libcamera_internal_headers = files([
     'request.h',
     'source_paths.h',
     'sysfs.h',
+    'udma_allocator.h',
     'v4l2_device.h',
     'v4l2_pixelformat.h',
     'v4l2_subdevice.h',

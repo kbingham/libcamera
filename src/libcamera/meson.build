@@ -43,6 +43,7 @@ libcamera_sources = files([
     'stream.cpp',
     'sysfs.cpp',
     'transform.cpp',
+    'udma_allocator.cpp',
     'v4l2_device.cpp',
     'v4l2_pixelformat.cpp',
     'v4l2_subdevice.cpp',
