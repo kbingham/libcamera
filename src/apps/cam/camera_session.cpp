@@ -164,8 +164,18 @@ void CameraSession::infoConfiguration() const
 				  << formats.range(pixelformat).toString()
 				  << std::endl;
 
-			for (const Size &size : formats.sizes(pixelformat))
-				std::cout << "  - " << size << std::endl;
+			unsigned int maxSize = 300 * 1024;
+			std::cout << "  -";
+			for (const Size &size : formats.sizes(pixelformat)) {
+				if (size.width * size.height > maxSize) {
+					/* Group sizes */
+					std::cout << std::endl
+						  << "  -";
+					maxSize *= 2;
+				}
+				std::cout << " " << size;
+			}
+			std::cout << std::endl;
 		}
 
 		index++;
