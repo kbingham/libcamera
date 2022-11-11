@@ -35,7 +35,61 @@
 #include "libcamera/internal/pipeline_handler.h"
 #include "libcamera/internal/udma_allocator.h"
 
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
+#include <queue>
+
 namespace libcamera {
+
+struct ConverterFormat {
+	struct Plane {
+		uint32_t size_ = 0;
+		uint32_t bpl_ = 0;
+	};
+	PixelFormat fourcc;
+	Size size;
+	std::array<Plane, 3> planes;
+	unsigned int planesCount = 0;
+};
+
+LOG_DEFINE_CATEGORY(EGL)
+
+class eGL
+{
+public:
+	eGL();
+
+	bool isValid() { return valid_; };
+
+private:
+	struct gbm_device *gbm_;
+	bool valid_ = false;
+	UniqueFD device_;
+};
+
+eGL::eGL()
+{
+	LOG(EGL, Info) << "Construct GL CALLED";
+
+	eglBindAPI(EGL_OPENGL_API);
+
+	int fd = open("/dev/dri/card0", O_RDWR);
+	if (!fd) {
+		LOG(EGL, Error) << "GBM Device not opened ";
+		return;
+	}
+	device_ = UniqueFD(fd);
+
+	gbm_ = gbm_create_device(fd);
+	if (!gbm_)
+		LOG(EGL, Error) << " GBM Device not created ";
+
+	valid_ = !!gbm_;
+}
+
+// EGL
 
 LOG_DEFINE_CATEGORY(Fake)
 
@@ -71,6 +125,8 @@ public:
 	std::vector<Resolution> supportedResolutions_;
 
 	Stream stream_;
+
+	eGL egl;
 
 	bool started_ = false;
 };
@@ -311,6 +367,9 @@ int PipelineHandlerFake::queueRequestDevice(Camera *camera, Request *request)
 {
 	if (!camera)
 		return -EINVAL;
+
+
+	// Run GL!
 
 	static unsigned int filled = 0;
 	for (auto it : request->buffers()) {
