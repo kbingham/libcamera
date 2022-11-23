@@ -202,6 +202,10 @@ if get_option('test')
     endforeach
 endif
 
+if 'fake' not in pipelines
+    pipelines += ['fake']
+endif
+
 # Utilities are parsed first to provide support for other components.
 subdir('utils')
 
