@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <memory>
 #include <set>
+#include <unistd.h>
 #include <vector>
 
 #include <libcamera/base/log.h>
@@ -29,6 +30,7 @@
 #include "libcamera/internal/device_enumerator.h"
 #include "libcamera/internal/formats.h"
 #include "libcamera/internal/framebuffer.h"
+#include "libcamera/internal/mapped_framebuffer.h"
 #include "libcamera/internal/media_device.h"
 #include "libcamera/internal/pipeline_handler.h"
 #include "libcamera/internal/udma_allocator.h"
@@ -289,13 +291,40 @@ void PipelineHandlerFake::stopDevice(Camera *camera)
 	data->started_ = false;
 }
 
+static void FillBuffer(const FrameBuffer *buffer, int idx) {
+	MappedFrameBuffer mfb(buffer, MappedFrameBuffer::MapFlag::ReadWrite);
+
+	if (mfb.isValid()) {
+		MappedBuffer::Plane plane = mfb.planes()[0];
+		uint8_t *data = plane.data();
+
+		for (unsigned int x = 0; x < plane.size(); x += 4) {
+			/* R */ data[x + 0] = 255.0 * ((float)x / plane.size());
+			/* G */ data[x + 1] = 255.0 - (255.0 * ((float)x / plane.size()));
+			/* B */ data[x + 2] = 255.0 * ((float)idx / 4);
+			/* A */ data[x + 3] = 0x00;
+		}
+	}
+}
+
 int PipelineHandlerFake::queueRequestDevice(Camera *camera, Request *request)
 {
 	if (!camera)
 		return -EINVAL;
 
-	for (auto it : request->buffers())
+	static unsigned int filled = 0;
+	for (auto it : request->buffers()) {
+		if (filled < FakeCameraConfiguration::kBufferCount) {
+			FillBuffer(it.second, filled);
+			filled++;
+		}
+
+		/* Run exceptionally slowly to view each individual buffer. */
+		if (camera->_d()->isRunning())
+			sleep(1);
+
 		completeBuffer(request, it.second);
+	}
 
 	// TODO: request.metadata()
 	request->metadata().set(controls::SensorTimestamp, CurrentTimestamp());
