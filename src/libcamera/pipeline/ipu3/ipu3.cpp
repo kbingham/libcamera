@@ -1190,6 +1190,12 @@ int IPU3CameraData::loadIPA()
 	if (ipaTuningFile.empty())
 		ipaTuningFile = ipa_->configurationFile("uncalibrated.yaml");
 
+	char const *envConfig = utils::secure_getenv("LIBCAMERA_IPU3_TUNING_FILE");
+	if (envConfig && *envConfig != '\0')
+		ipaTuningFile = std::string(envConfig);
+
+	LOG(IPU3, Info) << "Using tuning file from : " << ipaTuningFile;
+
 	ret = ipa_->init(IPASettings{ ipaTuningFile, sensor->model() },
 			 sensorInfo, sensor->controls(), &ipaControls_);
 	if (ret) {
