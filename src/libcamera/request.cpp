@@ -114,14 +114,13 @@ void Request::Private::complete()
 {
 	Request *request = _o<Request>();
 
+	LOG(Request, Debug) << request->toString();
+	LIBCAMERA_TRACEPOINT(request_complete, this);
+
 	ASSERT(request->status() == RequestPending);
 	ASSERT(!hasPendingBuffers());
 
 	request->status_ = cancelled_ ? RequestCancelled : RequestComplete;
-
-	LOG(Request, Debug) << request->toString();
-
-	LIBCAMERA_TRACEPOINT(request_complete, this);
 }
 
 void Request::Private::doCancelRequest()
@@ -149,9 +148,11 @@ void Request::Private::doCancelRequest()
  */
 void Request::Private::cancel()
 {
-	LIBCAMERA_TRACEPOINT(request_cancel, this);
-
 	Request *request = _o<Request>();
+
+	LIBCAMERA_TRACEPOINT(request_cancel, this);
+	LOG(Request, Debug) << request->toString();
+
 	ASSERT(request->status() == RequestPending);
 
 	doCancelRequest();
@@ -289,12 +290,12 @@ void Request::Private::notifierActivated(FrameBuffer *buffer)
 
 void Request::Private::timeout()
 {
+	Request *request = _o<Request>();
+	LOG(Request, Debug) << "Request prepare timeout: " << request->cookie();
+
 	/* A timeout can only happen if there are fences not yet signalled. */
 	ASSERT(!notifiers_.empty());
 	notifiers_.clear();
-
-	Request *request = _o<Request>();
-	LOG(Request, Debug) << "Request prepare timeout: " << request->cookie();
 
 	cancel();
 
