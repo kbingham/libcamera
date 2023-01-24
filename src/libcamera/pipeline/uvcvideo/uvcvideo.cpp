@@ -368,7 +368,7 @@ int PipelineHandlerUVC::queueRequestDevice(Camera *camera, Request *request)
 	FrameBuffer *buffer = request->findBuffer(&data->stream_);
 	if (!buffer) {
 		LOG(UVC, Error)
-			<< "Attempt to queue request with invalid stream";
+			<< "Attempt to queue " << request->toString() << "with invalid stream";
 
 		return -ENOENT;
 	}

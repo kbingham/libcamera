@@ -1116,6 +1116,8 @@ int Camera::queueRequest(Request *request)
 {
 	Private *const d = _d();
 
+	LOG(Camera, Debug) << "Queueing: " << request->toString();
+
 	if (request->canary()) {
 		LOG(Camera, Error) << "Invalid request";
 		return -EINVAL;

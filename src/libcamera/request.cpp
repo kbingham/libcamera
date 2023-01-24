@@ -159,7 +159,7 @@ void Request::Private::cancel()
 	ASSERT(canary_ == REQUEST_CANARY);
 
 	LIBCAMERA_TRACEPOINT(request_cancel, this);
-	LOG(Request, Debug) << request->toString();
+	LOG(Request, Debug) << "Cancelling: " << request->toString();
 
 	ASSERT(request->status() == RequestPending);
 
@@ -372,6 +372,8 @@ Request::Request(Camera *camera, uint64_t cookie)
 
 Request::~Request()
 {
+	LOG(Request, Debug) << "Destroying " << toString();
+
 	LIBCAMERA_TRACEPOINT(request_destroy, this);
 
 	delete metadata_;
