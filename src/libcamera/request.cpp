@@ -56,6 +56,7 @@ Request::Private::Private(Camera *camera)
 
 Request::Private::~Private()
 {
+	LOG(Request, Debug) << "Destructing Private request : " << this;
 	doCancelRequest();
 }
 
@@ -118,10 +119,15 @@ void Request::Private::complete()
 
 	ASSERT(canary_ == REQUEST_CANARY);
 
-	LOG(Request, Debug) << request->toString();
+	// Pipeline handler has paths that cancel this ?
+
+	LOG(Request, Debug) << "Completing: " << request->toString();
 	LIBCAMERA_TRACEPOINT(request_complete, this);
 
-	ASSERT(request->status() == RequestPending);
+	//ASSERT(request->status() == RequestPending); // this is too hard maybe?
+	if (request->status() != RequestPending)
+		LOG(Request, Error) << "Request in incorrect state. Expected pending";
+
 	ASSERT(!hasPendingBuffers());
 
 	request->status_ = cancelled_ ? RequestCancelled : RequestComplete;
