@@ -487,7 +487,7 @@ int Request::addBuffer(const Stream *stream, FrameBuffer *buffer,
 		       std::unique_ptr<Fence> fence)
 {
 	if (canary_ != REQUEST_CANARY) {
-		LOG(Request, Error) << "Invalid Request object";
+		LOG(Request, Error) << "Attempt to add buffer to invalid request";
 		return -EINVAL;
 	}
 
