@@ -701,6 +701,11 @@ void UVCCameraData::bufferReady(FrameBuffer *buffer)
 {
 	Request *request = buffer->request();
 
+	if (!request) {
+		LOG(UVC, Error) << "Leaked buffer with no request";
+		return;
+	}
+
 	/* \todo Use the UVC metadata to calculate a more precise timestamp */
 	request->metadata().set(controls::SensorTimestamp,
 				buffer->metadata().timestamp);
