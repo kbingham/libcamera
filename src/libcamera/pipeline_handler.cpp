@@ -528,7 +528,21 @@ void PipelineHandler::completeRequest(Request *request)
 		if (req->status() == Request::RequestPending)
 			break;
 
-		ASSERT(!req->hasPendingBuffers());
+		/*
+Completeing this request queue in error condition means we might have cancelled requests to handle.
+
+[6:36:14.222292789] [59719] DEBUG V4L2 v4l2_videodevice.cpp:1764 /dev/video0[33:cap]: Dequeuing buffer 2
+[6:36:14.222443384] [59719] DEBUG Request request.cpp:124 Completing: Request(2:P:0/1:10)
+[6:36:14.222479377] [59719] DEBUG Pipeline pipeline_handler.cpp:531 Completeing back queued Request(2:C:0/1:10)
+[6:36:14.222525289] [59719] DEBUG Pipeline pipeline_handler.cpp:531 Completeing back queued Request(3:X:1/1:11)
+[6:36:14.222557719] [59719] FATAL default pipeline_handler.cpp:534 assertion "!req->hasPendingBuffers()" failed in completeRequest()
+*/
+
+		LOG(Pipeline, Debug)
+			<< "Completeing back queued " << req->toString();
+
+		// Either we have no pending buffers, or we're not a pending request...
+		ASSERT(!req->hasPendingBuffers() || req->status() != Request::RequestPending);
 		data->queuedRequests_.pop_front();
 		camera->requestComplete(req);
 	}
