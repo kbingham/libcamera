@@ -690,6 +690,14 @@ controls:
         that is twice that of the full resolution mode. This value will be valid
         after the configure method has returned successfully.
 
+
+  - Devices:
+      type: dev_t
+      size: [n]
+      description: |
+        A list of integer values of type dev_t denoting major and minor device
+        number of the underlying devices used in the operation of this camera.
+
   # ----------------------------------------------------------------------------
   # Draft properties section
 
