@@ -395,6 +395,16 @@ double CameraSensorHelperAr0521::gain(uint32_t gainCode) const
 
 REGISTER_CAMERA_SENSOR_HELPER("ar0521", CameraSensorHelperAr0521)
 
+class CameraSensorHelperImx214 : public CameraSensorHelper
+{
+public:
+        CameraSensorHelperImx214()
+        {
+                analogueGainConstants_ = { AnalogueGainLinear, 0, 256, -1, 256 };
+        }
+};
+REGISTER_CAMERA_SENSOR_HELPER("imx214", CameraSensorHelperImx214)
+
 class CameraSensorHelperImx219 : public CameraSensorHelper
 {
 public:
