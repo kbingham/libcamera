@@ -63,6 +63,11 @@ struct control_type<int32_t> {
 };
 
 template<>
+struct control_type<dev_t> {
+	static constexpr ControlType value = ControlTypeInteger32;
+};
+
+template<>
 struct control_type<int64_t> {
 	static constexpr ControlType value = ControlTypeInteger64;
 };
