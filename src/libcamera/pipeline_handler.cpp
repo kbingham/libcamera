@@ -18,6 +18,7 @@
 #include <libcamera/camera.h>
 #include <libcamera/camera_manager.h>
 #include <libcamera/framebuffer.h>
+#include <libcamera/property_ids.h>
 
 #include "libcamera/internal/camera.h"
 #include "libcamera/internal/device_enumerator.h"
@@ -623,6 +624,13 @@ void PipelineHandler::registerCamera(std::shared_ptr<Camera> camera)
 			}
 		}
 	}
+
+	/*
+	 * Store the associated devices as a property of the camera to allow
+	 * systems to identify which devices are managed by libcamera.
+	 */
+	Camera::Private *data = camera->_d();
+	data->properties_.set(properties::Devices, devnums);
 
 	manager_->addCamera(std::move(camera), devnums);
 }
