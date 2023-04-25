@@ -287,6 +287,12 @@ void IPAIPU3::updateControls(const IPACameraSensorInfo &sensorInfo,
 							       frameDurations[1],
 							       frameDurations[2]);
 
+	/* Brightness! Dummy control at the moment. */
+	controls[&controls::Brightness] = ControlInfo(0.0f, 8.0f, 1.0f);
+	controls[&controls::Contrast] = ControlInfo(0.0f, 8.0f, 1.0f);
+	controls[&controls::Saturation] = ControlInfo(0.0f, 8.0f, 1.0f);
+	controls[&controls::AnalogueGain] = ControlInfo(0.0f, 8.0f, 1.0f);
+
 	*ipaControls = ControlInfoMap(std::move(controls), controls::controls);
 }
 

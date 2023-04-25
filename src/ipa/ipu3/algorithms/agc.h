@@ -28,6 +28,12 @@ public:
 	~Agc() = default;
 
 	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
+
+	void queueRequest(IPAContext &context,
+		      const uint32_t frame,
+		      IPAFrameContext &frameContext,
+		      const ControlList &controls) override;
+
 	void process(IPAContext &context, const uint32_t frame,
 		     IPAFrameContext &frameContext,
 		     const ipu3_uapi_stats_3a *stats,

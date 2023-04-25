@@ -15,7 +15,18 @@ import selectors
 import sys
 import time
 
+import datetime as dt
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
 TIMEOUT_SEC = 3
+
+
+# Create figure for plotting
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+xs = []
+ys = []
 
 
 def handle_camera_event(cm):
