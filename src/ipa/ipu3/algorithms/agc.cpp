@@ -315,6 +315,49 @@ double Agc::estimateLuminance(IPAActiveState &activeState,
 	return ySum / (grid.height * grid.width) / 255;
 }
 
+void Agc::queueRequest(IPAContext &context,
+		       const uint32_t frame,
+		       IPAFrameContext &frameContext,
+		       const ControlList &controls)
+{
+	auto &agc = context.activeState.agc;
+
+	const auto &brightness = controls.get(controls::Brightness);
+	if (brightness) {
+	}
+
+	const auto &gain = controls.get(controls::analogueGAin);
+	if (gain) {
+		// HACK one you go manual, you can't go back
+		agc.autoEnabled = false;
+		agc.manual.gain = *gain;
+		LOG(IPU3, Debug) << "Setting gain to " << agc.manual.gain;
+	}
+
+	frameContext.agc.autoEnabled = agc.autoEnabled;
+
+	if (!frameContext.agc.autoEnabled) {
+		frameContext.agc.gain = agc.manual.gain;
+	}
+}
+
+
+/**
+ * \copydoc libcamera::ipa::Algorithm::prepare
+ */
+void Agc::prepare(IPAContext &context, const uint32_t frame,
+                  IPAFrameContext &frameContext, rkisp1_params_cfg *params)
+{
+	/*
+	 * Update the target frame context when in auto with the most recent
+	 * auto values.
+	 */
+        if (frameContext.agc.autoEnabled) {
+                frameContext.agc.exposure = context.activeState.agc.automatic.exposure;
+                frameContext.agc.gain = context.activeState.agc.automatic.gain;
+        }
+}
+
 /**
  * \brief Process IPU3 statistics, and run AGC operations
  * \param[in] context The shared IPA context
@@ -333,7 +376,7 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 {
 	/*
 	 * Estimate the gain needed to have the proportion of pixels in a given
-	 * desired range. iqMean is the mean value of the top 2% of the
+ 	 * desired range. iqMean is the mean value of the top 2% of the
 	 * cumulative histogram, and we want it to be as close as possible to a
 	 * configured target.
 	 */
@@ -367,10 +410,12 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 	computeExposure(context, frameContext, yGain, iqMeanGain);
 	frameCount_++;
 
+
 	utils::Duration exposureTime = context.configuration.sensor.lineDuration
 				     * frameContext.sensor.exposure;
 	metadata.set(controls::AnalogueGain, frameContext.sensor.gain);
 	metadata.set(controls::ExposureTime, exposureTime.get<std::micro>());
+	metadata.set(controls::Brightness, iqMean);
 
 	/* \todo Use VBlank value calculated from each frame exposure. */
 	uint32_t vTotal = context.configuration.sensor.size.height

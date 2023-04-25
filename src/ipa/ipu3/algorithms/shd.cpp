@@ -80,6 +80,7 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 {
 	gridSize_ = getSize(tuningData, "gridSize");
 	gridBlockSize_ = getSize(tuningData, "gridBlockSize");
+       			//Size(6, 6); //getSize(tuningData, "gridBlockSize");
 
 	// Clamp to restrict sizes then validate
 
