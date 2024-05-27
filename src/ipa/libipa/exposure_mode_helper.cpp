@@ -166,8 +166,15 @@ ExposureModeHelper::splitExposure(utils::Duration exposure) const
 		return { minShutter_, minGain_, exposure / (minShutter_ * minGain_) };
 
 	utils::Duration shutter;
-	double stageGain;
 	double gain;
+	/*
+	 * From here on all we can do is max out the shutter time, followed by
+	 * the analogue gain. If we still haven't achieved the target we send
+	 * the rest of the exposure time to digital gain. If we were given no
+	 * stages to use then set stageGain to 1.0 so that shutter time is maxed
+	 * before gain touched at all.
+	 */
+	double stageGain = 1.0;
 
 	for (unsigned int stage = 0; stage < gains_.size(); stage++) {
 		double lastStageGain = stage == 0 ? 1.0 : clampGain(gains_[stage - 1]);
@@ -196,16 +203,6 @@ ExposureModeHelper::splitExposure(utils::Duration exposure) const
 			return { shutter, gain, exposure / (shutter * gain) };
 		}
 	}
-
-	/*
-	 * From here on all we can do is max out the shutter time, followed by
-	 * the analogue gain. If we still haven't achieved the target we send
-	 * the rest of the exposure time to digital gain. If we were given no
-	 * stages to use then set stageGain to 1.0 so that shutter time is maxed
-	 * before gain touched at all.
-	 */
-	if (gains_.empty())
-		stageGain = 1.0;
 
 	shutter = clampShutter(exposure / clampGain(stageGain));
 	gain = clampGain(exposure / shutter);
