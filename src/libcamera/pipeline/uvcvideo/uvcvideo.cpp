@@ -525,8 +525,8 @@ bool UVCCameraData::generateId()
 	while (true) {
 		std::string::size_type pos = searchPath.rfind('/');
 		if (pos <= 1) {
-			LOG(UVC, Error) << "Can not find controller ID";
-			return false;
+			LOG(UVC, Debug) << "Controller ID was not detected";
+			break;
 		}
 
 		searchPath = searchPath.substr(0, pos);
