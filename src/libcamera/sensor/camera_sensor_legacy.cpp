@@ -619,14 +619,13 @@ int CameraSensorLegacy::initProperties()
 		 * Cache the Transform associated with the camera mounting
 		 * rotation for later use in computeTransform().
 		 */
-		bool success;
-		mountingOrientation_ = orientationFromRotation(propertyValue, &success);
-		if (!success) {
+		auto mountingOrientation = orientationFromRotation(propertyValue);
+		if (!mountingOrientation)
 			LOG(CameraSensor, Warning)
 				<< "Invalid rotation of " << propertyValue
 				<< " degrees - ignoring";
-			mountingOrientation_ = Orientation::Rotate0;
-		}
+
+		mountingOrientation_ = mountingOrientation.value_or(Orientation::Rotate0);
 
 		properties_.set(properties::Rotation, propertyValue);
 	} else {
