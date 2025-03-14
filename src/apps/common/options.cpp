@@ -1093,7 +1093,7 @@ OptionsParser::childOption(const Option *parent, Options *options)
 		std::tie(options, error) = childOption(parent->parent, options);
 
 		/* Propagate the error all the way back up the call stack. */
-		if (!error)
+		if (error)
 			return { options, error };
 	}
 
