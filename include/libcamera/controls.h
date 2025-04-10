@@ -15,6 +15,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <libcamera/base/class.h>
@@ -172,6 +173,28 @@ public:
 
 	ControlValue(const ControlValue &other);
 	ControlValue &operator=(const ControlValue &other);
+
+	ControlValue(ControlValue &&other) noexcept
+		: type_(std::exchange(other.type_, ControlTypeNone)),
+		  isArray_(std::exchange(other.isArray_, false)),
+		  numElements_(std::exchange(other.numElements_, 0)),
+		  storage_(std::exchange(other.storage_, {}))
+	{
+	}
+
+	ControlValue &operator=(ControlValue &&other) noexcept
+	{
+		if (this != &other) {
+			release();
+
+			type_ = std::exchange(other.type_, ControlTypeNone);
+			isArray_ = std::exchange(other.isArray_, false);
+			numElements_ = std::exchange(other.numElements_, 0);
+			storage_ = std::exchange(other.storage_, {});
+		}
+
+		return *this;
+	}
 
 	ControlType type() const { return type_; }
 	bool isNone() const { return type_ == ControlTypeNone; }

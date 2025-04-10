@@ -157,6 +157,24 @@ ControlValue &ControlValue::operator=(const ControlValue &other)
 }
 
 /**
+ * \fn ControlValue::ControlValue(ControlValue &&other) noexcept
+ * \brief Move constructor for ControlValue
+ * \param[in] other The ControlValue object to move from
+ *
+ * Move constructs a ControlValue instance from \a other.
+ * After this operation \a other will be in the same state
+ * as a default constructed ControlValue instance.
+ */
+
+/**
+ * \fn ControlValue &ControlValue::operator=(ControlValue &&other) noexcept
+ * \brief Move assignment operator for ControlValue
+ * \param[in] other The ControlValue object to move from
+ *
+ * \sa ControlValue::ControlValue(ControlValue &&other)
+ */
+
+/**
  * \fn ControlValue::type()
  * \brief Retrieve the data type of the value
  * \return The value data type
