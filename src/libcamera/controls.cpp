@@ -414,6 +414,21 @@ void ControlValue::reserve(ControlType type, bool isArray, std::size_t numElemen
 }
 
 /**
+ * \fn ControlValue::swap(ControlValue &other) noexcept
+ * \brief Swap two control values
+ *
+ * This function swaps the contained value of \a this with that of \a other.
+ */
+
+/**
+ * \fn ControlValue::swap(ControlValue &a, ControlValue &b) noexcept
+ * \brief Swap two control values
+ *
+ * This function swaps the contained value of \a a with that of \a b.
+ * \sa ControlValue::swap()
+ */
+
+/**
  * \class ControlId
  * \brief Control static metadata
  *
