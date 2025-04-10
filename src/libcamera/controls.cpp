@@ -122,9 +122,9 @@ void ControlValue::release()
 {
 	std::size_t size = numElements_ * ControlValueSize[type_];
 
-	if (size > sizeof(value_)) {
-		delete[] reinterpret_cast<uint8_t *>(storage_);
-		storage_ = nullptr;
+	if (size > sizeof(storage_.internal)) {
+		delete[] reinterpret_cast<uint8_t *>(storage_.external);
+		storage_.external = nullptr;
 	}
 }
 
@@ -192,9 +192,9 @@ ControlValue &ControlValue::operator=(const ControlValue &other)
 std::span<const uint8_t> ControlValue::data() const
 {
 	std::size_t size = numElements_ * ControlValueSize[type_];
-	const uint8_t *data = size > sizeof(value_)
-			    ? reinterpret_cast<const uint8_t *>(storage_)
-			    : reinterpret_cast<const uint8_t *>(&value_);
+	const uint8_t *data = size > sizeof(storage_.internal)
+			    ? reinterpret_cast<const uint8_t *>(storage_.external)
+			    : reinterpret_cast<const uint8_t *>(&storage_.internal);
 	return { data, size };
 }
 
@@ -391,8 +391,8 @@ void ControlValue::reserve(ControlType type, bool isArray, std::size_t numElemen
 	if (oldSize == newSize)
 		return;
 
-	if (newSize > sizeof(value_))
-		storage_ = reinterpret_cast<void *>(new uint8_t[newSize]);
+	if (newSize > sizeof(storage_.internal))
+		storage_.external = new uint8_t[newSize];
 }
 
 /**

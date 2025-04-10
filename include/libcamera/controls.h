@@ -246,9 +246,9 @@ private:
 	bool isArray_;
 	std::size_t numElements_ : 32;
 	union {
-		uint64_t value_;
-		void *storage_;
-	};
+		uint64_t internal;
+		void *external;
+	} storage_;
 
 	void release();
 	void set(ControlType type, bool isArray, const void *data,
