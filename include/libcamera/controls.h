@@ -513,6 +513,7 @@ public:
 
 	const ControlValue &get(unsigned int id) const;
 	void set(unsigned int id, const ControlValue &value);
+	void set(unsigned int id, ControlValue &&value);
 
 	const ControlInfoMap *infoMap() const { return infoMap_; }
 	const ControlIdMap *idMap() const { return idmap_; }

@@ -1154,6 +1154,18 @@ void ControlList::set(unsigned int id, const ControlValue &value)
 }
 
 /**
+ * \copydoc ControlList::set(unsigned int, const ControlValue &)
+ */
+void ControlList::set(unsigned int id, ControlValue &&value)
+{
+	ControlValue *val = find(id);
+	if (!val)
+		return;
+
+	*val = std::move(value);
+}
+
+/**
  * \fn ControlList::infoMap()
  * \brief Retrieve the ControlInfoMap used to construct the ControlList
  *
