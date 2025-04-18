@@ -26,7 +26,7 @@ namespace libcamera {
 
 class ControlValidator;
 
-enum ControlType {
+enum ControlType : uint8_t {
 	ControlTypeNone,
 	ControlTypeBool,
 	ControlTypeByte,
@@ -242,9 +242,9 @@ public:
 		     std::size_t numElements = 1);
 
 private:
-	ControlType type_ : 8;
+	ControlType type_;
 	bool isArray_;
-	std::size_t numElements_ : 32;
+	uint32_t numElements_;
 	union {
 		uint64_t internal;
 		void *external;
