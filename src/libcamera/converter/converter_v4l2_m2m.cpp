@@ -646,8 +646,8 @@ int V4L2M2MConverter::start()
 {
 	int ret;
 
-	for (auto &iter : streams_) {
-		ret = iter.second->start();
+	for (auto &[stream, m2mStream] : streams_) {
+		ret = m2mStream->start();
 		if (ret < 0) {
 			stop();
 			return ret;
@@ -662,8 +662,8 @@ int V4L2M2MConverter::start()
  */
 void V4L2M2MConverter::stop()
 {
-	for (auto &iter : streams_)
-		iter.second->stop();
+	for (auto &[stream, m2mStream] : streams_)
+		m2mStream->stop();
 }
 
 /**

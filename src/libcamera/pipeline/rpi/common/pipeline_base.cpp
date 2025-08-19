@@ -941,13 +941,12 @@ V4L2SubdeviceFormat CameraData::findBestFormat(const Size &req, unsigned int bit
 	constexpr float penaltyBitDepth = 500.0;
 
 	/* Calculate the closest/best mode from the user requested size. */
-	for (const auto &iter : sensorFormats_) {
-		const unsigned int mbusCode = iter.first;
+	for (const auto &[mbusCode, sizes] : sensorFormats_) {
 		const PixelFormat format = mbusCodeToPixelFormat(mbusCode,
 								 BayerFormat::Packing::None);
 		const PixelFormatInfo &info = PixelFormatInfo::info(format);
 
-		for (const Size &size : iter.second) {
+		for (const Size &size : sizes) {
 			double reqAr = static_cast<double>(req.width) / req.height;
 			double fmtAr = static_cast<double>(size.width) / size.height;
 

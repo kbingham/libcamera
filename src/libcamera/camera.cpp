@@ -1362,9 +1362,7 @@ int Camera::queueRequest(Request *request)
 		return -EINVAL;
 	}
 
-	for (auto const &it : request->buffers()) {
-		const Stream *stream = it.first;
-
+	for (const auto &[stream, buffer] : request->buffers()) {
 		if (d->activeStreams_.find(stream) == d->activeStreams_.end()) {
 			LOG(Camera, Error) << "Invalid request";
 			return -EINVAL;

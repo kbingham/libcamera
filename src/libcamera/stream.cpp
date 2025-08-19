@@ -108,8 +108,8 @@ std::vector<PixelFormat> StreamFormats::pixelformats() const
 {
 	std::vector<PixelFormat> formats;
 
-	for (auto const &it : formats_)
-		formats.push_back(it.first);
+	for (const auto &[format, sizes] : formats_)
+		formats.push_back(format);
 
 	return formats;
 }
