@@ -27,6 +27,7 @@ public:
 	virtual ~CameraSensorHelper() = default;
 
 	std::optional<int16_t> blackLevel() const { return blackLevel_; }
+	std::optional<uint32_t> exposureMargin() const { return exposureMargin_; }
 	virtual uint32_t gainCode(double gain) const;
 	virtual double gain(uint32_t gainCode) const;
 	double quantizeGain(double gain, double *quantizationGain) const;
@@ -46,6 +47,7 @@ protected:
 
 	std::optional<int16_t> blackLevel_;
 	std::variant<std::monostate, AnalogueGainLinear, AnalogueGainExp> gain_;
+	std::optional<uint32_t> exposureMargin_;
 
 private:
 	LIBCAMERA_DISABLE_COPY_AND_MOVE(CameraSensorHelper)

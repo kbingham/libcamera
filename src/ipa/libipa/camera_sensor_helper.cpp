@@ -77,6 +77,16 @@ namespace ipa {
  */
 
 /**
+ * \fn CameraSensorHelper::exposureMargin()
+ * \brief Fetch the exposure margin of the sensor
+ *
+ * This function returns the exposure margin of the sensor, in lines, which
+ * is the minimum difference between the integration time and frame length.
+ *
+ * \return The exposure margin of the sensor, or std::nullopt if not known
+ */
+
+/**
  * \brief Compute gain code from the analogue gain absolute value
  * \param[in] gain The real gain to pass
  *
@@ -227,6 +237,12 @@ double CameraSensorHelper::quantizeGain(double _gain, double *quantizationGain) 
  *
  * The analogue gain is calculated through a formula, and its parameters are
  * sensor specific. Use this variable to store the values at init time.
+ */
+
+/**
+ * \var CameraSensorHelper::exposureMargin_
+ * \brief The smallest margin between the integration time and the frame length
+ * in lines
  */
 
 /**
@@ -387,6 +403,7 @@ public:
 	{
 		/* Power-on default value: 168 at 12bits. */
 		blackLevel_ = 2688;
+		exposureMargin_ = 4;
 	}
 
 	uint32_t gainCode(double gain) const override
@@ -473,6 +490,11 @@ REGISTER_CAMERA_SENSOR_HELPER("ar0144", CameraSensorHelperAr0144)
 class CameraSensorHelperAr0521 : public CameraSensorHelper
 {
 public:
+	CameraSensorHelperAr0521()
+	{
+		exposureMargin_ = 4;
+	}
+
 	uint32_t gainCode(double gain) const override
 	{
 		gain = std::clamp(gain, 1.0, 15.5);
@@ -503,6 +525,7 @@ public:
 		/* From datasheet: 64 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 100, 0, 0, 1024 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("gc05a2", CameraSensorHelperGc05a2)
@@ -515,6 +538,7 @@ public:
 		/* From datasheet: 64 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 100, 0, 0, 1024 };
+		exposureMargin_ = 16;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("gc08a3", CameraSensorHelperGc08a3)
@@ -525,6 +549,7 @@ public:
 	CameraSensorHelperHm1246()
 	{
 		gain_ = AnalogueGainLinear{ 1, 16, 0, 16 };
+		exposureMargin_ = 2;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("hm1246", CameraSensorHelperHm1246)
@@ -537,6 +562,7 @@ public:
 		/* From datasheet: 64 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 0, 512, -1, 512 };
+		exposureMargin_ = 10;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx214", CameraSensorHelperImx214)
@@ -549,6 +575,7 @@ public:
 		/* From datasheet: 64 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 0, 256, -1, 256 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx219", CameraSensorHelperImx219)
@@ -561,6 +588,7 @@ public:
 		/* From datasheet: 0x40 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 0, 512, -1, 512 };
+		exposureMargin_ = 10;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx258", CameraSensorHelperImx258)
@@ -573,6 +601,7 @@ public:
 		/* From datasheet: 0x32 at 10bits. */
 		blackLevel_ = 3200;
 		gain_ = AnalogueGainLinear{ 0, 2048, -1, 2048 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx283", CameraSensorHelperImx283)
@@ -585,6 +614,7 @@ public:
 		/* From datasheet: 0xf0 at 12bits. */
 		blackLevel_ = 3840;
 		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
+		exposureMargin_ = 2;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx290", CameraSensorHelperImx290)
@@ -595,6 +625,11 @@ public:
 	CameraSensorHelperImx296()
 	{
 		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.1) };
+		/*
+		 * The driver doesn't apply any margin. Use the value
+		 * in RPi's CamHelper.
+		 */
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx296", CameraSensorHelperImx296)
@@ -612,6 +647,7 @@ public:
 		/* From datasheet: 0x32 at 10bits. */
 		blackLevel_ = 3200;
 		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
+		exposureMargin_ = 10;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx335", CameraSensorHelperImx335)
@@ -624,6 +660,7 @@ public:
 		/* From datasheet: 64 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 0, 1024, -1, 1024 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx355", CameraSensorHelperImx355)
@@ -634,6 +671,7 @@ public:
 	CameraSensorHelperImx415()
 	{
 		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
+		exposureMargin_ = 8;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx415", CameraSensorHelperImx415)
@@ -652,6 +690,7 @@ public:
 		blackLevel_ = 4096;
 		/* gain = 1024/(1024 - code); code = [0, 800]; max gain = x4.57 */
 		gain_ = AnalogueGainLinear{ 0, 1024, -1, 1024 };
+		exposureMargin_ = 18;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx471", CameraSensorHelperImx471)
@@ -662,6 +701,7 @@ public:
 	CameraSensorHelperImx477()
 	{
 		gain_ = AnalogueGainLinear{ 0, 1024, -1, 1024 };
+		exposureMargin_ = 22;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx477", CameraSensorHelperImx477)
@@ -674,6 +714,7 @@ public:
 		/* From datasheet: 0xc8 at 12bits. */
 		blackLevel_ = 3200;
 		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx662", CameraSensorHelperImx662)
@@ -686,6 +727,7 @@ public:
 		/* From datasheet: 0x32 at 10bits. */
 		blackLevel_ = 3200;
 		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx678", CameraSensorHelperImx678)
@@ -697,6 +739,7 @@ public:
 	{
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 0, 1024, -1, 1024 };
+		exposureMargin_ = 48;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx708", CameraSensorHelperImx708)
@@ -709,6 +752,7 @@ public:
 		/* From dark frame measurement: 0x40 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 256 };
+		exposureMargin_ = 8;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov01a10", CameraSensorHelperOv01a10)
@@ -721,6 +765,7 @@ public:
 		/* From Linux kernel driver: 0x40 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 6;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov08d10", CameraSensorHelperOv08d10)
@@ -732,6 +777,7 @@ public:
 	{
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 8;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov08x40", CameraSensorHelperOv08x40)
@@ -744,6 +790,7 @@ public:
 		blackLevel_ = 3600;
 		/* gain is fixed to 1x, this is just a place holder. */
 		gain_ = AnalogueGainLinear{ 0, 2048, -1, 2048 };
+		exposureMargin_ = 6;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("mira220", CameraSensorHelperMira220)
@@ -758,6 +805,7 @@ public:
 		 * This has been validated with some empirical testing only.
 		 */
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov2685", CameraSensorHelperOv2685)
@@ -770,6 +818,7 @@ public:
 		/* From Linux kernel driver: 0x40 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 8;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov2740", CameraSensorHelperOv2740)
@@ -782,6 +831,7 @@ public:
 		/* From datasheet: 0x40 at 12bits. */
 		blackLevel_ = 1024;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov4689", CameraSensorHelperOv4689)
@@ -794,6 +844,14 @@ public:
 		/* From datasheet: 0x10 at 10bits. */
 		blackLevel_ = 1024;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 16 };
+		/*
+		 * Very convoluted in the driver that however applies a margin
+		 * of 4 lines when setting vts.
+		 *
+		 * 	cap_vts = cap_shutter + 4;
+		 * 	ret = ov5640_set_vts(sensor, cap_vts);
+		 */
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov5640", CameraSensorHelperOv5640)
@@ -804,6 +862,7 @@ public:
 	CameraSensorHelperOv5647()
 	{
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 16 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov5647", CameraSensorHelperOv5647)
@@ -814,6 +873,7 @@ public:
 	CameraSensorHelperOv5670()
 	{
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 8;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov5670", CameraSensorHelperOv5670)
@@ -826,6 +886,7 @@ public:
 		/* From Linux kernel driver: 0x40 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov5675", CameraSensorHelperOv5675)
@@ -837,6 +898,7 @@ public:
 	{
 		blackLevel_ = 1024;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 16 };
+		exposureMargin_ = 8;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov5693", CameraSensorHelperOv5693)
@@ -847,6 +909,7 @@ public:
 	CameraSensorHelperOv64a40()
 	{
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 32;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov64a40", CameraSensorHelperOv64a40)
@@ -863,6 +926,7 @@ public:
 		 * See: https://patchwork.linuxtv.org/project/linux-media/patch/20221106171129.166892-2-nicholas@rothemail.net/#142267
 		 */
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 4;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov8858", CameraSensorHelperOv8858)
@@ -873,6 +937,7 @@ public:
 	CameraSensorHelperOv8865()
 	{
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 8;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov8865", CameraSensorHelperOv8865)
@@ -883,6 +948,7 @@ public:
 	CameraSensorHelperOv13858()
 	{
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+		exposureMargin_ = 8;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov13858", CameraSensorHelperOv13858)
@@ -895,6 +961,7 @@ public:
 		/* From datasheet: 0x40 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 0, 32, -1, 32 };
+		exposureMargin_ = 64;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("vd55g1", CameraSensorHelperVd55g1)
@@ -907,6 +974,7 @@ public:
 		/* From datasheet: 0x40 at 10bits. */
 		blackLevel_ = 4096;
 		gain_ = AnalogueGainLinear{ 0, 32, -1, 32 };
+		exposureMargin_ = 75;
 	}
 };
 REGISTER_CAMERA_SENSOR_HELPER("vd56g3", CameraSensorHelperVd56g3)
