@@ -79,11 +79,6 @@ public:
 
 	double effectiveYTarget(double lux, double exposureCompensation) const;
 
-	void resetFrameCount()
-	{
-		frameCount_ = 0;
-	}
-
 private:
 	int parseRelativeLuminanceTarget(const ValueNode &tuningData);
 	int parseConstraint(const ValueNode &modeDict, int32_t id);

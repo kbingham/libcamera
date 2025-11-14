@@ -169,11 +169,11 @@ static constexpr unsigned int kDefaultLuxLevel = 500;
  *
  * IPA modules that want to use this class to implement their AEGC algorithm
  * should derive AgcMeanLuminance::Traits and override the necessary functions.
- * The users must call parseTuningData() in init(), and must also call setLimits()
- * and resetFrameCounter() in configure(). They may then use calculateNewEv() in
- * process(). If the limits passed to setLimits() change for any reason (for example,
- * in response to a FrameDurationLimit control being passed in queueRequest())
- * then setLimits() must be called again with the new values.
+ * The users must call parseTuningData() in init(), and must also call configure()
+ * and setLimits() in configure(). They may then use calculateNewEv() in process().
+ * If the limits passed to setLimits() change for any reason (for example, in
+ * response to a FrameDurationLimit control being passed in queueRequest()) then
+ * setLimits() must be called again with the new values.
  */
 
 AgcMeanLuminance::AgcMeanLuminance()
@@ -354,6 +354,7 @@ void AgcMeanLuminance::configure(utils::Duration lineDuration,
 
 	luxWarningEnabled_ = true;
 	filteredExposure_ = 0s;
+	frameCount_ = 0;
 }
 
 /**
@@ -698,16 +699,6 @@ AgcMeanLuminance::calculateNewEv(const Params &params)
 	frameCount_++;
 	return { exposureModeHelper.splitExposure(newExposureValue), yTarget };
 }
-
-/**
- * \fn AgcMeanLuminance::resetFrameCount()
- * \brief Reset the frame counter
- *
- * This function resets the internal frame counter, which exists to help the
- * algorithm decide whether it should respond instantly or not. The expectation
- * is for users to call this function before each camera start call in their
- * configure() function.
- */
 
 } /* namespace ipa */
 
