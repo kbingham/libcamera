@@ -46,14 +46,6 @@ constexpr Duration defaultExposureTime = 20.0ms;
 constexpr Duration defaultMinFrameDuration = 1.0s / 30.0;
 constexpr Duration defaultMaxFrameDuration = 250.0s;
 
-/*
- * Determine the minimum allowable inter-frame duration to run the controller
- * algorithms. If the pipeline handler provider frames at a rate higher than this,
- * we rate-limit the controller Prepare() and Process() calls to lower than or
- * equal to this rate.
- */
-constexpr Duration controllerMinFrameDuration = 1.0s / 30.0;
-
 /* List of controls handled by the Raspberry Pi IPA */
 const ControlInfoMap::Map ipaControls{
 	/* \todo Move this to the Camera class */
@@ -185,6 +177,14 @@ int32_t IpaBase::init(const IPASettings &settings, const InitParams &params, Ini
 		ctrlMap.merge(ControlInfoMap::Map(ipaColourControls));
 
 	result->controlInfo = ControlInfoMap(std::move(ctrlMap), controls::controls);
+
+	/*
+	 * This determines the minimum allowable inter-frame duration to run the
+	 * controller algorithms. If the pipeline handler provider frames at a
+	 * rate higher than this, we rate-limit the controller Prepare() and
+	 * Process() calls to lower than or equal to this rate.
+	 */
+	controllerMinFrameDuration_ = params.controllerMinFrameDurationUs * 1us;
 
 	return platformInit(params, result);
 }
@@ -467,7 +467,7 @@ void IpaBase::prepareIsp(const PrepareParams &params)
 	/* Allow a 10% margin on the comparison below. */
 	Duration delta = (frameTimestamp - lastRunTimestamp_) * 1.0ns;
 	if (lastRunTimestamp_ && frameCount_ > invalidCount_ &&
-	    delta < controllerMinFrameDuration * 0.9 && !hdrChange) {
+	    delta < controllerMinFrameDuration_ * 0.9 && !hdrChange) {
 		/*
 		 * Ensure we merge the previous frame's metadata with the current
 		 * frame. This will not overwrite exposure/gain values for the

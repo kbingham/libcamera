@@ -33,6 +33,12 @@ LOG_DEFINE_CATEGORY(RPI)
 
 using StreamFlag = RPi::Stream::StreamFlag;
 
+/*
+ * The IPA's algorithms will not be called more often than this many
+ * microseconds. The default corresponds to 30fps.
+ */
+constexpr float defaultControllerMinimumFrameDurationUs = 1000000.0 / 30.0;
+
 namespace {
 
 constexpr unsigned int defaultRawBitDepth = 12;
@@ -800,6 +806,12 @@ int PipelineHandlerBase::registerCamera(std::unique_ptr<RPi::CameraData> &camera
 	if (!data->sensor_)
 		return -EINVAL;
 
+	ret = data->loadPipelineConfiguration();
+	if (ret) {
+		LOG(RPI, Error) << "Unable to load pipeline configuration";
+		return ret;
+	}
+
 	/* Populate the map of sensor supported formats and sizes. */
 	for (const auto mbusCode : data->sensor_->mbusCodes())
 		data->sensorFormats_.emplace(mbusCode,
@@ -858,12 +870,6 @@ int PipelineHandlerBase::registerCamera(std::unique_ptr<RPi::CameraData> &camera
 	ret = platformRegister(cameraData, frontend, backend);
 	if (ret)
 		return ret;
-
-	ret = data->loadPipelineConfiguration();
-	if (ret) {
-		LOG(RPI, Error) << "Unable to load pipeline configuration";
-		return ret;
-	}
 
 	/* Setup the general IPA signal handlers. */
 	data->frontendDevice()->dequeueTimeout.connect(data, &RPi::CameraData::cameraTimeout);
@@ -1095,6 +1101,7 @@ int CameraData::loadPipelineConfiguration()
 {
 	config_ = {
 		.cameraTimeoutValue = 0,
+		.controllerMinFrameDurationUs = defaultControllerMinimumFrameDurationUs,
 	};
 
 	/* Initial configuration of the platform, in case no config file is present */
@@ -1144,6 +1151,9 @@ int CameraData::loadPipelineConfiguration()
 		frontendDevice()->setDequeueTimeout(config_.cameraTimeoutValue * 1ms);
 	}
 
+	config_.controllerMinFrameDurationUs =
+		phConfig["controller_min_frame_duration_us"].get<double>(config_.controllerMinFrameDurationUs);
+
 	return platformPipelineConfigure(root);
 }
 
@@ -1172,6 +1182,8 @@ int CameraData::loadIPA(ipa::RPi::InitResult *result)
 	}
 
 	params.lensPresent = !!sensor_->focusLens();
+	params.controllerMinFrameDurationUs = config_.controllerMinFrameDurationUs;
+
 	ret = platformInitIpa(params);
 	if (ret)
 		return ret;
