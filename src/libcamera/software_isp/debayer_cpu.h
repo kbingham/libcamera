@@ -39,7 +39,7 @@ public:
 	std::vector<PixelFormat> formats(PixelFormat input);
 	std::tuple<unsigned int, unsigned int>
 	strideAndFrameSize(const PixelFormat &outputFormat, const Size &size);
-	void process(uint32_t frame, FrameBuffer *input, FrameBuffer *output, DebayerParams params);
+	void process(uint32_t frame, FrameBuffer *input, FrameBuffer *output, const DebayerParams &params);
 	SizeRange sizes(PixelFormat inputFormat, const Size &inputSize);
 	const SharedFD &getStatsFD() { return stats_->getStatsFD(); }
 
@@ -110,8 +110,8 @@ private:
 	void memcpyNextLine(const uint8_t *linePointers[]);
 	void process2(uint32_t frame, const uint8_t *src, uint8_t *dst);
 	void process4(uint32_t frame, const uint8_t *src, uint8_t *dst);
-	void updateGammaTable(DebayerParams &params);
-	void updateLookupTables(DebayerParams &params);
+	void updateGammaTable(const DebayerParams &params);
+	void updateLookupTables(const DebayerParams &params);
 
 	/* Max. supported Bayer pattern height is 4, debayering this requires 5 lines */
 	static constexpr unsigned int kMaxLineBuffers = 5;

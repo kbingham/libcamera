@@ -50,7 +50,7 @@ public:
 	std::vector<PixelFormat> formats(PixelFormat input);
 	std::tuple<unsigned int, unsigned int> strideAndFrameSize(const PixelFormat &outputFormat, const Size &size);
 
-	void process(uint32_t frame, FrameBuffer *input, FrameBuffer *output, DebayerParams params);
+	void process(uint32_t frame, FrameBuffer *input, FrameBuffer *output, const DebayerParams &params);
 	int start();
 	void stop();
 
@@ -72,9 +72,9 @@ private:
 				 std::vector<std::string> shaderEnv);
 	int linkShaderProgram(void);
 	int getShaderVariableLocations();
-	void setShaderVariableValues(DebayerParams &params);
+	void setShaderVariableValues(const DebayerParams &params);
 	void configureTexture(GLuint &texture);
-	int debayerGPU(MappedFrameBuffer &in, int out_fd, DebayerParams &params);
+	int debayerGPU(MappedFrameBuffer &in, int out_fd, const DebayerParams &params);
 
 	/* Shader program identifiers */
 	GLuint vertexShaderId_ = 0;
