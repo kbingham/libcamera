@@ -84,6 +84,7 @@ public:
 			       Transform transform = Transform::Identity,
 			       V4L2SubdeviceFormat *sensorFormat = nullptr) override;
 
+	V4L2Subdevice::Stream imageStream() const override;
 	const ControlList &properties() const override { return properties_; }
 	int sensorInfo(IPACameraSensorInfo *info) const override;
 	Transform computeTransform(Orientation *orientation) const override;
@@ -862,6 +863,11 @@ int CameraSensorLegacy::applyConfiguration(const SensorConfiguration &config,
 	/* \todo Handle scaling in the digital domain. */
 
 	return 0;
+}
+
+V4L2Subdevice::Stream CameraSensorLegacy::imageStream() const
+{
+	return { pad_, 0 };
 }
 
 int CameraSensorLegacy::sensorInfo(IPACameraSensorInfo *info) const

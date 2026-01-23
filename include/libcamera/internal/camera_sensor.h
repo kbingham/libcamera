@@ -64,7 +64,7 @@ public:
 				       Transform transform = Transform::Identity,
 				       V4L2SubdeviceFormat *sensorFormat = nullptr) = 0;
 
-	virtual V4L2Subdevice::Stream imageStream() const;
+	virtual V4L2Subdevice::Stream imageStream() const = 0;
 	virtual std::optional<V4L2Subdevice::Stream> embeddedDataStream() const;
 	virtual V4L2SubdeviceFormat embeddedDataFormat() const;
 	virtual int setEmbeddedDataEnabled(bool enable);
