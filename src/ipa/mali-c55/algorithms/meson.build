@@ -5,5 +5,6 @@ mali_c55_ipa_algorithms = files([
     'awb.cpp',
     'blc.cpp',
     'ccm.cpp',
+    'gamma.cpp',
     'lsc.cpp',
 ])

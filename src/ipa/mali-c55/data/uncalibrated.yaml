@@ -7,4 +7,5 @@ algorithms:
   - Awb:
   - BlackLevelCorrection:
   - Ccm:
+  - Gamma:
 ...

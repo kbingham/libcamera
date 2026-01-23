@@ -30,6 +30,8 @@ enum class MaliC55Blocks : uint16_t {
 	MeshShadingConfig,
 	MeshShadingSel,
 	Ccm,
+	GammaFr,
+	GammaDs,
 };
 
 namespace details {
@@ -57,6 +59,8 @@ MALI_C55_DEFINE_BLOCK_TYPE(AwbConfig,		awb_config,		BLOCK_AWB_CONFIG);
 MALI_C55_DEFINE_BLOCK_TYPE(MeshShadingConfig,	mesh_shading_config,	MESH_SHADING_CONFIG);
 MALI_C55_DEFINE_BLOCK_TYPE(MeshShadingSel,	mesh_shading_selection,	MESH_SHADING_SELECTION);
 MALI_C55_DEFINE_BLOCK_TYPE(Ccm,			ccm,			BLOCK_CCM);
+MALI_C55_DEFINE_BLOCK_TYPE(GammaFr,		gamma,			BLOCK_GAMMA_FR);
+MALI_C55_DEFINE_BLOCK_TYPE(GammaDs,		gamma,			BLOCK_GAMMA_DS);
 
 struct param_traits {
 	using id_type = MaliC55Blocks;
