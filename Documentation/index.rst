@@ -19,16 +19,16 @@
    :maxdepth: 1
    :caption: For Developers
 
-   Contribute <contributing>
    Getting Started <getting-started>
-   Camera Sensor Model <camera-sensor-model>
-   IPA Writer's guide <guides/ipa>
-   libcamera Architecture <libcamera_architecture>
+   Architecture <libcamera_architecture>
    Pipeline Handler Writer's Guide <guides/pipeline-handler>
-   SoftwareISP Benchmarking <software-isp-benchmarking>
+   IPA Writer's guide <guides/ipa>
    Tracing guide <guides/tracing>
+   Camera Sensor Model <camera-sensor-model>
+   SoftwareISP Benchmarking <software-isp-benchmarking>
    Design document: AE <design/ae>
    Internal API <internal-api/index>
+   Contribute <contributing>
 
 .. toctree::
    :maxdepth: 1
