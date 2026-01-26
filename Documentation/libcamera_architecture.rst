@@ -141,21 +141,3 @@ Helpers and Support Classes
   self-contained support classes, even if such code is present only once in the
   code base, in order to keep the source code clean and easy to read. This
   should be the case for instance for plugin management.
-
-Platform Support
-----------------
-
-The library currently supports the following hardware platforms specifically
-with dedicated pipeline handlers:
-
-   - Arm Mali-C55
-   - Intel IPU3 (ipu3)
-   - NXP i.MX8MP (imx8-isi and rkisp1)
-   - RaspberryPi 3, 4 and zero (rpi/vc4)
-   - Rockchip RK3399 (rkisp1)
-
-Furthermore, generic platform support is provided for the following:
-
-   - USB video device class cameras (uvcvideo)
-   - iMX7, IPU6, Allwinner Sun6i (simple)
-   - Virtual media controller driver for test use cases (vimc)
