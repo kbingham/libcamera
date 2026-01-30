@@ -42,6 +42,11 @@ option('lc-compliance',
         value : 'auto',
         description : 'Compile the lc-compliance test application')
 
+option('libdw',
+        type : 'feature',
+        value : 'auto',
+        description : 'Enable libdw integration for backtrace symbolization')
+
 option('libunwind',
         type : 'feature',
         value : 'auto',
