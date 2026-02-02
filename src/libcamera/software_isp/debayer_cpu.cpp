@@ -987,9 +987,9 @@ void DebayerCpu::updateLookupTables(const DebayerParams &params)
 	};
 	const unsigned int gammaTableSize = gammaTable_.size();
 
-	const RGB<float> blackIndex = params.blackLevel * kRGBLookupSize;
-	const RGB<float> gains = params.gains;
-	const RGB<float> div = (RGB<float>(kRGBLookupSize) - blackIndex).max(1.0);
+	const RGB<double> blackIndex = params.blackLevel * kRGBLookupSize;
+	const RGB<double> gains = params.gains;
+	const RGB<double> div = (RGB<double>(kRGBLookupSize) - blackIndex).max(1.0);
 
 	if (ccmEnabled_) {
 		if (gammaUpdateNeeded ||
@@ -1002,7 +1002,7 @@ void DebayerCpu::updateLookupTables(const DebayerParams &params)
 			const unsigned int greenIndex = 1;
 			const unsigned int blueIndex = swapRedBlueGains_ ? 0 : 2;
 			for (unsigned int i = 0; i < kRGBLookupSize; i++) {
-				const RGB<float> rgb = (gains * (RGB<float>(i) - blackIndex) * kRGBLookupSize / div)
+				const RGB<double> rgb = (gains * (RGB<double>(i) - blackIndex) * kRGBLookupSize / div)
 							       .clamp(0.0, kRGBLookupSize - 1);
 				red[i].r = std::round(rgb.r() * params.combinedMatrix[redIndex][0]);
 				red[i].g = std::round(rgb.r() * params.combinedMatrix[greenIndex][0]);
@@ -1022,8 +1022,8 @@ void DebayerCpu::updateLookupTables(const DebayerParams &params)
 			auto &green = green_;
 			auto &blue = swapRedBlueGains_ ? red_ : blue_;
 			for (unsigned int i = 0; i < kRGBLookupSize; i++) {
-				const RGB<float> lutGains =
-					(gains * (RGB<float>(i) - blackIndex) * gammaTableSize / div)
+				const RGB<double> lutGains =
+					(gains * (RGB<double>(i) - blackIndex) * gammaTableSize / div)
 						.clamp(0.0, gammaTableSize - 1);
 				red[i] = gammaTable_[lutGains.r()];
 				green[i] = gammaTable_[lutGains.g()];
