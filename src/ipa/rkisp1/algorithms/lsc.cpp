@@ -512,7 +512,7 @@ void LensShadingCorrection::prepare([[maybe_unused]] IPAContext &context,
 				    IPAFrameContext &frameContext,
 				    RkISP1Params *params)
 {
-	uint32_t ct = frameContext.awb.temperatureK;
+	uint32_t ct = frameContext.awb.colourTemperature;
 	unsigned int quantizedCt = quantize(ct, kColourTemperatureQuantization);
 
 	/* Check if we can skip the update. */

@@ -77,7 +77,7 @@ int Ccm::configure(IPAContext &context,
 {
 	auto &as = context.activeState;
 	as.ccm.manual = kIdentity3x3;
-	as.ccm.automatic = ccm_.getInterpolated(as.awb.automatic.temperatureK);
+	as.ccm.automatic = ccm_.getInterpolated(as.awb.automatic.colourTemperature);
 	return 0;
 }
 
@@ -140,7 +140,7 @@ void Ccm::prepare(IPAContext &context, const uint32_t frame,
 		return;
 	}
 
-	uint32_t ct = frameContext.awb.temperatureK;
+	uint32_t ct = frameContext.awb.colourTemperature;
 	if (frame > 0 && ct == ct_) {
 		frameContext.ccm.ccm = context.activeState.ccm.automatic;
 		return;
