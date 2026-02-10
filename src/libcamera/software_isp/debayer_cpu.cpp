@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <time.h>
 #include <utility>
 
 #include <linux/dma-buf.h>
