@@ -128,7 +128,11 @@ void main(void) {
             vec3(PATTERN.w, C, PATTERN.z) :
             vec3(PATTERN.yx, C));
 
-    rgb = rgb - blacklevel;
+    /*
+     * \todo: Black level normalising, AWB and digital gain could be
+     * reworked into a single multiplication.
+     */
+    rgb = (rgb - blacklevel) / (1.0 - blacklevel);
 
     /*
      *   CCM is a 3x3 in the format
