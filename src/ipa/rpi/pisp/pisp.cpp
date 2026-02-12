@@ -553,7 +553,7 @@ RPiController::StatisticsPtr IpaPiSP::platformProcessStats(Span<uint8_t> mem)
 
 void IpaPiSP::handleControls(const ControlList &controls)
 {
-	for (auto const &ctrl : controls) {
+	for (const auto &ctrl : controls) {
 		switch (ctrl.first) {
 		case controls::HDR_MODE:
 		case controls::AE_METERING_MODE:

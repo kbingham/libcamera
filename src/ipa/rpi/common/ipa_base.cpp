@@ -924,7 +924,7 @@ void IpaBase::applyControls(const ControlList &controls)
 		} while (false);
 
 	/* Iterate over controls */
-	for (auto const &ctrl : controls) {
+	for (const auto &ctrl : controls) {
 		LOG(IPARPI, Debug) << "Request ctrl: "
 				   << controls::controls.at(ctrl.first)->name()
 				   << " = " << ctrl.second.toString();
@@ -1627,7 +1627,7 @@ void IpaBase::reportMetadata(unsigned int ipaContext)
 	const HdrStatus &hdrStatus = agcStatus ? agcStatus->hdr : hdrStatus_;
 	if (!hdrStatus.mode.empty() && hdrStatus.mode != "Off") {
 		int32_t hdrMode = controls::HdrModeOff;
-		for (auto const &[mode, name] : HdrModeTable) {
+		for (const auto &[mode, name] : HdrModeTable) {
 			if (hdrStatus.mode == name) {
 				hdrMode = mode;
 				break;

@@ -340,7 +340,7 @@ public:
 	template<typename Period>
 	double get() const
 	{
-		auto const c = std::chrono::duration_cast<std::chrono::duration<double, Period>>(*this);
+		const auto c = std::chrono::duration_cast<std::chrono::duration<double, Period>>(*this);
 		return c.count();
 	}
 

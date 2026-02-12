@@ -508,7 +508,7 @@ int PipelineHandlerBase::configure(Camera *camera, CameraConfiguration *config)
 
 	/* Start by freeing all buffers and reset the stream states. */
 	data->freeBuffers();
-	for (auto const stream : data->streams_)
+	for (const auto stream : data->streams_)
 		stream->clearFlags(StreamFlag::External);
 
 	/*
@@ -561,7 +561,7 @@ int PipelineHandlerBase::configure(Camera *camera, CameraConfiguration *config)
 
 	/* Update the controls that the Raspberry Pi IPA can handle. */
 	ControlInfoMap::Map ctrlMap;
-	for (auto const &c : result.controlInfo)
+	for (const auto &c : result.controlInfo)
 		ctrlMap.emplace(c.first, c.second);
 
 	const auto cropParamsIt = data->cropParams_.find(0);
@@ -663,7 +663,7 @@ int PipelineHandlerBase::start(Camera *camera, const ControlList *controls)
 	data->startupFrameCount_ = result.startupFrameCount;
 	data->invalidFrameCount_ = result.invalidFrameCount;
 
-	for (auto const stream : data->streams_)
+	for (const auto stream : data->streams_)
 		stream->resetBuffers();
 
 	if (!data->buffersAllocated_) {
@@ -701,7 +701,7 @@ int PipelineHandlerBase::start(Camera *camera, const ControlList *controls)
 	data->platformStart();
 
 	/* Start all streams. */
-	for (auto const stream : data->streams_) {
+	for (const auto stream : data->streams_) {
 		ret = stream->dev()->streamOn();
 		if (ret) {
 			stop(camera);
@@ -719,7 +719,7 @@ void PipelineHandlerBase::stopDevice(Camera *camera)
 	data->state_ = CameraData::State::Stopped;
 	data->platformStop();
 
-	for (auto const stream : data->streams_) {
+	for (const auto stream : data->streams_) {
 		stream->dev()->streamOff();
 		stream->dev()->releaseBuffers();
 	}
@@ -801,7 +801,7 @@ int PipelineHandlerBase::registerCamera(std::unique_ptr<RPi::CameraData> &camera
 		return -EINVAL;
 
 	/* Populate the map of sensor supported formats and sizes. */
-	for (auto const mbusCode : data->sensor_->mbusCodes())
+	for (const auto mbusCode : data->sensor_->mbusCodes())
 		data->sensorFormats_.emplace(mbusCode,
 					     data->sensor_->sizes(mbusCode));
 
@@ -886,7 +886,7 @@ void PipelineHandlerBase::mapBuffers(Camera *camera, const BufferMap &buffers, u
 	 * This will allow us to identify buffers passed between the pipeline
 	 * handler and the IPA.
 	 */
-	for (auto const &[id, buffer] : buffers) {
+	for (const auto &[id, buffer] : buffers) {
 		Span<const FrameBuffer::Plane> planes = buffer.buffer->planes();
 
 		bufferIds.emplace_back(mask | id,
@@ -902,7 +902,7 @@ int PipelineHandlerBase::queueAllBuffers(Camera *camera)
 	CameraData *data = cameraData(camera);
 	int ret;
 
-	for (auto const stream : data->streams_) {
+	for (const auto stream : data->streams_) {
 		ret = stream->dev()->importBuffers(VIDEO_MAX_FRAME);
 		if (ret < 0)
 			return ret;
@@ -987,7 +987,7 @@ void CameraData::freeBuffers()
 		bufferIds_.clear();
 	}
 
-	for (auto const stream : streams_)
+	for (const auto stream : streams_)
 		stream->releaseBuffers();
 
 	platformFreeBuffers();
@@ -1322,7 +1322,7 @@ void CameraData::applyScalerCrop(const ControlList &controls)
 			scalerCrops.push_back(*scalerCropCore);
 	}
 
-	for (auto const &[i, scalerCrop] : utils::enumerate(scalerCrops)) {
+	for (const auto &[i, scalerCrop] : utils::enumerate(scalerCrops)) {
 		Rectangle nativeCrop = scalerCrop;
 
 		if (!nativeCrop.width || !nativeCrop.height)
@@ -1364,7 +1364,7 @@ void CameraData::cameraTimeout()
 	 * stop all devices streaming, and return any outstanding requests as
 	 * incomplete and cancelled.
 	 */
-	for (auto const stream : streams_)
+	for (const auto stream : streams_)
 		stream->dev()->streamOff();
 
 	clearIncompleteRequests();
@@ -1504,7 +1504,7 @@ void CameraData::fillRequestMetadata(const ControlList &bufferControls, Request 
 	if (cropParams_.size()) {
 		std::vector<Rectangle> crops;
 
-		for (auto const &[k, v] : cropParams_)
+		for (const auto &[k, v] : cropParams_)
 			crops.push_back(scaleIspCrop(v.ispCrop));
 
 		request->_d()->metadata().set(controls::ScalerCrop, crops[0]);

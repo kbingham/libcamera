@@ -206,7 +206,7 @@ V4L2BufferCache::~V4L2BufferCache()
  */
 bool V4L2BufferCache::isEmpty() const
 {
-	for (auto const &entry : cache_) {
+	for (const auto &entry : cache_) {
 		if (!entry.free_)
 			return false;
 	}
