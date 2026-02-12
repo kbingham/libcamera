@@ -114,12 +114,12 @@ public:
 		appendPOD<uint32_t>(dataVec, vecLen);
 
 		/* Serialize the members. */
-		for (auto const &it : data) {
+		for (const auto &value : data) {
 			std::vector<uint8_t> dvec;
 			std::vector<SharedFD> fvec;
 
 			std::tie(dvec, fvec) =
-				IPADataSerializer<V>::serialize(it, cs);
+				IPADataSerializer<V>::serialize(value, cs);
 
 			appendPOD<uint32_t>(dataVec, dvec.size());
 			appendPOD<uint32_t>(dataVec, fvec.size());
