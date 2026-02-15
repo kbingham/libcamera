@@ -155,7 +155,7 @@ namespace libcamera {
 LOG_DEFINE_CATEGORY(SwStatsCpu)
 
 SwStatsCpu::SwStatsCpu(const GlobalConfiguration &configuration)
-	: sharedStats_("softIsp_stats"), bench_(configuration)
+	: sharedStats_("softIsp_stats"), bench_(configuration, "CPU stats")
 {
 	if (!sharedStats_)
 		LOG(SwStatsCpu, Error)
