@@ -28,7 +28,7 @@ public:
 
 private:
 	timespec frameStartTime_;
-	bool measure;
+	bool measure_;
 	/* Skip 30 frames for things to stabilize then measure 30 frames */
 	unsigned int encounteredFrames_ = 0;
 	int64_t frameProcessTime_ = 0;

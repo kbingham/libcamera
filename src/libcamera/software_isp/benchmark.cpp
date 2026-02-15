@@ -54,11 +54,11 @@ static inline int64_t timeDiff(timespec &after, timespec &before)
  */
 void Benchmark::startFrame(void)
 {
-	measure = framesToMeasure_ > 0 &&
-		  encounteredFrames_ < skipBeforeMeasure_ + framesToMeasure_ &&
-		  ++encounteredFrames_ > skipBeforeMeasure_;
+	measure_ = framesToMeasure_ > 0 &&
+		   encounteredFrames_ < skipBeforeMeasure_ + framesToMeasure_ &&
+		   ++encounteredFrames_ > skipBeforeMeasure_;
 
-	if (measure) {
+	if (measure_) {
 		frameStartTime_ = {};
 		clock_gettime(CLOCK_MONOTONIC_RAW, &frameStartTime_);
 	}
@@ -75,7 +75,7 @@ void Benchmark::startFrame(void)
  */
 void Benchmark::finishFrame(void)
 {
-	if (measure) {
+	if (measure_) {
 		timespec frameEndTime = {};
 		clock_gettime(CLOCK_MONOTONIC_RAW, &frameEndTime);
 		frameProcessTime_ += timeDiff(frameEndTime, frameStartTime_);
