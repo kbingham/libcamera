@@ -17,8 +17,6 @@
 #include "libipa/colours.h"
 #include "simple/ipa_context.h"
 
-#include "control_ids.h"
-
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPASoftAwb)
