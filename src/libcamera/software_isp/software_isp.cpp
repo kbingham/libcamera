@@ -108,8 +108,10 @@ SoftwareIsp::SoftwareIsp(PipelineHandler *pipe, const CameraSensor *sensor,
 	std::optional<std::string> softISPMode = configuration.envOption("LIBCAMERA_SOFTISP_MODE", { "software_isp", "mode" });
 	if (softISPMode) {
 		if (softISPMode != "gpu" && softISPMode != "cpu") {
-			LOG(SoftwareIsp, Error) << "LIBCAMERA_SOFISP_MODE " << softISPMode.value() << " invalid "
-						<< "must be \"cpu\" or \"gpu\"";
+			LOG(SoftwareIsp, Error)
+				<< "Invalid LIBCAMERA_SOFTISP_MODE \""
+				<< softISPMode.value()
+				<< "\", must be \"cpu\" or \"gpu\"";
 			return;
 		}
 	}
