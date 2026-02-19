@@ -37,7 +37,14 @@ namespace {
 
 constexpr float kDefaultBrightness = 0.0f;
 constexpr float kDefaultContrast = 1.0f;
+constexpr float kDefaultHue = 0.0f;
 constexpr float kDefaultSaturation = 1.0f;
+
+/*
+ * The Hue scale is negated as the hardware performs the opposite phase shift
+ * to what is expected and defined from the libcamera Hue control value.
+ */
+constexpr float kHueScale = -90.0f;
 
 } /* namespace */
 
@@ -53,6 +60,11 @@ int ColorProcessing::init(IPAContext &context,
 	cmap[&controls::Contrast] = ControlInfo(0.0f, 1.993f, kDefaultContrast);
 	cmap[&controls::Saturation] = ControlInfo(0.0f, 1.993f, kDefaultSaturation);
 
+	/* Hue adjustment is negated by kHueScale, min/max are swapped */
+	cmap[&controls::Hue] = ControlInfo(HueQ::TraitsType::max * kHueScale,
+					   HueQ::TraitsType::min * kHueScale,
+					   kDefaultHue);
+
 	return 0;
 }
 
@@ -66,6 +78,7 @@ int ColorProcessing::configure(IPAContext &context,
 
 	cproc.brightness = BrightnessQ(kDefaultBrightness);
 	cproc.contrast = ContrastQ(kDefaultContrast);
+	cproc.hue = HueQ(kDefaultHue);
 	cproc.saturation = SaturationQ(kDefaultSaturation);
 
 	return 0;
@@ -107,6 +120,18 @@ void ColorProcessing::queueRequest(IPAContext &context,
 		LOG(RkISP1CProc, Debug) << "Set contrast to " << value;
 	}
 
+	const auto &hue = controls.get(controls::Hue);
+	if (hue) {
+		/* Scale the Hue from ]-90, +90] */
+		HueQ value = *hue / kHueScale;
+		if (cproc.hue != value) {
+			cproc.hue = value;
+			update = true;
+		}
+
+		LOG(RkISP1CProc, Debug) << "Set hue to " << value;
+	}
+
 	const auto saturation = controls.get(controls::Saturation);
 	if (saturation) {
 		SaturationQ value = *saturation;
@@ -120,6 +145,7 @@ void ColorProcessing::queueRequest(IPAContext &context,
 
 	frameContext.cproc.brightness = cproc.brightness;
 	frameContext.cproc.contrast = cproc.contrast;
+	frameContext.cproc.hue = cproc.hue;
 	frameContext.cproc.saturation = cproc.saturation;
 	frameContext.cproc.update = update;
 }
@@ -140,6 +166,7 @@ void ColorProcessing::prepare([[maybe_unused]] IPAContext &context,
 	config.setEnabled(true);
 	config->brightness = frameContext.cproc.brightness.quantized();
 	config->contrast = frameContext.cproc.contrast.quantized();
+	config->hue = frameContext.cproc.hue.quantized();
 	config->sat = frameContext.cproc.saturation.quantized();
 }
 
@@ -154,6 +181,7 @@ void ColorProcessing::process([[maybe_unused]] IPAContext &context,
 {
 	metadata.set(controls::Brightness, frameContext.cproc.brightness.value());
 	metadata.set(controls::Contrast, frameContext.cproc.contrast.value());
+	metadata.set(controls::Hue, frameContext.cproc.hue.value() * kHueScale);
 	metadata.set(controls::Saturation, frameContext.cproc.saturation.value());
 }
 
