@@ -159,7 +159,7 @@ void Awb::process(IPAContext &context, const uint32_t frame,
 	 * Sometimes the first frame's statistics have no valid pixels, in which
 	 * case we'll just assume a grey world until they say otherwise.
 	 */
-	double rgAvg, bgAvg;
+	float rgAvg, bgAvg;
 	if (!counted_zones) {
 		rgAvg = 1.0;
 		bgAvg = 1.0;
@@ -174,15 +174,15 @@ void Awb::process(IPAContext &context, const uint32_t frame,
 	 * figure by the gains that were applied when the statistics for this
 	 * frame were generated.
 	 */
-	double rRatio = rgAvg / frameContext.awb.rGain;
-	double bRatio = bgAvg / frameContext.awb.bGain;
+	float rRatio = rgAvg / frameContext.awb.rGain;
+	float bRatio = bgAvg / frameContext.awb.bGain;
 
 	/*
 	 * And then we can simply invert the ratio to find the gain we should
 	 * apply.
 	 */
-	double rGain = 1 / rRatio;
-	double bGain = 1 / bRatio;
+	float rGain = 1 / rRatio;
+	float bGain = 1 / bRatio;
 
 	/*
 	 * Running at full speed, this algorithm results in oscillations in the
@@ -190,7 +190,7 @@ void Awb::process(IPAContext &context, const uint32_t frame,
 	 * changes in gain, unless we're in the startup phase in which case we
 	 * want to fix the miscolouring as quickly as possible.
 	 */
-	double speed = frame < kNumStartupFrames ? 1.0 : 0.2;
+	float speed = frame < kNumStartupFrames ? 1.0f : 0.2f;
 	rGain = speed * rGain + context.activeState.awb.rGain * (1.0 - speed);
 	bGain = speed * bGain + context.activeState.awb.bGain * (1.0 - speed);
 
