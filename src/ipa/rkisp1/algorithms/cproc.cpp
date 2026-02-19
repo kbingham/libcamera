@@ -143,6 +143,20 @@ void ColorProcessing::prepare([[maybe_unused]] IPAContext &context,
 	config->sat = frameContext.cproc.saturation.quantized();
 }
 
+/**
+ * \copydoc libcamera::ipa::Algorithm::process
+ */
+void ColorProcessing::process([[maybe_unused]] IPAContext &context,
+			      [[maybe_unused]] const uint32_t frame,
+			      IPAFrameContext &frameContext,
+			      [[maybe_unused]] const rkisp1_stat_buffer *stats,
+			      ControlList &metadata)
+{
+	metadata.set(controls::Brightness, frameContext.cproc.brightness.value());
+	metadata.set(controls::Contrast, frameContext.cproc.contrast.value());
+	metadata.set(controls::Saturation, frameContext.cproc.saturation.value());
+}
+
 REGISTER_IPA_ALGORITHM(ColorProcessing, "ColorProcessing")
 
 } /* namespace ipa::rkisp1::algorithms */
