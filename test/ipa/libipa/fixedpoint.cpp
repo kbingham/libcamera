@@ -68,7 +68,7 @@ protected:
 		 * The second 7.992 test is to test that unused bits don't
 		 * affect the result.
 		 */
-		std::map<double, uint16_t> testCases = {
+		std::map<double, int16_t> testCases = {
 			{ 7.992, 0x3ff },
 			{   0.2, 0x01a },
 			{  -0.2, 0x7e6 },
@@ -81,14 +81,14 @@ protected:
 
 		int ret;
 		for (const auto &testCase : testCases) {
-			ret = testSingleFixedPoint<4, 7, uint16_t>(testCase.first,
+			ret = testSingleFixedPoint<4, 7, int16_t>(testCase.first,
 								   testCase.second);
 			if (ret != TestPass)
 				return ret;
 		}
 
 		/* Special case with a superfluous one in the unused bits */
-		ret = testFixedToFloat<4, 7, uint16_t, double>(0xbff, 7.992);
+		ret = testFixedToFloat<4, 7, int16_t, double>(0xbff, 7.992);
 		if (ret != TestPass)
 			return ret;
 

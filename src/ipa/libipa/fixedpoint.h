@@ -49,6 +49,9 @@ constexpr R fixedToFloatingPoint(T number)
 	static_assert(sizeof(int) >= sizeof(T));
 	static_assert(I + F <= sizeof(T) * 8);
 
+	if constexpr (std::is_unsigned_v<T>)
+		return static_cast<R>(number) / static_cast<R>(T{ 1 } << F);
+
 	/*
 	 * Recreate the upper bits in case of a negative number by shifting the sign
 	 * bit from the fixed point to the first bit of the unsigned and then right shifting
