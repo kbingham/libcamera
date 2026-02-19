@@ -24,13 +24,19 @@
 #include "libcamera/internal/matrix.h"
 #include "libcamera/internal/vector.h"
 
-#include <libipa/camera_sensor_helper.h>
-#include <libipa/fc_queue.h>
 #include "libipa/agc_mean_luminance.h"
+#include "libipa/camera_sensor_helper.h"
+#include "libipa/fc_queue.h"
+#include "libipa/fixedpoint.h"
 
 namespace libcamera {
 
 namespace ipa::rkisp1 {
+
+/* Fixed point types used by CPROC */
+using BrightnessQ = Q<1, 7>;
+using ContrastQ = UQ<1, 7>;
+using SaturationQ = UQ<1, 7>;
 
 struct IPAHwSettings {
 	unsigned int numAeCells;
@@ -111,9 +117,9 @@ struct IPAActiveState {
 	} ccm;
 
 	struct {
-		int8_t brightness;
-		uint8_t contrast;
-		uint8_t saturation;
+		BrightnessQ brightness;
+		ContrastQ contrast;
+		SaturationQ saturation;
 	} cproc;
 
 	struct {
@@ -173,9 +179,10 @@ struct IPAFrameContext : public FrameContext {
 	} awb;
 
 	struct {
-		int8_t brightness;
-		uint8_t contrast;
-		uint8_t saturation;
+		BrightnessQ brightness;
+		ContrastQ contrast;
+		SaturationQ saturation;
+
 		bool update;
 	} cproc;
 
