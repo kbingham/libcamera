@@ -37,8 +37,8 @@ int Awb::configure([[maybe_unused]] IPAContext &context,
 	 * for the first frame we will make no assumptions and leave the R/B
 	 * channels unmodified.
 	 */
-	context.activeState.awb.rGain = 1.0;
-	context.activeState.awb.bGain = 1.0;
+	context.activeState.awb.rGain = 1.0f;
+	context.activeState.awb.bGain = 1.0f;
 
 	return 0;
 }
@@ -46,8 +46,8 @@ int Awb::configure([[maybe_unused]] IPAContext &context,
 void Awb::fillGainsParamBlock(MaliC55Params *params, IPAContext &context,
 				IPAFrameContext &frameContext)
 {
-	double rGain = context.activeState.awb.rGain;
-	double bGain = context.activeState.awb.bGain;
+	UQ<4, 8> rGain = context.activeState.awb.rGain;
+	UQ<4, 8> bGain = context.activeState.awb.bGain;
 
 	/*
 	 * The gains here map as follows:
@@ -61,10 +61,10 @@ void Awb::fillGainsParamBlock(MaliC55Params *params, IPAContext &context,
 	 */
 	auto block = params->block<MaliC55Blocks::AwbGains>();
 
-	block->gain00 = floatingToFixedPoint<4, 8, uint16_t, double>(rGain);
-	block->gain01 = floatingToFixedPoint<4, 8, uint16_t, double>(1.0);
-	block->gain10 = floatingToFixedPoint<4, 8, uint16_t, double>(1.0);
-	block->gain11 = floatingToFixedPoint<4, 8, uint16_t, double>(bGain);
+	block->gain00 = rGain.quantized();
+	block->gain01 = UQ<4, 8>(1.0f).quantized();
+	block->gain10 = UQ<4, 8>(1.0f).quantized();
+	block->gain11 = bGain.quantized();
 
 	frameContext.awb.rGain = rGain;
 	frameContext.awb.bGain = bGain;
@@ -140,18 +140,18 @@ void Awb::process(IPAContext &context, const uint32_t frame,
 	 * gain figures that we can apply to approximate a grey world.
 	 */
 	unsigned int counted_zones = 0;
-	double rgSum = 0, bgSum = 0;
+	float rgSum = 0, bgSum = 0;
 
 	for (unsigned int i = 0; i < 225; i++) {
 		if (!awb_ratios[i].num_pixels)
 			continue;
 
 		/*
-		 * The statistics are in Q4.8 format, so we convert to double
+		 * The statistics are in Q4.8 format, so we convert to float
 		 * here.
 		 */
-		rgSum += fixedToFloatingPoint<4, 8, double, uint16_t>(awb_ratios[i].avg_rg_gr);
-		bgSum += fixedToFloatingPoint<4, 8, double, uint16_t>(awb_ratios[i].avg_bg_br);
+		rgSum += UQ<4, 8>(awb_ratios[i].avg_rg_gr).value();
+		bgSum += UQ<4, 8>(awb_ratios[i].avg_bg_br).value();
 		counted_zones++;
 	}
 
@@ -174,8 +174,8 @@ void Awb::process(IPAContext &context, const uint32_t frame,
 	 * figure by the gains that were applied when the statistics for this
 	 * frame were generated.
 	 */
-	float rRatio = rgAvg / frameContext.awb.rGain;
-	float bRatio = bgAvg / frameContext.awb.bGain;
+	float rRatio = rgAvg / frameContext.awb.rGain.value();
+	float bRatio = bgAvg / frameContext.awb.bGain.value();
 
 	/*
 	 * And then we can simply invert the ratio to find the gain we should
@@ -191,15 +191,15 @@ void Awb::process(IPAContext &context, const uint32_t frame,
 	 * want to fix the miscolouring as quickly as possible.
 	 */
 	float speed = frame < kNumStartupFrames ? 1.0f : 0.2f;
-	rGain = speed * rGain + context.activeState.awb.rGain * (1.0 - speed);
-	bGain = speed * bGain + context.activeState.awb.bGain * (1.0 - speed);
+	rGain = speed * rGain + context.activeState.awb.rGain.value() * (1.0f - speed);
+	bGain = speed * bGain + context.activeState.awb.bGain.value() * (1.0f - speed);
 
 	context.activeState.awb.rGain = rGain;
 	context.activeState.awb.bGain = bGain;
 
 	metadata.set(controls::ColourGains, {
-		static_cast<float>(frameContext.awb.rGain),
-		static_cast<float>(frameContext.awb.bGain),
+		frameContext.awb.rGain.value(),
+		frameContext.awb.bGain.value(),
 	});
 
 	LOG(MaliC55Awb, Debug) << "For frame number " << frame << ": "
