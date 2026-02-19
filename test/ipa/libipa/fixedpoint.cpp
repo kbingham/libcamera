@@ -23,80 +23,6 @@ using namespace ipa;
 class FixedPointUtilsTest : public Test
 {
 protected:
-	/* R for real, I for integer */
-	template<unsigned int IntPrec, unsigned int FracPrec, typename I, typename R>
-	int testFixedToFloat(I input, R expected)
-	{
-		R out = fixedToFloatingPoint<IntPrec, FracPrec, R>(input);
-		R prec = 1.0 / (1 << FracPrec);
-		if (std::abs(out - expected) > prec) {
-			cerr << "Reverse conversion expected " << input
-			     << " to convert to " << expected
-			     << ", got " << out << std::endl;
-			return TestFail;
-		}
-
-		return TestPass;
-	}
-
-	template<unsigned int IntPrec, unsigned int FracPrec, typename T>
-	int testSingleFixedPoint(double input, T expected)
-	{
-		T ret = floatingToFixedPoint<IntPrec, FracPrec, T>(input);
-		if (ret != expected) {
-			cerr << "Expected " << input << " to convert to "
-			     << expected << ", got " << ret << std::endl;
-			return TestFail;
-		}
-
-		/*
-		 * The precision check is fairly arbitrary but is based on what
-		 * the rkisp1 is capable of in the crosstalk module.
-		 */
-		double f = fixedToFloatingPoint<IntPrec, FracPrec, double>(ret);
-		if (std::abs(f - input) > 0.005) {
-			cerr << "Reverse conversion expected " << ret
-			     << " to convert to " << input
-			     << ", got " << f << std::endl;
-			return TestFail;
-		}
-
-		return TestPass;
-	}
-
-	int testFixedPoint()
-	{
-		/*
-		 * The second 7.992 test is to test that unused bits don't
-		 * affect the result.
-		 */
-		std::map<double, int16_t> testCases = {
-			{ 7.992, 0x3ff },
-			{   0.2, 0x01a },
-			{  -0.2, 0x7e6 },
-			{  -0.8, 0x79a },
-			{  -0.4, 0x7cd },
-			{  -1.4, 0x74d },
-			{    -8, 0x400 },
-			{     0, 0 },
-		};
-
-		int ret;
-		for (const auto &testCase : testCases) {
-			ret = testSingleFixedPoint<4, 7, int16_t>(testCase.first,
-								   testCase.second);
-			if (ret != TestPass)
-				return ret;
-		}
-
-		/* Special case with a superfluous one in the unused bits */
-		ret = testFixedToFloat<4, 7, int16_t, double>(0xbff, 7.992);
-		if (ret != TestPass)
-			return ret;
-
-		return TestPass;
-	}
-
 	template<typename Q>
 	int quantizedCheck(float input, typename Q::QuantizedType expected, float value)
 	{
@@ -219,6 +145,21 @@ protected:
 		fails += quantizedCheck<UQ<1, 7>>( 1.992f, 0b1'1111111, 1.99219f);	/* Max */
 		fails += quantizedCheck<UQ<1, 7>>( 2.000f, 0b1'1111111, 1.99219f);	/* Clamped to Max */
 
+		/* Q4.7(-8 .. 7.99219)  Min: [0x0400:-8] -- Max: [0x03ff:7.99219] Step:0.0078125 */
+		introduce<Q<4, 7>>("Q4.7");
+		fails += quantizedCheck<Q<4, 7>>(-8.0f,   0b1000'0000000, -8.0f);	/* Min */
+		fails += quantizedCheck<Q<4, 7>>(-0.008f, 0b1111'1111111, -0.0078125);	/* -1 step */
+		fails += quantizedCheck<Q<4, 7>>( 0.0f,   0b0000'0000000,  0.0f);	/* Zero */
+		fails += quantizedCheck<Q<4, 7>>( 0.008f, 0b0000'0000001,  0.0078125f);	/* +1 step */
+		fails += quantizedCheck<Q<4, 7>>( 7.992f, 0b0111'1111111,  7.99219f);	/* Max */
+
+		/* Retain additional tests from original testFixedPoint() */
+		fails += quantizedCheck<Q<4, 7>>( 0.2f, 0b0000'0011010,  0.203125f);	/* 0x01a */
+		fails += quantizedCheck<Q<4, 7>>(-0.2f, 0b1111'1100110, -0.203125f);	/* 0x7e6 */
+		fails += quantizedCheck<Q<4, 7>>(-0.8f, 0b1111'0011010, -0.796875f);	/* 0x79a */
+		fails += quantizedCheck<Q<4, 7>>(-0.4f, 0b1111'1001101, -0.398438f);	/* 0x7cd */
+		fails += quantizedCheck<Q<4, 7>>(-1.4f, 0b1110'1001101, -1.39844f);	/* 0x74d */
+
 		/* UQ4.8(0 .. 15.9961)  Min: [0x0000:0] -- Max: [0x0fff:15.9961] Step:0.00390625 */
 		introduce<UQ<4, 8>>("UQ4.8");
 		fails += quantizedCheck<UQ<4, 8>>( 0.0f, 0b0000'00000000,  0.00f);
@@ -294,10 +235,6 @@ protected:
 	int run()
 	{
 		unsigned int fails = 0;
-
-		/* fixed point conversion test */
-		if (testFixedPoint() != TestPass)
-			fails++;
 
 		if (testFixedPointQuantizers() != TestPass)
 			fails++;
