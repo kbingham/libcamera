@@ -276,16 +276,6 @@ int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputForm
 	return getShaderVariableLocations();
 }
 
-/**
- * \brief Get the output frame size
- *
- * \return The output frame size
- */
-unsigned int DebayerEGL::frameSize()
-{
-	return outputConfig_.frameSize;
-}
-
 int DebayerEGL::configure(const StreamConfiguration &inputCfg,
 			  const std::vector<std::reference_wrapper<StreamConfiguration>> &outputCfgs,
 			  [[maybe_unused]] bool ccmEnabled)

@@ -55,7 +55,6 @@ public:
 	void stop();
 
 	const SharedFD &getStatsFD() { return stats_->getStatsFD(); }
-	unsigned int frameSize();
 
 	SizeRange sizes(PixelFormat inputFormat, const Size &inputSize);
 
