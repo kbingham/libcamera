@@ -71,10 +71,7 @@ struct IPAFrameContext : public FrameContext {
 		double gain;
 	} sensor;
 
-	struct {
-		double red;
-		double blue;
-	} gains;
+	RGB<float> gains;
 
 	float gamma;
 	std::optional<float> contrast;

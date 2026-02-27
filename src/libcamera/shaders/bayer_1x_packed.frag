@@ -65,6 +65,7 @@ uniform vec2 tex_step;
 uniform vec2 tex_bayer_first_red;
 
 uniform sampler2D tex_y;
+uniform vec3 awb;
 uniform mat3 ccm;
 uniform vec3 blacklevel;
 uniform float gamma;
@@ -230,6 +231,9 @@ void main(void)
 	 * reworked into a single multiplication.
 	 */
 	rgb = (rgb - blacklevel) / (1.0 - blacklevel);
+
+	/* Apply AWB gains, and saturate each channel at sensor range */
+	rgb = clamp(rgb * awb, vec3(0.0), vec3(1.0));
 
 	/*
 	 *   CCM is a 3x3 in the format

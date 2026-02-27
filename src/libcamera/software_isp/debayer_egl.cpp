@@ -115,6 +115,7 @@ int DebayerEGL::getShaderVariableLocations(void)
 	attributeTexture_ = glGetAttribLocation(programId_, "textureIn");
 
 	textureUniformBayerDataIn_ = glGetUniformLocation(programId_, "tex_y");
+	awbUniformDataIn_ = glGetUniformLocation(programId_, "awb");
 	ccmUniformDataIn_ = glGetUniformLocation(programId_, "ccm");
 	blackLevelUniformDataIn_ = glGetUniformLocation(programId_, "blacklevel");
 	gammaUniformDataIn_ = glGetUniformLocation(programId_, "gamma");
@@ -128,6 +129,7 @@ int DebayerEGL::getShaderVariableLocations(void)
 
 	LOG(Debayer, Debug) << "vertexIn " << attributeVertex_ << " textureIn " << attributeTexture_
 			    << " tex_y " << textureUniformBayerDataIn_
+			    << " awb " << awbUniformDataIn_
 			    << " ccm " << ccmUniformDataIn_
 			    << " blacklevel " << blackLevelUniformDataIn_
 			    << " gamma " << gammaUniformDataIn_
@@ -503,6 +505,9 @@ void DebayerEGL::setShaderVariableValues(const DebayerParams &params)
 	 */
 	glUniform3f(blackLevelUniformDataIn_, params.blackLevel[0], params.blackLevel[1], params.blackLevel[2]);
 	LOG(Debayer, Debug) << " blackLevelUniformDataIn_ " << blackLevelUniformDataIn_ << " data " << params.blackLevel;
+
+	glUniform3f(awbUniformDataIn_, params.gains[0], params.gains[1], params.gains[2]);
+	LOG(Debayer, Debug) << " awbUniformDataIn_ " << awbUniformDataIn_ << " data " << params.gains;
 
 	/*
 	 * Gamma

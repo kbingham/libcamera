@@ -38,15 +38,8 @@ void Awb::prepare(IPAContext &context,
 		  DebayerParams *params)
 {
 	auto &gains = context.activeState.awb.gains;
-	Matrix<float, 3, 3> gainMatrix = { { gains.r(), 0, 0,
-					     0, gains.g(), 0,
-					     0, 0, gains.b() } };
-	context.activeState.combinedMatrix =
-		gainMatrix * context.activeState.combinedMatrix;
 
-	frameContext.gains.red = gains.r();
-	frameContext.gains.blue = gains.b();
-
+	frameContext.gains = gains;
 	params->gains = gains;
 }
 
@@ -59,11 +52,8 @@ void Awb::process(IPAContext &context,
 	const SwIspStats::Histogram &histogram = stats->yHistogram;
 	const uint8_t blackLevel = context.activeState.blc.level;
 
-	const float mdGains[] = {
-		static_cast<float>(frameContext.gains.red),
-		static_cast<float>(frameContext.gains.blue)
-	};
-	metadata.set(controls::ColourGains, mdGains);
+	metadata.set(controls::ColourGains, { frameContext.gains.r(),
+					      frameContext.gains.b() });
 
 	if (!stats->valid)
 		return;

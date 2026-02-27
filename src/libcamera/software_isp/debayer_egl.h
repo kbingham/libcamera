@@ -90,6 +90,9 @@ private:
 
 	GLint textureUniformBayerDataIn_;
 
+	/* Per-frame AWB gains */
+	GLint awbUniformDataIn_;
+
 	/* Represent per-frame CCM as a uniform vector of floats 3 x 3 */
 	GLint ccmUniformDataIn_;
 
