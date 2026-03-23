@@ -515,8 +515,8 @@ void eGL::pushEnv(std::vector<std::string> &shaderEnv, const char *str)
  * \return 0 on success, or -EINVAL on compilation failure
  */
 int eGL::compileVertexShader(GLuint &shaderId,
-			     Span<const unsigned char> shaderData,
-			     Span<const std::string> shaderEnv)
+			     std::span<const unsigned char> shaderData,
+			     std::span<const std::string> shaderEnv)
 {
 	return compileShader(GL_VERTEX_SHADER, shaderId, shaderData, shaderEnv);
 }
@@ -533,8 +533,8 @@ int eGL::compileVertexShader(GLuint &shaderId,
  * \return 0 on success, or -EINVAL on compilation failure
  */
 int eGL::compileFragmentShader(GLuint &shaderId,
-			       Span<const unsigned char> shaderData,
-			       Span<const std::string> shaderEnv)
+			       std::span<const unsigned char> shaderData,
+			       std::span<const std::string> shaderEnv)
 {
 	return compileShader(GL_FRAGMENT_SHADER, shaderId, shaderData, shaderEnv);
 }
@@ -552,8 +552,8 @@ int eGL::compileFragmentShader(GLuint &shaderId,
  * \return 0 on success, or -EINVAL on compilation failure
  */
 int eGL::compileShader(int shaderType, GLuint &shaderId,
-		       Span<const unsigned char> shaderData,
-		       Span<const std::string> shaderEnv)
+		       std::span<const unsigned char> shaderData,
+		       std::span<const std::string> shaderEnv)
 {
 	GLint success;
 	size_t i;

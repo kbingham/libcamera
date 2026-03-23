@@ -9,9 +9,9 @@
 
 #include <array>
 #include <cmath>
+#include <span>
 
 #include <libcamera/base/log.h>
-#include <libcamera/base/span.h>
 #include <libcamera/control_ids.h>
 #include <libcamera/property_ids.h>
 
@@ -78,8 +78,8 @@ const ControlInfoMap::Map ipaControls{
 	{ &controls::FrameDurationLimits,
 	  ControlInfo(static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()),
 		      static_cast<int64_t>(defaultMaxFrameDuration.get<std::micro>()),
-		      Span<const int64_t, 2>{ { static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()),
-						static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()) } }) },
+		      std::span<const int64_t, 2>{ { static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()),
+						     static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()) } }) },
 	{ &controls::draft::NoiseReductionMode, ControlInfo(controls::draft::NoiseReductionModeValues) },
 	{ &controls::rpi::StatsOutputEnable, ControlInfo(false, true, false) },
 };
@@ -101,7 +101,7 @@ const ControlInfoMap::Map ipaAfControls{
 	{ &controls::AfSpeed, ControlInfo(controls::AfSpeedValues) },
 	{ &controls::AfMetering, ControlInfo(controls::AfMeteringValues) },
 	{ &controls::AfWindows, ControlInfo(Rectangle{}, Rectangle(65535, 65535, 65535, 65535),
-					    Span<const Rectangle, 1>{ { Rectangle{} } }) },
+					    std::span<const Rectangle, 1>{ { Rectangle{} } }) },
 	{ &controls::AfTrigger, ControlInfo(controls::AfTriggerValues) },
 	{ &controls::AfPause, ControlInfo(controls::AfPauseValues) },
 	{ &controls::LensPosition, ControlInfo(0.0f, 32.0f, 1.0f) }
@@ -250,8 +250,8 @@ int32_t IpaBase::configure(const IPACameraSensorInfo &sensorInfo, const ConfigPa
 	ctrlMap[&controls::FrameDurationLimits] =
 		ControlInfo(static_cast<int64_t>(mode_.minFrameDuration.get<std::micro>()),
 			    static_cast<int64_t>(mode_.maxFrameDuration.get<std::micro>()),
-			    Span<const int64_t, 2>{ { static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()),
-						      static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()) } });
+			    std::span<const int64_t, 2>{ { static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()),
+							   static_cast<int64_t>(defaultMinFrameDuration.get<std::micro>()) } });
 
 	ctrlMap[&controls::AnalogueGain] =
 		ControlInfo(static_cast<float>(mode_.minAnalogueGain),
@@ -417,7 +417,7 @@ void IpaBase::prepareIsp(const PrepareParams &params)
 	int64_t frameTimestamp = params.sensorControls.get(controls::SensorTimestamp).value_or(0);
 	unsigned int ipaContext = params.ipaContext % rpiMetadata_.size();
 	RPiController::Metadata &rpiMetadata = rpiMetadata_[ipaContext];
-	Span<uint8_t> embeddedBuffer;
+	std::span<uint8_t> embeddedBuffer;
 
 	rpiMetadata.clear();
 	fillDeviceStatus(params.sensorControls, ipaContext);
@@ -1177,7 +1177,7 @@ void IpaBase::applyControls(const ControlList &controls)
 			if (monoSensor_)
 				break;
 
-			auto floats = ctrl.second.get<Span<const float>>();
+			auto floats = ctrl.second.get<std::span<const float>>();
 			RPiController::CcmAlgorithm *ccm = dynamic_cast<RPiController::CcmAlgorithm *>(
 				controller_.getAlgorithm("ccm"));
 			if (!ccm) {
@@ -1287,7 +1287,7 @@ void IpaBase::applyControls(const ControlList &controls)
 		}
 
 		case controls::FRAME_DURATION_LIMITS: {
-			auto frameDurations = ctrl.second.get<Span<const int64_t>>();
+			auto frameDurations = ctrl.second.get<std::span<const int64_t>>();
 			applyFrameDurations(frameDurations[0] * 1.0us, frameDurations[1] * 1.0us);
 			break;
 		}
@@ -1351,7 +1351,7 @@ void IpaBase::applyControls(const ControlList &controls)
 					<< "Could not set AF_WINDOWS - no AF algorithm";
 				break;
 			}
-			af->setWindows(ctrl.second.get<Span<const Rectangle>>());
+			af->setWindows(ctrl.second.get<std::span<const Rectangle>>());
 			break;
 		}
 

@@ -48,7 +48,7 @@ public:
 	CamHelperImx477();
 	uint32_t gainCode(double gain) const override;
 	double gain(uint32_t gainCode) const override;
-	void prepare(libcamera::Span<const uint8_t> buffer, Metadata &metadata) override;
+	void prepare(std::span<const uint8_t> buffer, Metadata &metadata) override;
 	std::pair<uint32_t, uint32_t> getBlanking(Duration &exposure, Duration minFrameDuration,
 						  Duration maxFrameDuration) const override;
 	bool sensorEmbeddedDataPresent() const override;
@@ -83,7 +83,7 @@ double CamHelperImx477::gain(uint32_t gainCode) const
 	return 1024.0 / (1024 - gainCode);
 }
 
-void CamHelperImx477::prepare(libcamera::Span<const uint8_t> buffer, Metadata &metadata)
+void CamHelperImx477::prepare(std::span<const uint8_t> buffer, Metadata &metadata)
 {
 	MdParser::RegisterMap registers;
 	DeviceStatus deviceStatus;

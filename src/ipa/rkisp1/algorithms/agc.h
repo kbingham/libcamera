@@ -9,7 +9,6 @@
 
 #include <linux/rkisp1-config.h>
 
-#include <libcamera/base/span.h>
 #include <libcamera/base/utils.h>
 
 #include <libcamera/geometry.h>

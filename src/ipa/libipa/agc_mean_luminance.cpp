@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <span>
 
 #include <libcamera/base/log.h>
 #include <libcamera/base/utils.h>
@@ -333,7 +334,7 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 	 */
 	if (exposureModeHelpers_.empty())
 		exposureModeHelpers_.try_emplace(controls::ExposureNormal,
-						 Span<std::pair<utils::Duration, double>>{});
+						 std::span<std::pair<utils::Duration, double>>{});
 
 	return 0;
 }

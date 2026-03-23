@@ -12,12 +12,12 @@
 #include <algorithm>
 #include <assert.h>
 #include <memory>
+#include <span>
 #include <stdlib.h>
 #include <string>
 #include <tuple>
 #include <vector>
 
-#include <libcamera/base/span.h>
 #include <libcamera/base/utils.h>
 
 #include <libcamera/formats.h>
@@ -132,9 +132,9 @@ int DebayerEGL::getShaderVariableLocations(void)
 
 int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputFormat)
 {
+	std::span<const unsigned char> fragmentShaderData;
+	std::span<const unsigned char> vertexShaderData;
 	std::vector<std::string> shaderEnv;
-	Span<const unsigned char> fragmentShaderData;
-	Span<const unsigned char> vertexShaderData;
 	GLenum err;
 
 	/* Target gles 100 glsl requires "#version x" as first directive in shader */

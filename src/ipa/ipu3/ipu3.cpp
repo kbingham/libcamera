@@ -10,6 +10,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <span>
 #include <stdint.h>
 #include <utility>
 #include <vector>
@@ -19,7 +20,6 @@
 
 #include <libcamera/base/file.h>
 #include <libcamera/base/log.h>
-#include <libcamera/base/span.h>
 #include <libcamera/base/utils.h>
 
 #include <libcamera/control_ids.h>
@@ -452,7 +452,7 @@ void IPAIPU3::computeParams(const uint32_t frame, const uint32_t bufferId)
 		return;
 	}
 
-	Span<uint8_t> mem = it->second.planes()[0];
+	std::span<uint8_t> mem = it->second.planes()[0];
 	ipu3_uapi_params *params =
 		reinterpret_cast<ipu3_uapi_params *>(mem.data());
 
@@ -496,7 +496,7 @@ void IPAIPU3::processStats(const uint32_t frame,
 		return;
 	}
 
-	Span<uint8_t> mem = it->second.planes()[0];
+	std::span<uint8_t> mem = it->second.planes()[0];
 	const ipu3_uapi_stats_3a *stats =
 		reinterpret_cast<ipu3_uapi_stats_3a *>(mem.data());
 

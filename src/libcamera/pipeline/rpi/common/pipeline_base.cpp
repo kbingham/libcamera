@@ -388,7 +388,7 @@ V4L2DeviceFormat PipelineHandlerBase::toV4L2DeviceFormat(const V4L2VideoDevice *
 }
 
 std::unique_ptr<CameraConfiguration>
-PipelineHandlerBase::generateConfiguration(Camera *camera, Span<const StreamRole> roles)
+PipelineHandlerBase::generateConfiguration(Camera *camera, std::span<const StreamRole> roles)
 {
 	CameraData *data = cameraData(camera);
 	std::unique_ptr<CameraConfiguration> config =
@@ -903,7 +903,7 @@ void PipelineHandlerBase::mapBuffers(Camera *camera, const BufferMap &buffers, u
 	 * handler and the IPA.
 	 */
 	for (const auto &[id, buffer] : buffers) {
-		Span<const FrameBuffer::Plane> planes = buffer.buffer->planes();
+		std::span<const FrameBuffer::Plane> planes = buffer.buffer->planes();
 
 		bufferIds.emplace_back(mask | id,
 				       std::vector<FrameBuffer::Plane>{ planes.begin(), planes.end() });
@@ -1264,7 +1264,7 @@ void CameraData::metadataReady(const ControlList &metadata)
 			*notifyGainsUnity_,
 			static_cast<int32_t>((*colourGains)[0] * *notifyGainsUnity_)
 		};
-		ctrls.set(V4L2_CID_NOTIFY_GAINS, Span<const int32_t>{ gains });
+		ctrls.set(V4L2_CID_NOTIFY_GAINS, std::span<const int32_t>{ gains });
 
 		sensor_->setControls(&ctrls);
 	}
@@ -1322,7 +1322,7 @@ Rectangle CameraData::scaleIspCrop(const Rectangle &ispCrop) const
 
 void CameraData::applyScalerCrop(const ControlList &controls)
 {
-	const auto &scalerCropRPi = controls.get<Span<const Rectangle>>(controls::rpi::ScalerCrops);
+	const auto &scalerCropRPi = controls.get<std::span<const Rectangle>>(controls::rpi::ScalerCrops);
 	const auto &scalerCropCore = controls.get<Rectangle>(controls::ScalerCrop);
 	std::vector<Rectangle> scalerCrops;
 
@@ -1532,8 +1532,8 @@ void CameraData::fillRequestMetadata(const ControlList &bufferControls, Request 
 		request->_d()->metadata().set(controls::ScalerCrop, crops[0]);
 		if (crops.size() > 1) {
 			request->_d()->metadata().set(controls::rpi::ScalerCrops,
-						      Span<const Rectangle>(crops.data(),
-									    crops.size()));
+						      std::span<const Rectangle>(crops.data(),
+										 crops.size()));
 		}
 	}
 }

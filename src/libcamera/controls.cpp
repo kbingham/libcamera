@@ -112,7 +112,7 @@ ControlValue::ControlValue()
  * \param[in] value Initial value
  *
  * This function constructs a new instance of ControlValue and stores the \a
- * value inside it. If the type \a T is equivalent to Span<R>, the instance
+ * value inside it. If the type \a T is equivalent to std::span<R>, the instance
  * stores an array of values of type \a R. Otherwise the instance stores a
  * single value of type \a T. The numElements() and type() are updated to
  * reflect the stored value.
@@ -189,7 +189,7 @@ ControlValue &ControlValue::operator=(const ControlValue &other)
  * \brief Retrieve the raw data of a control value
  * \return The raw data of the control value as a span of uint8_t
  */
-Span<const uint8_t> ControlValue::data() const
+std::span<const uint8_t> ControlValue::data() const
 {
 	std::size_t size = numElements_ * ControlValueSize[type_];
 	const uint8_t *data = size > sizeof(value_)
@@ -201,9 +201,9 @@ Span<const uint8_t> ControlValue::data() const
 /**
  * \copydoc ControlValue::data() const
  */
-Span<uint8_t> ControlValue::data()
+std::span<uint8_t> ControlValue::data()
 {
-	Span<const uint8_t> data = const_cast<const ControlValue *>(this)->data();
+	std::span<const uint8_t> data = const_cast<const ControlValue *>(this)->data();
 	return { const_cast<uint8_t *>(data.data()), data.size() };
 }
 
@@ -324,12 +324,12 @@ bool ControlValue::operator==(const ControlValue &other) const
  * This function returns the contained value as an instance of \a T. If the
  * ControlValue instance stores a single value, the type \a T shall match the
  * stored value type(). If the instance stores an array of values, the type
- * \a T should be equal to Span<const R>, and the type \a R shall match the
+ * \a T should be equal to std::span<const R>, and the type \a R shall match the
  * stored value type(). The behaviour is undefined otherwise.
  *
  * Note that a ControlValue instance that stores a non-array value is not
  * equivalent to an instance that stores an array value containing a single
- * element. The latter shall be accessed through a Span<const R> type, while
+ * element. The latter shall be accessed through a std::span<const R> type, while
  * the former shall be accessed through a type \a T corresponding to type().
  *
  * \return The control value
@@ -341,13 +341,13 @@ bool ControlValue::operator==(const ControlValue &other) const
  * \param[in] value The control value
  *
  * This function stores the \a value in the instance. If the type \a T is
- * equivalent to Span<R>, the instance stores an array of values of type \a R.
+ * equivalent to std::span<R>, the instance stores an array of values of type \a R.
  * Otherwise the instance stores a single value of type \a T. The numElements()
  * and type() are updated to reflect the stored value.
  *
  * The entire content of \a value is copied to the instance, no reference to \a
  * value or to the data it references is retained. This may be an expensive
- * operation for Span<> values that refer to large arrays.
+ * operation for std::span<> values that refer to large arrays.
  */
 
 void ControlValue::set(ControlType type, bool isArray, const void *data,
@@ -357,7 +357,7 @@ void ControlValue::set(ControlType type, bool isArray, const void *data,
 
 	reserve(type, isArray, numElements);
 
-	Span<uint8_t> storage = ControlValue::data();
+	std::span<uint8_t> storage = ControlValue::data();
 	memcpy(storage.data(), data, storage.size());
 }
 
@@ -613,7 +613,7 @@ ControlInfo::ControlInfo(const ControlValue &min,
  * values list respectively. The default value is set to \a def if provided, or
  * to the minimum value otherwise.
  */
-ControlInfo::ControlInfo(Span<const ControlValue> values,
+ControlInfo::ControlInfo(std::span<const ControlValue> values,
 			 const ControlValue &def)
 {
 	min_ = values.front();
@@ -1074,7 +1074,7 @@ bool ControlList::contains(unsigned int id) const
  */
 
 /**
- * \fn ControlList::set(const Control<Span<T, Size>> &ctrl, const std::initializer_list<V> &value)
+ * \fn ControlList::set(const Control<std::span<T, Size>> &ctrl, const std::initializer_list<V> &value)
  * \copydoc ControlList::set(const Control<T> &ctrl, const V &value)
  */
 

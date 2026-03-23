@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <link.h>
+#include <span>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -21,7 +22,6 @@
 
 #include <libcamera/base/file.h>
 #include <libcamera/base/log.h>
-#include <libcamera/base/span.h>
 #include <libcamera/base/utils.h>
 
 /**
@@ -41,7 +41,7 @@ LOG_DEFINE_CATEGORY(IPAModule)
 namespace {
 
 template<typename T>
-typename std::remove_extent_t<T> *elfPointer(Span<const uint8_t> elf,
+typename std::remove_extent_t<T> *elfPointer(std::span<const uint8_t> elf,
 					     off_t offset, size_t objSize)
 {
 	size_t size = offset + objSize;
@@ -53,13 +53,13 @@ typename std::remove_extent_t<T> *elfPointer(Span<const uint8_t> elf,
 }
 
 template<typename T>
-typename std::remove_extent_t<T> *elfPointer(Span<const uint8_t> elf,
+typename std::remove_extent_t<T> *elfPointer(std::span<const uint8_t> elf,
 					     off_t offset)
 {
 	return elfPointer<T>(elf, offset, sizeof(T));
 }
 
-int elfVerifyIdent(Span<const uint8_t> elf)
+int elfVerifyIdent(std::span<const uint8_t> elf)
 {
 	const char *e_ident = elfPointer<const char[EI_NIDENT]>(elf, 0);
 	if (!e_ident)
@@ -85,7 +85,7 @@ int elfVerifyIdent(Span<const uint8_t> elf)
 	return 0;
 }
 
-const ElfW(Shdr) *elfSection(Span<const uint8_t> elf, const ElfW(Ehdr) *eHdr,
+const ElfW(Shdr) *elfSection(std::span<const uint8_t> elf, const ElfW(Ehdr) *eHdr,
 			     ElfW(Half) idx)
 {
 	if (idx >= eHdr->e_shnum)
@@ -104,7 +104,7 @@ const ElfW(Shdr) *elfSection(Span<const uint8_t> elf, const ElfW(Ehdr) *eHdr,
  * \return The memory region storing the symbol on success, or an empty span
  * otherwise
  */
-Span<const uint8_t> elfLoadSymbol(Span<const uint8_t> elf, const char *symbol)
+std::span<const uint8_t> elfLoadSymbol(std::span<const uint8_t> elf, const char *symbol)
 {
 	const ElfW(Ehdr) *eHdr = elfPointer<const ElfW(Ehdr)>(elf, 0);
 	if (!eHdr)
@@ -274,14 +274,14 @@ int IPAModule::loadIPAModuleInfo()
 		return file.error();
 	}
 
-	Span<const uint8_t> data = file.map();
+	std::span<const uint8_t> data = file.map();
 	int ret = elfVerifyIdent(data);
 	if (ret) {
 		LOG(IPAModule, Error) << "IPA module is not an ELF file";
 		return ret;
 	}
 
-	Span<const uint8_t> info = elfLoadSymbol(data, "ipaModuleInfo");
+	std::span<const uint8_t> info = elfLoadSymbol(data, "ipaModuleInfo");
 	if (info.size() < sizeof(info_)) {
 		LOG(IPAModule, Error) << "IPA module has no valid info";
 		return -EINVAL;

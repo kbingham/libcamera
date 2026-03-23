@@ -300,7 +300,7 @@ bool IPAManager::isSignatureValid([[maybe_unused]] IPAModule *ipa) const
 	if (!file.open(File::OpenModeFlag::ReadOnly))
 		return false;
 
-	Span<uint8_t> data = file.map();
+	std::span<uint8_t> data = file.map();
 	if (data.empty())
 		return false;
 

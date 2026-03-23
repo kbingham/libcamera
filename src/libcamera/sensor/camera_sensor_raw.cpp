@@ -74,7 +74,7 @@ public:
 	std::vector<Size> sizes(unsigned int mbusCode) const override;
 	Size resolution() const override;
 
-	V4L2SubdeviceFormat getFormat(Span<const unsigned int> mbusCodes,
+	V4L2SubdeviceFormat getFormat(std::span<const unsigned int> mbusCodes,
 				      const Size &size,
 				      const Size maxSize) const override;
 	int setFormat(V4L2SubdeviceFormat *format,
@@ -97,7 +97,7 @@ public:
 	Orientation mountingOrientation() const override { return mountingOrientation_; }
 
 	const ControlInfoMap &controls() const override;
-	ControlList getControls(Span<const uint32_t> ids) override;
+	ControlList getControls(std::span<const uint32_t> ids) override;
 	int setControls(ControlList *ctrls) override;
 
 	const std::vector<controls::draft::TestPatternModeEnum> &
@@ -767,7 +767,7 @@ Size CameraSensorRaw::resolution() const
 }
 
 V4L2SubdeviceFormat
-CameraSensorRaw::getFormat(Span<const unsigned int> mbusCodes,
+CameraSensorRaw::getFormat(std::span<const unsigned int> mbusCodes,
 			   const Size &size, Size maxSize) const
 {
 	unsigned int desiredArea = size.width * size.height;
@@ -1113,7 +1113,7 @@ const ControlInfoMap &CameraSensorRaw::controls() const
 	return subdev_->controls();
 }
 
-ControlList CameraSensorRaw::getControls(Span<const uint32_t> ids)
+ControlList CameraSensorRaw::getControls(std::span<const uint32_t> ids)
 {
 	return subdev_->getControls(ids);
 }

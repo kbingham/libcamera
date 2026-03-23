@@ -11,6 +11,7 @@
 #include <array>
 #include <cmath>
 #include <map>
+#include <span>
 #include <stdint.h>
 #include <type_traits>
 
@@ -1083,7 +1084,7 @@ int CameraCapabilities::initializeStaticMetadata()
 	}
 
 	{
-		const Span<const Rectangle> rects =
+		const std::span<const Rectangle> rects =
 			properties.get(properties::PixelArrayActiveAreas).value_or(utils::defopt);
 		std::vector<int32_t> data{
 			static_cast<int32_t>(rects[0].x),

@@ -69,7 +69,7 @@ namespace ipa {
  * The vector of stages may be empty. In that case, the helper will simply use
  * the runtime limits set through setLimits() instead.
  */
-ExposureModeHelper::ExposureModeHelper(const Span<std::pair<utils::Duration, double>> stages)
+ExposureModeHelper::ExposureModeHelper(std::span<std::pair<utils::Duration, double>> stages)
 	: lineDuration_(1us), minExposureTime_(0us), maxExposureTime_(0us),
 	  minGain_(0), maxGain_(0), sensorHelper_(nullptr)
 {

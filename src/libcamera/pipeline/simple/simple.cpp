@@ -412,7 +412,7 @@ public:
 	SimplePipelineHandler(CameraManager *manager);
 
 	std::unique_ptr<CameraConfiguration> generateConfiguration(Camera *camera,
-								   Span<const StreamRole> roles) override;
+								   std::span<const StreamRole> roles) override;
 	int configure(Camera *camera, CameraConfiguration *config) override;
 
 	int exportFrameBuffers(Camera *camera, Stream *stream,
@@ -1407,7 +1407,7 @@ SimplePipelineHandler::SimplePipelineHandler(CameraManager *manager)
 }
 
 std::unique_ptr<CameraConfiguration>
-SimplePipelineHandler::generateConfiguration(Camera *camera, Span<const StreamRole> roles)
+SimplePipelineHandler::generateConfiguration(Camera *camera, std::span<const StreamRole> roles)
 {
 	SimpleCameraData *data = cameraData(camera);
 	std::unique_ptr<CameraConfiguration> config =

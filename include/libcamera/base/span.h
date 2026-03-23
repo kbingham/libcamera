@@ -30,11 +30,11 @@ struct is_array<std::array<U, N>> : public std::true_type {
 };
 
 template<typename U>
-struct is_span : public std::false_type {
+struct is_libcamera_span : public std::false_type {
 };
 
 template<typename U, std::size_t Extent>
-struct is_span<Span<U, Extent>> : public std::true_type {
+struct is_libcamera_span<Span<U, Extent>> : public std::true_type {
 };
 
 } /* namespace details */
@@ -153,7 +153,7 @@ public:
 
 	template<class Container>
 	explicit constexpr Span(Container &cont,
-				std::enable_if_t<!details::is_span<Container>::value &&
+				std::enable_if_t<!details::is_libcamera_span<Container>::value &&
 						 !details::is_array<Container>::value &&
 						 !std::is_array<Container>::value &&
 						 std::is_convertible<std::remove_pointer_t<decltype(utils::data(cont))> (*)[],
@@ -165,7 +165,7 @@ public:
 
 	template<class Container>
 	explicit constexpr Span(const Container &cont,
-				std::enable_if_t<!details::is_span<Container>::value &&
+				std::enable_if_t<!details::is_libcamera_span<Container>::value &&
 						 !details::is_array<Container>::value &&
 						 !std::is_array<Container>::value &&
 						 std::is_convertible<std::remove_pointer_t<decltype(utils::data(cont))> (*)[],
@@ -315,7 +315,7 @@ public:
 
 	template<class Container>
 	constexpr Span(Container &cont,
-		       std::enable_if_t<!details::is_span<Container>::value &&
+		       std::enable_if_t<!details::is_libcamera_span<Container>::value &&
 					!details::is_array<Container>::value &&
 					!std::is_array<Container>::value &&
 					std::is_convertible<std::remove_pointer_t<decltype(utils::data(cont))> (*)[],
@@ -327,7 +327,7 @@ public:
 
 	template<class Container>
 	constexpr Span(const Container &cont,
-		       std::enable_if_t<!details::is_span<Container>::value &&
+		       std::enable_if_t<!details::is_libcamera_span<Container>::value &&
 					!details::is_array<Container>::value &&
 					!std::is_array<Container>::value &&
 					std::is_convertible<std::remove_pointer_t<decltype(utils::data(cont))> (*)[],

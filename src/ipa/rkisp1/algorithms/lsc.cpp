@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <span>
 
 #include <libcamera/base/log.h>
 #include <libcamera/base/utils.h>
@@ -68,7 +69,7 @@ std::vector<double> parseSizes(const ValueNode &tuningData,
  * input:   | 0.2 | 0.3 |
  * output: 0.0   0.2   0.5   0.8   1.0
  */
-std::vector<double> sizesListToPositions(Span<const double> sizes)
+std::vector<double> sizesListToPositions(std::span<const double> sizes)
 {
 	const int half = sizes.size();
 	std::vector<double> positions(half * 2 + 1);

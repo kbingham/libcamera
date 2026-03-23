@@ -8,6 +8,7 @@
 #include "agc.h"
 
 #include <algorithm>
+#include <span>
 
 #include <libcamera/base/log.h>
 #include <libcamera/base/utils.h>
@@ -143,7 +144,7 @@ Histogram Agc::parseStatistics(const ipu3_uapi_stats_3a *stats,
 		}
 	}
 
-	return Histogram(Span<uint32_t>(hist));
+	return Histogram(std::span<uint32_t>(hist));
 }
 
 namespace {
@@ -151,7 +152,7 @@ namespace {
 class AgcTraits final : public AgcMeanLuminance::Traits
 {
 public:
-	AgcTraits(Span<const std::tuple<uint8_t, uint8_t, uint8_t>> rgbTriples,
+	AgcTraits(std::span<const std::tuple<uint8_t, uint8_t, uint8_t>> rgbTriples,
 		  RGB<double> gains, const ipu3_uapi_grid_config &bdsGrid)
 		: rgbTriples_(rgbTriples), gains_(gains), bdsGrid_(bdsGrid)
 	{
@@ -193,7 +194,7 @@ public:
 	}
 
 private:
-	Span<const std::tuple<uint8_t, uint8_t, uint8_t>> rgbTriples_;
+	std::span<const std::tuple<uint8_t, uint8_t, uint8_t>> rgbTriples_;
 	RGB<double> gains_;
 	const ipu3_uapi_grid_config &bdsGrid_;
 };

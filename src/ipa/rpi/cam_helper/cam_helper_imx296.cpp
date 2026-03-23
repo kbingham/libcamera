@@ -36,7 +36,7 @@ public:
 	double gain(uint32_t gainCode) const override;
 	uint32_t exposureLines(const Duration exposure, const Duration lineLength) const override;
 	Duration exposure(uint32_t exposureLines, const Duration lineLength) const override;
-	void prepare(libcamera::Span<const uint8_t> buffer, Metadata &metadata) override;
+	void prepare(std::span<const uint8_t> buffer, Metadata &metadata) override;
 	bool sensorEmbeddedDataPresent() const override;
 	void populateMetadata(const MdParser::RegisterMap &registers,
 			      Metadata &metadata) const override;
@@ -83,7 +83,7 @@ Duration CamHelperImx296::exposure(uint32_t exposureLines,
 	return std::max<uint32_t>(minExposureLines, exposureLines) * timePerLine + 14.26us;
 }
 
-void CamHelperImx296::prepare(libcamera::Span<const uint8_t> buffer, Metadata &metadata)
+void CamHelperImx296::prepare(std::span<const uint8_t> buffer, Metadata &metadata)
 {
 	/*
 	 * The imx296 embedded data is ahead by a single frame, i.e. embedded

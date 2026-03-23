@@ -50,7 +50,7 @@ public:
 	CamHelperImx708();
 	uint32_t gainCode(double gain) const override;
 	double gain(uint32_t gain_code) const override;
-	void prepare(libcamera::Span<const uint8_t> buffer, Metadata &metadata) override;
+	void prepare(std::span<const uint8_t> buffer, Metadata &metadata) override;
 	void process(StatisticsPtr &stats, Metadata &metadata) override;
 	std::pair<uint32_t, uint32_t> getBlanking(Duration &exposure, Duration minFrameDuration,
 						  Duration maxFrameDuration) const override;
@@ -104,7 +104,7 @@ double CamHelperImx708::gain(uint32_t gain_code) const
 	return 1024.0 / (1024 - gain_code);
 }
 
-void CamHelperImx708::prepare(libcamera::Span<const uint8_t> buffer, Metadata &metadata)
+void CamHelperImx708::prepare(std::span<const uint8_t> buffer, Metadata &metadata)
 {
 	MdParser::RegisterMap registers;
 	DeviceStatus deviceStatus;

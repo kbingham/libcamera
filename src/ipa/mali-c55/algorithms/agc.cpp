@@ -110,10 +110,10 @@ void AgcStatistics::parseStatistics(const mali_c55_stats_buffer *stats)
 						  static_cast<double>(b[i]) } });
 	}
 
-	rHist = Histogram(Span<uint32_t>(r, kNumHistogramBins));
-	gHist = Histogram(Span<uint32_t>(g, kNumHistogramBins));
-	bHist = Histogram(Span<uint32_t>(b, kNumHistogramBins));
-	yHist = Histogram(Span<uint32_t>(y, kNumHistogramBins));
+	rHist = Histogram(std::span<uint32_t>(r, kNumHistogramBins));
+	gHist = Histogram(std::span<uint32_t>(g, kNumHistogramBins));
+	bHist = Histogram(std::span<uint32_t>(b, kNumHistogramBins));
+	yHist = Histogram(std::span<uint32_t>(y, kNumHistogramBins));
 }
 
 Agc::Agc()
@@ -197,7 +197,7 @@ void Agc::fillWeightsArrayBuffer(MaliC55Params *params, const enum MaliC55Blocks
 	 * histograms containing a true pixel count, which we can then use to
 	 * approximate colour channel averages for the image.
 	 */
-	Span<uint8_t> weights{
+	std::span<uint8_t> weights{
 		block->zone_weights,
 		MALI_C55_MAX_ZONES
 	};

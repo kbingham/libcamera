@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <span>
 #include <vector>
 
 #include <libcamera/base/log.h>
@@ -256,7 +257,7 @@ void Agc::prepare(IPAContext &context, const uint32_t frame,
 	 */
 	hstConfig->mode = RKISP1_CIF_ISP_HISTOGRAM_MODE_RGB_COMBINED;
 
-	Span<uint8_t> weights{
+	std::span<uint8_t> weights{
 		hstConfig->hist_weight,
 		context.hw.numHistogramWeights
 	};
@@ -275,7 +276,7 @@ namespace {
 class AgcTraits final : public AgcMeanLuminance::Traits
 {
 public:
-	AgcTraits(Span<const uint8_t> expMeans, Span<const uint8_t> weights)
+	AgcTraits(std::span<const uint8_t> expMeans, std::span<const uint8_t> weights)
 		: expMeans_(expMeans), weights_(weights)
 	{
 	}
@@ -322,8 +323,8 @@ public:
 	}
 
 private:
-	Span<const uint8_t> expMeans_;
-	Span<const uint8_t> weights_;
+	std::span<const uint8_t> expMeans_;
+	std::span<const uint8_t> weights_;
 };
 
 } /* namespace */

@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <map>
 #include <optional>
+#include <span>
 #include <stdint.h>
 #include <string>
 #include <string_view>
@@ -18,7 +19,6 @@
 
 #include <libcamera/base/class.h>
 #include <libcamera/base/flags.h>
-#include <libcamera/base/span.h>
 
 #include <libcamera/geometry.h>
 
@@ -42,6 +42,14 @@ enum ControlType {
 };
 
 namespace details {
+
+template<typename>
+struct is_span : public std::false_type {
+};
+
+template<typename T, std::size_t Extent>
+struct is_span<std::span<T, Extent>> : public std::true_type {
+};
 
 template<typename T, typename = void>
 struct control_type {
@@ -120,7 +128,7 @@ struct control_type<Point> {
 };
 
 template<typename T, std::size_t N>
-struct control_type<Span<T, N>, std::enable_if_t<control_type<std::remove_cv_t<T>>::size == 0>> : public control_type<std::remove_cv_t<T>> {
+struct control_type<std::span<T, N>, std::enable_if_t<control_type<std::remove_cv_t<T>>::size == 0>> : public control_type<std::remove_cv_t<T>> {
 	static constexpr std::size_t size = N;
 };
 
@@ -169,8 +177,8 @@ public:
 	bool isNone() const { return type_ == ControlTypeNone; }
 	bool isArray() const { return isArray_; }
 	std::size_t numElements() const { return numElements_; }
-	Span<const uint8_t> data() const;
-	Span<uint8_t> data();
+	std::span<const uint8_t> data() const;
+	std::span<uint8_t> data();
 
 	std::string toString() const;
 
@@ -332,7 +340,7 @@ public:
 	explicit ControlInfo(const ControlValue &min = {},
 			     const ControlValue &max = {},
 			     const ControlValue &def = {});
-	explicit ControlInfo(Span<const ControlValue> values,
+	explicit ControlInfo(std::span<const ControlValue> values,
 			     const ControlValue &def = {});
 
 	const ControlValue &min() const { return min_; }
@@ -458,13 +466,13 @@ public:
 	}
 
 	template<typename T, typename V, size_t Size>
-	void set(const Control<Span<T, Size>> &ctrl, const std::initializer_list<V> &value)
+	void set(const Control<std::span<T, Size>> &ctrl, const std::initializer_list<V> &value)
 	{
 		ControlValue *val = find(ctrl.id());
 		if (!val)
 			return;
 
-		val->set(Span<const typename std::remove_cv_t<V>, Size>{ value.begin(), value.size() });
+		val->set(std::span<const typename std::remove_cv_t<V>, Size>{ value.begin(), value.size() });
 	}
 
 	const ControlValue &get(unsigned int id) const;

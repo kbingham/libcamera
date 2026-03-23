@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include <span>
 #include <utility>
 #include <vector>
 
-#include <libcamera/base/span.h>
 #include <libcamera/base/utils.h>
 
 #include "camera_sensor_helper.h"
@@ -22,7 +22,7 @@ namespace ipa {
 class ExposureModeHelper
 {
 public:
-	ExposureModeHelper(const Span<std::pair<utils::Duration, double>> stages);
+	ExposureModeHelper(std::span<std::pair<utils::Duration, double>> stages);
 	~ExposureModeHelper() = default;
 
 	void configure(utils::Duration lineLength, const CameraSensorHelper *sensorHelper);

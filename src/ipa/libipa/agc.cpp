@@ -13,12 +13,12 @@
 #include <cmath>
 #include <optional>
 #include <ratio>
+#include <span>
 #include <variant>
 
 #include <linux/v4l2-controls.h>
 
 #include <libcamera/base/log.h>
-#include <libcamera/base/span.h>
 #include <libcamera/base/utils.h>
 
 #include <libcamera/control_ids.h>
@@ -462,7 +462,7 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	};
 	config.ctrlMap[&controls::FrameDurationLimits] = ControlInfo{
 		frameDurations[0], frameDurations[1],
-		Span<const int64_t, 2>{ { frameDurations[0], frameDurations[1] } },
+		std::span<const int64_t, 2>{ { frameDurations[0], frameDurations[1] } },
 	};
 
 	const auto add = [&](const ControlId &cid, const auto &automatic, const auto &manual) {
