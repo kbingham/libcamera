@@ -261,7 +261,7 @@ ControlList V4L2Device::getControls(Span<const uint32_t> ids, const V4L2Request 
 		unsigned int errorIdx = v4l2ExtCtrls.error_idx;
 
 		/* Generic validation error. */
-		if (errorIdx == 0 || errorIdx >= v4l2Ctrls.size()) {
+		if (errorIdx >= v4l2Ctrls.size()) {
 			LOG(V4L2, Error) << "Unable to read controls: "
 					 << strerror(-ret);
 			return {};
@@ -406,7 +406,7 @@ int V4L2Device::setControls(ControlList *ctrls, const V4L2Request *request)
 		unsigned int errorIdx = v4l2ExtCtrls.error_idx;
 
 		/* Generic validation error. */
-		if (errorIdx == 0 || errorIdx >= v4l2Ctrls.size()) {
+		if (errorIdx >= v4l2Ctrls.size()) {
 			LOG(V4L2, Error) << "Unable to set controls: "
 					 << strerror(-ret);
 			return -EINVAL;
