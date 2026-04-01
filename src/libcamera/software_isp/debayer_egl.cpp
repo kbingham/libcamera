@@ -261,7 +261,7 @@ int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputForm
 	egl_.dumpShaderSource(fragmentShaderId_);
 
 	/* Ensure we set the programId_ */
-	egl_.useProgram(programId_);
+	glUseProgram(programId_);
 	err = glGetError();
 	if (err != GL_NO_ERROR) {
 		LOG(Debayer, Error) << "Use program error " << err;

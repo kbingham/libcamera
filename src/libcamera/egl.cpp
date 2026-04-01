@@ -465,34 +465,6 @@ void eGL::makeCurrent()
 }
 
 /**
- * \brief Activate a shader program for rendering
- * \param[in] programId OpenGL program object ID
- *
- * Sets the specified program as the current rendering program. All
- * subsequent draw calls will use this program's shaders.
- */
-void eGL::useProgram(GLuint programId)
-{
-	ASSERT(tid_ == Thread::currentId());
-
-	glUseProgram(programId);
-}
-
-/**
- * \brief Delete a shader program
- * \param[in] programId OpenGL program object ID
- *
- * Deletes a shader program and frees associated resources. The program
- * must not be currently in use.
- */
-void eGL::deleteProgram(GLuint programId)
-{
-	ASSERT(tid_ == Thread::currentId());
-
-	glDeleteProgram(programId);
-}
-
-/**
  * \brief Add a preprocessor definition to shader environment
  * \param[in,out] shaderEnv Vector of shader environment strings
  * \param[in] str Preprocessor definition string (e.g., "#define APPLY_RGB_PARAMETERS")

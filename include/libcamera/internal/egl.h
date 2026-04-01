@@ -123,8 +123,6 @@ public:
 				  Span<const std::string> shaderEnv);
 	int linkProgram(GLuint &programId, GLuint fragmentshaderId, GLuint vertexshaderId);
 	void dumpShaderSource(GLuint shaderId);
-	void useProgram(GLuint programId);
-	void deleteProgram(GLuint programId);
 	void syncOutput();
 	void flushOutput();
 
