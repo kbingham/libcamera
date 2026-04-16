@@ -575,7 +575,7 @@ uint32_t Request::sequence() const
  */
 bool Request::hasPendingBuffers() const
 {
-	return !_d()->pending_.empty();
+	return _d()->hasPendingBuffers();
 }
 
 /**
