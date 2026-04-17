@@ -406,15 +406,13 @@ void SoftwareIsp::stop()
 	ipa_->stop();
 
 	for (auto buffer : queuedOutputBuffers_) {
-		FrameMetadata &metadata = buffer->_d()->metadata();
-		metadata.status = FrameMetadata::FrameCancelled;
+		buffer->_d()->cancel();
 		outputBufferReady.emit(buffer);
 	}
 	queuedOutputBuffers_.clear();
 
 	for (auto buffer : queuedInputBuffers_) {
-		FrameMetadata &metadata = buffer->_d()->metadata();
-		metadata.status = FrameMetadata::FrameCancelled;
+		buffer->_d()->cancel();
 		inputBufferReady.emit(buffer);
 	}
 	queuedInputBuffers_.clear();
