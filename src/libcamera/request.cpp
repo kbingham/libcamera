@@ -74,15 +74,12 @@ Request::Private::~Private()
  */
 
 /**
+ * \fn Request::Private::hasPendingBuffers()
  * \brief Check if a request has buffers yet to be completed
  *
  * \return True if the request has buffers pending for completion, false
  * otherwise
  */
-bool Request::Private::hasPendingBuffers() const
-{
-	return !pending_.empty();
-}
 
 /**
  * \fn Request::Private::metadata()
