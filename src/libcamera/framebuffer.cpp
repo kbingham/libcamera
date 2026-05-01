@@ -309,7 +309,7 @@ ino_t fileDescriptorInode(const SharedFD &fd)
  * \param[in] planes The frame memory planes
  * \param[in] cookie Cookie
  */
-FrameBuffer::FrameBuffer(std::span<const Plane> planes, unsigned int cookie)
+FrameBuffer::FrameBuffer(std::span<const Plane> planes, uint64_t cookie)
 	: FrameBuffer(std::make_unique<Private>(planes, cookie))
 {
 }

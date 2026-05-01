@@ -376,7 +376,7 @@ PYBIND11_MODULE(_libcamera, m)
 		});
 
 	pyFrameBuffer
-		.def(py::init<std::vector<FrameBuffer::Plane>, unsigned int>(),
+		.def(py::init<std::vector<FrameBuffer::Plane>, uint64_t>(),
 		     py::arg("planes"), py::arg("cookie") = 0)
 		.def_property_readonly("metadata", &FrameBuffer::metadata, py::return_value_policy::reference_internal)
 		.def_property_readonly("planes", [](const FrameBuffer &self) {

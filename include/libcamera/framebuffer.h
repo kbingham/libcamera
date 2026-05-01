@@ -58,7 +58,7 @@ public:
 		unsigned int length;
 	};
 
-	FrameBuffer(std::span<const Plane> planes, unsigned int cookie = 0);
+	FrameBuffer(std::span<const Plane> planes, uint64_t cookie = 0);
 	FrameBuffer(std::unique_ptr<Private> d);
 	virtual ~FrameBuffer() {}
 
