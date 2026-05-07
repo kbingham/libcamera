@@ -88,6 +88,19 @@ private:
 	std::string prefix_;
 };
 
+#ifndef __DOXYGEN__
+template<LogSeverity>
+struct LogMessageAbortGuard {
+};
+
+template<>
+struct LogMessageAbortGuard<LogFatal> {
+	LogMessageAbortGuard() = default;
+	LIBCAMERA_DISABLE_COPY_AND_MOVE(LogMessageAbortGuard)
+	[[noreturn]] ~LogMessageAbortGuard();
+};
+#endif
+
 class Loggable
 {
 public:
@@ -124,7 +137,8 @@ constexpr int isLogSeverityEnabled(const LogCategory &category)
 	switch (const auto &_logCategory = (cat);             \
 		isLogSeverityEnabled<Log##sev>(_logCategory)) \
 	case 1:                                               \
-		_log(_logCategory, Log##sev).stream()
+		(LogMessageAbortGuard<Log##sev>(),            \
+		 _log(_logCategory, Log##sev).stream())
 
 #define _LOG1(severity) \
 	_LOG(LogCategory::defaultCategory(), severity)
