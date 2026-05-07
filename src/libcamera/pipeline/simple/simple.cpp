@@ -30,6 +30,7 @@
 #include <libcamera/control_ids.h>
 #include <libcamera/geometry.h>
 #include <libcamera/pixel_format.h>
+#include <libcamera/property_ids.h>
 #include <libcamera/stream.h>
 
 #include "libcamera/internal/camera.h"
@@ -1534,6 +1535,13 @@ int SimplePipelineHandler::configure(Camera *camera, CameraConfiguration *c)
 				 config->combinedTransform());
 	if (ret < 0)
 		return ret;
+
+	IPACameraSensorInfo sensorInfo;
+	ret = data->sensor_->sensorInfo(&sensorInfo);
+	if (ret)
+		return ret;
+
+	data->properties_.set(properties::ScalerCropMaximum, sensorInfo.analogCrop);
 
 	/* Configure the video node, taking into account any Bayer pattern change. */
 	V4L2PixelFormat videoFormat;
