@@ -362,6 +362,8 @@ public:
 	std::unique_ptr<SoftwareIsp> swIsp_;
 	SimpleFrames frameInfo_;
 
+	Rectangle scalerCrop_;
+
 private:
 	void tryPipeline(unsigned int code, const Size &size);
 	static std::vector<const MediaPad *> routedSourcePads(MediaPad *sink);
@@ -998,6 +1000,8 @@ void SimpleCameraData::tryCompleteRequest(Request *request)
 	if (info->metadataRequired && !info->metadataProcessed)
 		return;
 
+	request->_d()->metadata().set(controls::ScalerCrop, scalerCrop_);
+
 	frameInfo_.destroy(info->frame);
 	pipe()->completeRequest(request);
 }
@@ -1542,6 +1546,7 @@ int SimplePipelineHandler::configure(Camera *camera, CameraConfiguration *c)
 		return ret;
 
 	data->properties_.set(properties::ScalerCropMaximum, sensorInfo.analogCrop);
+	data->scalerCrop_ = sensorInfo.analogCrop;
 
 	/* Configure the video node, taking into account any Bayer pattern change. */
 	V4L2PixelFormat videoFormat;
