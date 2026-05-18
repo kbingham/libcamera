@@ -62,6 +62,11 @@ namespace RPiController {
  * MistrustFramesModeSwitch(): The number of frames, after a mode switch
  *    (other than start-up), for which control algorithms should not run
  *    (for example, metadata may be unreliable).
+ * getMinDebinFactor(): the binning factor after which we should apply
+ *    "debinning", which corrects for the uneven spatial sampling of the
+ *    standard binning process. A return value of 2 means to enable
+ *    debinning for camera modes using 2x2, or larger, binning. A return
+ *    value of zero means never to enable debinning.
  */
 
 class CamHelper
@@ -93,6 +98,7 @@ public:
 	virtual unsigned int hideFramesModeSwitch() const;
 	virtual unsigned int mistrustFramesStartup() const;
 	virtual unsigned int mistrustFramesModeSwitch() const;
+	virtual unsigned int getMinDebinFactor() const;
 
 protected:
 	void parseEmbeddedData(libcamera::Span<const uint8_t> buffer,

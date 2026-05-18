@@ -204,6 +204,12 @@ unsigned int CamHelper::mistrustFramesModeSwitch() const
 	return 0;
 }
 
+unsigned int CamHelper::getMinDebinFactor() const
+{
+	/* Most cameras require debinning from 2x2 binning upwards. */
+	return 2;
+}
+
 void CamHelper::parseEmbeddedData(Span<const uint8_t> buffer,
 				  Metadata &metadata)
 {
