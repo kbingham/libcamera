@@ -98,9 +98,6 @@ namespace libcamera::ipa::rkisp1 {
  * \var IPASessionConfiguration::sensor.maxAnalogueGain
  * \brief Maximum analogue gain supported with the sensor
  *
- * \var IPASessionConfiguration::sensor.defVBlank
- * \brief The default vblank value of the sensor
- *
  * \var IPASessionConfiguration::sensor.lineDuration
  * \brief Line duration in microseconds
  *
