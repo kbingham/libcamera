@@ -8,6 +8,7 @@
 #include "agc.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <tuple>
@@ -33,12 +34,95 @@ using namespace std::literals::chrono_literals;
 
 namespace ipa::rkisp1::algorithms {
 
+LOG_DEFINE_CATEGORY(RkISP1Agc)
+
+namespace {
+
+void reconfigure(IPAContext &context)
+{
+	context.configuration.sensor.lineDuration =
+		context.sensorInfo.minLineLength * 1.0s / context.sensorInfo.pixelRate;
+
+	double lineDurationUs = context.configuration.sensor.lineDuration.get<std::micro>();
+
+	/*
+	 * Compute exposure time limits from the V4L2_CID_EXPOSURE control
+	 * limits and the line duration.
+	 */
+
+	const ControlInfo &v4l2Exposure = context.sensorControls.find(V4L2_CID_EXPOSURE)->second;
+	int32_t minExposure = v4l2Exposure.min().get<int32_t>();
+	int32_t maxExposure = v4l2Exposure.max().get<int32_t>();
+	int32_t defExposure = v4l2Exposure.def().get<int32_t>();
+	context.ctrlMap[&controls::ExposureTime] = ControlInfo{
+		static_cast<int32_t>(minExposure * lineDurationUs),
+		static_cast<int32_t>(maxExposure * lineDurationUs),
+		static_cast<int32_t>(defExposure * lineDurationUs),
+	};
+
+	/* Compute the analogue gain limits. */
+	const ControlInfo &v4l2Gain = context.sensorControls.find(V4L2_CID_ANALOGUE_GAIN)->second;
+	float minGain = context.camHelper->gain(v4l2Gain.min().get<int32_t>());
+	float maxGain = context.camHelper->gain(v4l2Gain.max().get<int32_t>());
+	float defGain = context.camHelper->gain(v4l2Gain.def().get<int32_t>());
+	context.ctrlMap[&controls::AnalogueGain] = ControlInfo{
+		minGain,
+		maxGain,
+		defGain,
+	};
+
+	LOG(RkISP1Agc, Debug)
+		<< "Exposure: [" << minExposure << ", " << maxExposure
+		<< "], gain: [" << minGain << ", " << maxGain << "]";
+
+	/*
+	 * Compute the frame duration limits.
+	 *
+	 * The frame length is computed assuming a fixed line length combined
+	 * with the vertical frame sizes.
+	 */
+	const ControlInfo &v4l2HBlank = context.sensorControls.find(V4L2_CID_HBLANK)->second;
+	uint32_t hblank = v4l2HBlank.def().get<int32_t>();
+	uint32_t lineLength = context.sensorInfo.outputSize.width + hblank;
+
+	const ControlInfo &v4l2VBlank = context.sensorControls.find(V4L2_CID_VBLANK)->second;
+	std::array<uint32_t, 3> frameHeights{
+		v4l2VBlank.min().get<int32_t>() + context.sensorInfo.outputSize.height,
+		v4l2VBlank.max().get<int32_t>() + context.sensorInfo.outputSize.height,
+		v4l2VBlank.def().get<int32_t>() + context.sensorInfo.outputSize.height,
+	};
+
+	std::array<int64_t, 3> frameDurations;
+	for (unsigned int i = 0; i < frameHeights.size(); ++i) {
+		uint64_t frameSize = lineLength * frameHeights[i];
+		frameDurations[i] = frameSize / (context.sensorInfo.pixelRate / 1000000U);
+	}
+
+	context.ctrlMap[&controls::FrameDurationLimits] = ControlInfo{
+		frameDurations[0],
+		frameDurations[1],
+		Span<const int64_t, 2>{ { frameDurations[2], frameDurations[2] } },
+	};
+
+	/*
+	 * When the AGC computes the new exposure values for a frame, it needs
+	 * to know the limits for exposure time and analogue gain. As it depends
+	 * on the sensor, update it with the controls.
+	 *
+	 * \todo take VBLANK into account for maximum exposure time
+	 */
+	context.configuration.sensor.minExposureTime = minExposure * context.configuration.sensor.lineDuration;
+	context.configuration.sensor.maxExposureTime = maxExposure * context.configuration.sensor.lineDuration;
+	context.configuration.sensor.minAnalogueGain = minGain;
+	context.configuration.sensor.maxAnalogueGain = maxGain;
+}
+
+} /* namespace */
+
 /**
  * \class Agc
  * \brief A mean-based auto-exposure algorithm
  */
-
-LOG_DEFINE_CATEGORY(RkISP1Agc)
 
 int Agc::parseMeteringModes(IPAContext &context, const ValueNode &tuningData)
 {
@@ -160,6 +244,8 @@ int Agc::init(IPAContext &context, const ValueNode &tuningData)
 	context.ctrlMap[&controls::ExposureValue] = ControlInfo(-8.0f, 8.0f, 0.0f);
 	context.ctrlMap.merge(controls());
 
+	reconfigure(context);
+
 	return 0;
 }
 
@@ -172,6 +258,8 @@ int Agc::init(IPAContext &context, const ValueNode &tuningData)
  */
 int Agc::configure(IPAContext &context, const IPACameraSensorInfo &configInfo)
 {
+	reconfigure(context);
+
 	/* Configure the default exposure and gain. */
 	context.activeState.agc.automatic.gain = context.configuration.sensor.minAnalogueGain;
 	context.activeState.agc.automatic.exposure =
