@@ -488,6 +488,9 @@ namespace libcamera::ipa::rkisp1 {
  *
  * \var IPAContext::frameContexts
  * \brief Ring buffer of per-frame contexts
+ *
+ * \var IPAContext::sensorControls
+ * \brief V4L2 controls of the sensor
  */
 
 } /* namespace libcamera::ipa::rkisp1 */
