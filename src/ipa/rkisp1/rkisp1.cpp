@@ -225,6 +225,7 @@ int IPARkISP1::configure(const IPAConfigInfo &ipaConfig,
 			 const std::map<uint32_t, IPAStream> &streamConfig,
 			 ControlInfoMap *ipaControls)
 {
+	context_.sensorInfo = ipaConfig.sensorInfo;
 	context_.sensorControls = ipaConfig.sensorControls;
 
 	const auto itExp = context_.sensorControls.find(V4L2_CID_EXPOSURE);
