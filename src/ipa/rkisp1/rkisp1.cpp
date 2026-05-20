@@ -74,8 +74,7 @@ protected:
 	std::string logPrefix() const override;
 
 private:
-	void updateControls(const IPACameraSensorInfo &sensorInfo,
-			    ControlInfoMap *ipaControls);
+	void updateControls(ControlInfoMap *ipaControls);
 	void setControls(unsigned int frame);
 
 	std::map<unsigned int, FrameBuffer> buffers_;
@@ -205,7 +204,7 @@ int IPARkISP1::init(const IPASettings &settings, unsigned int hwRevision,
 		return ret;
 
 	/* Initialize controls. */
-	updateControls(sensorInfo, ipaControls);
+	updateControls(ipaControls);
 
 	return 0;
 }
@@ -247,12 +246,12 @@ int IPARkISP1::configure(const IPAConfigInfo &ipaConfig,
 
 	context_.configuration.paramFormat = ipaConfig.paramFormat;
 
-	const IPACameraSensorInfo &info = ipaConfig.sensorInfo;
-	context_.configuration.sensor.size = info.outputSize;
-	context_.configuration.sensor.lineDuration = info.minLineLength * 1.0s / info.pixelRate;
+	context_.configuration.sensor.size = context_.sensorInfo.outputSize;
+	context_.configuration.sensor.lineDuration = context_.sensorInfo.minLineLength * 1.0s
+							/ context_.sensorInfo.pixelRate;
 
 	/* Update the camera controls using the new sensor settings. */
-	updateControls(info, ipaControls);
+	updateControls(ipaControls);
 
 	/*
 	 * When the AGC computes the new exposure values for a frame, it needs
@@ -285,7 +284,7 @@ int IPARkISP1::configure(const IPAConfigInfo &ipaConfig,
 		if (algo->disabled_)
 			continue;
 
-		int ret = algo->configure(context_, info);
+		int ret = algo->configure(context_, context_.sensorInfo);
 		if (ret)
 			return ret;
 	}
@@ -383,8 +382,7 @@ void IPARkISP1::processStats(const uint32_t frame, const uint32_t bufferId,
 	metadataReady.emit(frame, metadata);
 }
 
-void IPARkISP1::updateControls(const IPACameraSensorInfo &sensorInfo,
-			       ControlInfoMap *ipaControls)
+void IPARkISP1::updateControls(ControlInfoMap *ipaControls)
 {
 	ControlInfoMap::Map ctrlMap = rkisp1Controls;
 
@@ -418,19 +416,19 @@ void IPARkISP1::updateControls(const IPACameraSensorInfo &sensorInfo,
 	 */
 	const ControlInfo &v4l2HBlank = context_.sensorControls.find(V4L2_CID_HBLANK)->second;
 	uint32_t hblank = v4l2HBlank.def().get<int32_t>();
-	uint32_t lineLength = sensorInfo.outputSize.width + hblank;
+	uint32_t lineLength = context_.sensorInfo.outputSize.width + hblank;
 
 	const ControlInfo &v4l2VBlank = context_.sensorControls.find(V4L2_CID_VBLANK)->second;
 	std::array<uint32_t, 3> frameHeights{
-		v4l2VBlank.min().get<int32_t>() + sensorInfo.outputSize.height,
-		v4l2VBlank.max().get<int32_t>() + sensorInfo.outputSize.height,
-		v4l2VBlank.def().get<int32_t>() + sensorInfo.outputSize.height,
+		v4l2VBlank.min().get<int32_t>() + context_.sensorInfo.outputSize.height,
+		v4l2VBlank.max().get<int32_t>() + context_.sensorInfo.outputSize.height,
+		v4l2VBlank.def().get<int32_t>() + context_.sensorInfo.outputSize.height,
 	};
 
 	std::array<int64_t, 3> frameDurations;
 	for (unsigned int i = 0; i < frameHeights.size(); ++i) {
 		uint64_t frameSize = lineLength * frameHeights[i];
-		frameDurations[i] = frameSize / (sensorInfo.pixelRate / 1000000U);
+		frameDurations[i] = frameSize / (context_.sensorInfo.pixelRate / 1000000U);
 	}
 
 	/* \todo Move this (and other agc-related controls) to agc */
