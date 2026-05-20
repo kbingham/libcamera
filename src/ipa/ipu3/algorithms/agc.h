@@ -24,7 +24,7 @@ struct IPACameraSensorInfo;
 
 namespace ipa::ipu3::algorithms {
 
-class Agc : public Algorithm, public AgcMeanLuminance
+class Agc : public Algorithm
 {
 public:
 	Agc();
@@ -38,7 +38,6 @@ public:
 		     ControlList &metadata) override;
 
 private:
-	double estimateLuminance(double gain) const override;
 	Histogram parseStatistics(const ipu3_uapi_stats_3a *stats,
 				  const ipu3_uapi_grid_config &grid);
 
@@ -49,11 +48,10 @@ private:
 	double maxAnalogueGain_;
 
 	uint32_t stride_;
-	double rGain_;
-	double gGain_;
-	double bGain_;
 	ipu3_uapi_grid_config bdsGrid_;
 	std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> rgbTriples_;
+
+	AgcMeanLuminance agc_;
 };
 
 } /* namespace ipa::ipu3::algorithms */

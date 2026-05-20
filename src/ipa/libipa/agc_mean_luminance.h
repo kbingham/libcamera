@@ -30,7 +30,7 @@ class AgcMeanLuminance
 {
 public:
 	AgcMeanLuminance();
-	virtual ~AgcMeanLuminance();
+	~AgcMeanLuminance();
 
 	struct AgcConstraint {
 		enum class Bound {
@@ -41,6 +41,11 @@ public:
 		double qLo;
 		double qHi;
 		Pwl yTarget;
+	};
+
+	struct Traits {
+		virtual ~Traits() = default;
+		virtual double estimateLuminance(double gain) const = 0;
 	};
 
 	void configure(utils::Duration lineDuration, const CameraSensorHelper *sensorHelper);
@@ -76,7 +81,8 @@ public:
 
 	std::tuple<utils::Duration, double, double, double>
 	calculateNewEv(uint32_t constraintModeIndex, uint32_t exposureModeIndex,
-		       const Histogram &yHist, utils::Duration effectiveExposureValue);
+		       const Histogram &yHist, utils::Duration effectiveExposureValue,
+		       const Traits &traits);
 
 	double effectiveYTarget() const;
 
@@ -86,13 +92,11 @@ public:
 	}
 
 private:
-	virtual double estimateLuminance(const double gain) const = 0;
-
 	int parseRelativeLuminanceTarget(const ValueNode &tuningData);
 	int parseConstraint(const ValueNode &modeDict, int32_t id);
 	int parseConstraintModes(const ValueNode &tuningData);
 	int parseExposureModes(const ValueNode &tuningData);
-	double estimateInitialGain() const;
+	double estimateInitialGain(const Traits &traits) const;
 	double constraintClampGain(uint32_t constraintModeIndex,
 				   const Histogram &hist,
 				   double gain);

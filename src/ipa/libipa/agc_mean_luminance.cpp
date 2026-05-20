@@ -21,7 +21,7 @@ using namespace libcamera::controls;
 
 /**
  * \file agc_mean_luminance.h
- * \brief Base class implementing mean luminance AEGC
+ * \brief Class implementing mean luminance AEGC
  */
 
 namespace libcamera {
@@ -106,6 +106,30 @@ static constexpr unsigned int kDefaultLuxLevel = 500;
  */
 
 /**
+ * \class AgcMeanLuminance::Traits
+ * \brief A collection of callbacks
+ *
+ * This type contains virtual methods that provide the necessary pieces of
+ * information for the algorithm, and are to be implemented by the user.
+ */
+
+/**
+ * \fn AgcMeanLuminance::Traits::estimateLuminance(double gain)
+ * \brief Estimate the luminance of an image, adjusted by a given gain
+ * \param[in] gain The gain with which to adjust the luminance estimate
+ *
+ * This function estimates the average relative luminance of the frame that
+ * would be output by the sensor if an additional \a gain was applied. It is a
+ * pure virtual function because estimation of luminance is a hardware-specific
+ * operation, which depends wholly on the format of the stats that are delivered
+ * to libcamera from the ISP. Derived classes must override this function with
+ * one that calculates the normalised mean luminance value across the entire
+ * image.
+ *
+ * \return The normalised relative luminance of the image
+ */
+
+/**
  * \class AgcMeanLuminance
  * \brief A mean-based auto-exposure algorithm
  *
@@ -144,13 +168,12 @@ static constexpr unsigned int kDefaultLuxLevel = 500;
  *    will determine the supportable precision of the constraints.
  *
  * IPA modules that want to use this class to implement their AEGC algorithm
- * should derive it and provide an overriding estimateLuminance() function for
- * this class to use. They must call parseTuningData() in init(), and must also
- * call setLimits() and resetFrameCounter() in configure(). They may then use
- * calculateNewEv() in process(). If the limits passed to setLimits() change for
- * any reason (for example, in response to a FrameDurationLimit control being
- * passed in queueRequest()) then setLimits() must be called again with the new
- * values.
+ * should derive AgcMeanLuminance::Traits and override the necessary functions.
+ * The users must call parseTuningData() in init(), and must also call setLimits()
+ * and resetFrameCounter() in configure(). They may then use calculateNewEv() in
+ * process(). If the limits passed to setLimits() change for any reason (for example,
+ * in response to a FrameDurationLimit control being passed in queueRequest())
+ * then setLimits() must be called again with the new values.
  */
 
 AgcMeanLuminance::AgcMeanLuminance()
@@ -488,27 +511,11 @@ void AgcMeanLuminance::setLimits(utils::Duration minExposureTime,
  */
 
 /**
- * \fn AgcMeanLuminance::estimateLuminance(const double gain)
- * \brief Estimate the luminance of an image, adjusted by a given gain
- * \param[in] gain The gain with which to adjust the luminance estimate
- *
- * This function estimates the average relative luminance of the frame that
- * would be output by the sensor if an additional \a gain was applied. It is a
- * pure virtual function because estimation of luminance is a hardware-specific
- * operation, which depends wholly on the format of the stats that are delivered
- * to libcamera from the ISP. Derived classes must override this function with
- * one that calculates the normalised mean luminance value across the entire
- * image.
- *
- * \return The normalised relative luminance of the image
- */
-
-/**
  * \brief Estimate the initial gain needed to achieve a relative luminance
  * target
  * \return The calculated initial gain
  */
-double AgcMeanLuminance::estimateInitialGain() const
+double AgcMeanLuminance::estimateInitialGain(const Traits &traits) const
 {
 	double yTarget = effectiveYTarget();
 	double yGain = 1.0;
@@ -520,7 +527,7 @@ double AgcMeanLuminance::estimateInitialGain() const
 	* regions are saturated.
 	*/
 	for (unsigned int i = 0; i < 8; i++) {
-		double yValue = estimateLuminance(yGain);
+		double yValue = traits.estimateLuminance(yGain);
 		double extra_gain = std::min(10.0, yTarget / (yValue + .001));
 
 		yGain *= extra_gain;
@@ -663,6 +670,7 @@ utils::Duration AgcMeanLuminance::filterExposure(utils::Duration exposureValue)
  * the calculated gain
  * \param[in] effectiveExposureValue The EV applied to the frame from which the
  * statistics in use derive
+ * \param[in] traits The traits object implementing the necessary functions
  *
  * Calculate a new exposure value to try to obtain the target. The calculated
  * exposure value is filtered to prevent rapid changes from frame to frame, and
@@ -675,7 +683,8 @@ std::tuple<utils::Duration, double, double, double>
 AgcMeanLuminance::calculateNewEv(uint32_t constraintModeIndex,
 				 uint32_t exposureModeIndex,
 				 const Histogram &yHist,
-				 utils::Duration effectiveExposureValue)
+				 utils::Duration effectiveExposureValue,
+				 const Traits &traits)
 {
 	/*
 	 * The pipeline handler should validate that we have received an allowed
@@ -696,7 +705,7 @@ AgcMeanLuminance::calculateNewEv(uint32_t constraintModeIndex,
 		return exposureModeHelper->splitExposure(10ms);
 	}
 
-	double gain = estimateInitialGain();
+	double gain = estimateInitialGain(traits);
 	gain = constraintClampGain(constraintModeIndex, yHist, gain);
 
 	/*
@@ -724,8 +733,8 @@ AgcMeanLuminance::calculateNewEv(uint32_t constraintModeIndex,
  *
  * This function resets the internal frame counter, which exists to help the
  * algorithm decide whether it should respond instantly or not. The expectation
- * is for derived classes to call this function before each camera start call in
- * their configure() function.
+ * is for users to call this function before each camera start call in their
+ * configure() function.
  */
 
 } /* namespace ipa */

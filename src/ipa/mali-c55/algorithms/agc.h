@@ -43,7 +43,7 @@ private:
 	unsigned int bIndex_;
 };
 
-class Agc : public Algorithm, public AgcMeanLuminance
+class Agc : public Algorithm
 {
 public:
 	Agc();
@@ -64,7 +64,6 @@ public:
 		     ControlList &metadata) override;
 
 private:
-	double estimateLuminance(const double gain) const override;
 	void fillGainParamBlock(IPAContext &context,
 				IPAFrameContext &frameContext,
 				MaliC55Params *params);
@@ -72,6 +71,7 @@ private:
 	void fillWeightsArrayBuffer(MaliC55Params *params, enum MaliC55Blocks type);
 
 	AgcStatistics statistics_;
+	AgcMeanLuminance agc_;
 };
 
 } /* namespace ipa::mali_c55::algorithms */

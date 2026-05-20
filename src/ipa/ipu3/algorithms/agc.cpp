@@ -76,11 +76,11 @@ int Agc::init(IPAContext &context, const ValueNode &tuningData)
 {
 	int ret;
 
-	ret = parseTuningData(tuningData);
+	ret = agc_.parseTuningData(tuningData);
 	if (ret)
 		return ret;
 
-	context.ctrlMap.merge(controls());
+	context.ctrlMap.merge(agc_.controls());
 
 	return 0;
 }
@@ -112,13 +112,13 @@ int Agc::configure(IPAContext &context,
 	activeState.agc.gain = minAnalogueGain_;
 	activeState.agc.exposure = 10ms / configuration.sensor.lineDuration;
 
-	context.activeState.agc.constraintMode = constraintModes().begin()->first;
-	context.activeState.agc.exposureMode = exposureModeHelpers().begin()->first;
+	context.activeState.agc.constraintMode = agc_.constraintModes().begin()->first;
+	context.activeState.agc.exposureMode = agc_.exposureModeHelpers().begin()->first;
 
 	/* \todo Run this again when FrameDurationLimits is passed in */
-	setLimits(minExposureTime_, maxExposureTime_, minAnalogueGain_,
-		  maxAnalogueGain_, {});
-	resetFrameCount();
+	agc_.setLimits(minExposureTime_, maxExposureTime_, minAnalogueGain_,
+		       maxAnalogueGain_, {});
+	agc_.resetFrameCount();
 
 	return 0;
 }
@@ -156,40 +156,59 @@ Histogram Agc::parseStatistics(const ipu3_uapi_stats_3a *stats,
 	return Histogram(Span<uint32_t>(hist));
 }
 
-/**
- * \brief Estimate the relative luminance of the frame with a given gain
- * \param[in] gain The gain to apply in estimating luminance
- *
- * The estimation is based on the AWB statistics for the current frame. Red,
- * green and blue averages for all cells are first multiplied by the gain, and
- * then saturated to approximate the sensor behaviour at high brightness
- * values. The approximation is quite rough, as it doesn't take into account
- * non-linearities when approaching saturation.
- *
- * The relative luminance (Y) is computed from the linear RGB components using
- * the Rec. 601 formula. The values are normalized to the [0.0, 1.0] range,
- * where 1.0 corresponds to a theoretical perfect reflector of 100% reference
- * white.
- *
- * More detailed information can be found in:
- * https://en.wikipedia.org/wiki/Relative_luminance
- *
- * \return The relative luminance of the frame
- */
-double Agc::estimateLuminance(double gain) const
-{
-	RGB<double> sum{ 0.0 };
+namespace {
 
-	for (unsigned int i = 0; i < rgbTriples_.size(); i++) {
-		sum.r() += std::min(std::get<0>(rgbTriples_[i]) * gain, 255.0);
-		sum.g() += std::min(std::get<1>(rgbTriples_[i]) * gain, 255.0);
-		sum.b() += std::min(std::get<2>(rgbTriples_[i]) * gain, 255.0);
+class AgcTraits final : public AgcMeanLuminance::Traits
+{
+public:
+	AgcTraits(Span<const std::tuple<uint8_t, uint8_t, uint8_t>> rgbTriples,
+		  RGB<double> gains, const ipu3_uapi_grid_config &bdsGrid)
+		: rgbTriples_(rgbTriples), gains_(gains), bdsGrid_(bdsGrid)
+	{
 	}
 
-	RGB<double> gains{{ rGain_, gGain_, bGain_ }};
-	double ySum = rec601LuminanceFromRGB(sum * gains);
-	return ySum / (bdsGrid_.height * bdsGrid_.width) / 255;
-}
+	/**
+	 * \brief Estimate the relative luminance of the frame with a given gain
+	 * \param[in] gain The gain to apply in estimating luminance
+	 *
+	 * The estimation is based on the AWB statistics for the current frame. Red,
+	 * green and blue averages for all cells are first multiplied by the gain, and
+	 * then saturated to approximate the sensor behaviour at high brightness
+	 * values. The approximation is quite rough, as it doesn't take into account
+	 * non-linearities when approaching saturation.
+	 *
+	 * The relative luminance (Y) is computed from the linear RGB components using
+	 * the Rec. 601 formula. The values are normalized to the [0.0, 1.0] range,
+	 * where 1.0 corresponds to a theoretical perfect reflector of 100% reference
+	 * white.
+	 *
+	 * More detailed information can be found in:
+	 * https://en.wikipedia.org/wiki/Relative_luminance
+	 *
+	 * \return The relative luminance of the frame
+	 */
+
+	double estimateLuminance(double gain) const override
+	{
+		RGB<double> sum{ 0.0 };
+
+		for (unsigned int i = 0; i < rgbTriples_.size(); i++) {
+			sum.r() += std::min(std::get<0>(rgbTriples_[i]) * gain, 255.0);
+			sum.g() += std::min(std::get<1>(rgbTriples_[i]) * gain, 255.0);
+			sum.b() += std::min(std::get<2>(rgbTriples_[i]) * gain, 255.0);
+		}
+
+		double ySum = rec601LuminanceFromRGB(sum * gains_);
+		return ySum / (bdsGrid_.height * bdsGrid_.width) / 255;
+	}
+
+private:
+	Span<const std::tuple<uint8_t, uint8_t, uint8_t>> rgbTriples_;
+	RGB<double> gains_;
+	const ipu3_uapi_grid_config &bdsGrid_;
+};
+
+} /* namespace */
 
 /**
  * \brief Process IPU3 statistics, and run AGC operations
@@ -208,9 +227,6 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 		  ControlList &metadata)
 {
 	Histogram hist = parseStatistics(stats, context.configuration.grid.bdsGrid);
-	rGain_ = context.activeState.awb.gains.red;
-	gGain_ = context.activeState.awb.gains.blue;
-	bGain_ = context.activeState.awb.gains.green;
 
 	/*
 	 * The Agc algorithm needs to know the effective exposure value that was
@@ -220,13 +236,22 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 				     * frameContext.sensor.exposure;
 	double analogueGain = frameContext.sensor.gain;
 	utils::Duration effectiveExposureValue = exposureTime * analogueGain;
+	AgcTraits agcTraits{
+		rgbTriples_,
+		{{
+			context.activeState.awb.gains.red,
+			context.activeState.awb.gains.blue,
+			context.activeState.awb.gains.green,
+		}},
+		bdsGrid_,
+	};
 
 	utils::Duration newExposureTime;
 	double aGain, qGain, dGain;
 	std::tie(newExposureTime, aGain, qGain, dGain) =
-		calculateNewEv(context.activeState.agc.constraintMode,
-			       context.activeState.agc.exposureMode, hist,
-			       effectiveExposureValue);
+		agc_.calculateNewEv(context.activeState.agc.constraintMode,
+				    context.activeState.agc.exposureMode, hist,
+				    effectiveExposureValue, agcTraits);
 
 	LOG(IPU3Agc, Debug)
 		<< "Divided up exposure time, analogue gain and digital gain are "
