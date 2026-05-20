@@ -27,6 +27,7 @@
 #include "libipa/agc_mean_luminance.h"
 #include "libipa/awb.h"
 #include "libipa/camera_sensor_helper.h"
+#include "libipa/ccm.h"
 #include "libipa/fc_queue.h"
 #include "libipa/fixedpoint.h"
 
@@ -105,10 +106,7 @@ struct IPAActiveState {
 
 	ipa::awb::ActiveState awb;
 
-	struct {
-		Matrix<float, 3, 3> manual;
-		Matrix<float, 3, 3> automatic;
-	} ccm;
+	ipa::ccm::ActiveState ccm;
 
 	struct {
 		float requestedBrightness;
@@ -207,9 +205,7 @@ struct IPAFrameContext : public FrameContext {
 		double gain;
 	} sensor;
 
-	struct {
-		Matrix<float, 3, 3> ccm;
-	} ccm;
+	ipa::ccm::FrameContext ccm;
 
 	struct {
 		double lux;
