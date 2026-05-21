@@ -13,7 +13,6 @@
 #include <libcamera/base/utils.h>
 
 #include <libcamera/control_ids.h>
-#include <libcamera/property_ids.h>
 
 #include "libipa/colours.h"
 
@@ -123,14 +122,12 @@ Agc::Agc()
 
 int Agc::init(IPAContext &context, const ValueNode &tuningData)
 {
-	int ret = agc_.parseTuningData(tuningData);
-	if (ret)
-		return ret;
-
-	context.ctrlMap[&controls::AeEnable] = ControlInfo(false, true);
-	context.ctrlMap.merge(agc_.controls());
-
-	return 0;
+	return agc_.init(tuningData, {
+		.sensor = context.camHelper.get(),
+		.sensorInfo = context.sensorInfo,
+		.sensorControls = context.sensorControls,
+		.ctrlMap = context.ctrlMap,
+	});
 }
 
 int Agc::configure(IPAContext &context,
@@ -140,79 +137,23 @@ int Agc::configure(IPAContext &context,
 	if (ret)
 		return ret;
 
-	/*
-	 * Defaults; we use whatever the sensor's default exposure is and the
-	 * minimum analogue gain. AEGC is _active_ by default.
-	 */
-	context.activeState.agc.autoEnabled = true;
-	context.activeState.agc.automatic.sensorGain = context.configuration.agc.minAnalogueGain;
-	context.activeState.agc.automatic.exposure = context.configuration.agc.defaultExposure;
-	context.activeState.agc.manual.sensorGain = context.configuration.agc.minAnalogueGain;
-	context.activeState.agc.manual.exposure = context.configuration.agc.defaultExposure;
-	context.activeState.agc.constraintMode = agc_.constraintModes().begin()->first;
-	context.activeState.agc.exposureMode = agc_.exposureModeHelpers().begin()->first;
-
-	/* \todo Run this again when FrameDurationLimits is passed in */
-	agc_.setLimits(context.configuration.agc.minShutterSpeed,
-		       context.configuration.agc.maxShutterSpeed,
-		       context.configuration.agc.minAnalogueGain,
-		       context.configuration.agc.maxAnalogueGain,
-		       {});
-
-	agc_.resetFrameCount();
+	ret = agc_.configure(context.configuration.agc, context.activeState.agc, {
+		.sensor = context.camHelper.get(),
+		.sensorInfo = context.sensorInfo,
+		.sensorControls = context.sensorControls,
+		.ctrlMap = context.ctrlMap,
+	});
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
-void Agc::queueRequest(IPAContext &context, const uint32_t frame,
-		       [[maybe_unused]] IPAFrameContext &frameContext,
+void Agc::queueRequest(IPAContext &context, [[maybe_unused]] const uint32_t frame,
+		       IPAFrameContext &frameContext,
 		       const ControlList &controls)
 {
-	auto &agc = context.activeState.agc;
-
-	const auto &constraintMode = controls.get(controls::AeConstraintMode);
-	agc.constraintMode = constraintMode.value_or(agc.constraintMode);
-
-	const auto &exposureMode = controls.get(controls::AeExposureMode);
-	agc.exposureMode = exposureMode.value_or(agc.exposureMode);
-
-	const auto &agcEnable = controls.get(controls::AeEnable);
-	if (agcEnable && *agcEnable != agc.autoEnabled) {
-		agc.autoEnabled = *agcEnable;
-
-		LOG(MaliC55Agc, Info)
-			<< (agc.autoEnabled ? "Enabling" : "Disabling")
-			<< " AGC";
-	}
-
-	/*
-	 * If the automatic exposure and gain is enabled we have no further work
-	 * to do here...
-	 */
-	if (agc.autoEnabled)
-		return;
-
-	/*
-	 * ...otherwise we need to look for exposure and gain controls and use
-	 * those to set the activeState.
-	 */
-	const auto &exposure = controls.get(controls::ExposureTime);
-	if (exposure) {
-		agc.manual.exposure = *exposure * 1.0us / context.configuration.sensor.lineDuration;
-
-		LOG(MaliC55Agc, Debug)
-			<< "Exposure set to " << agc.manual.exposure
-			<< " on request sequence " << frame;
-	}
-
-	const auto &analogueGain = controls.get(controls::AnalogueGain);
-	if (analogueGain) {
-		agc.manual.sensorGain = *analogueGain;
-
-		LOG(MaliC55Agc, Debug)
-			<< "Analogue gain set to " << agc.manual.sensorGain
-			<< " on request sequence " << frame;
-	}
+	agc_.queueRequest(context.configuration.agc, context.activeState.agc, frameContext.agc, controls);
 }
 
 void Agc::fillParamsBuffer(MaliC55Params *params, enum MaliC55Blocks type)
@@ -265,9 +206,11 @@ void Agc::fillWeightsArrayBuffer(MaliC55Params *params, const enum MaliC55Blocks
 	std::fill(weights.begin(), weights.end(), 1);
 }
 
-void Agc::prepare([[maybe_unused]] IPAContext &context, const uint32_t frame,
-		  [[maybe_unused]] IPAFrameContext &frameContext, MaliC55Params *params)
+void Agc::prepare(IPAContext &context, const uint32_t frame,
+		  IPAFrameContext &frameContext, MaliC55Params *params)
 {
+	agc_.prepare(context.activeState.agc, frameContext.agc);
+
 	if (frame > 0)
 		return;
 
@@ -308,11 +251,8 @@ void Agc::process(IPAContext &context,
 		  [[maybe_unused]] const uint32_t frame,
 		  IPAFrameContext &frameContext,
 		  const mali_c55_stats_buffer *stats,
-		  [[maybe_unused]] ControlList &metadata)
+		  ControlList &metadata)
 {
-	IPASessionConfiguration &configuration = context.configuration;
-	IPAActiveState &activeState = context.activeState;
-
 	if (!stats) {
 		LOG(MaliC55Agc, Error) << "No statistics buffer passed to Agc";
 		return;
@@ -323,32 +263,13 @@ void Agc::process(IPAContext &context,
 							       statistics_.gHist.interQuantileMean(0, 1),
 							       statistics_.bHist.interQuantileMean(0, 1) } });
 
-	/*
-	 * The Agc algorithm needs to know the effective exposure value that was
-	 * applied to the sensor when the statistics were collected.
-	 */
-	uint32_t exposure = frameContext.agc.exposure;
-	double analogueGain = frameContext.agc.sensorGain;
-	utils::Duration currentShutter = exposure * configuration.sensor.lineDuration;
-	utils::Duration effectiveExposureValue = currentShutter * analogueGain;
-
-	const auto &newEv = agc_.calculateNewEv({
+	agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {{
 		.traits = AgcTraits(statistics_),
 		.yHist = statistics_.yHist,
-		.effectiveExposureValue = effectiveExposureValue,
-		.constraintModeIndex = activeState.agc.constraintMode,
-		.exposureModeIndex = activeState.agc.exposureMode,
-	});
+		.exposure = frameContext.sensor.exposure,
+		.gain = frameContext.sensor.gain,
+	}}, metadata);
 
-	LOG(MaliC55Agc, Debug)
-		<< "Divided up shutter, analogue gain and digital gain are "
-		<< newEv.exposureTime << ", " << newEv.analogueGain << " and " << newEv.digitalGain;
-
-	activeState.agc.automatic.exposure = newEv.exposureTime / configuration.sensor.lineDuration;
-	activeState.agc.automatic.sensorGain = newEv.analogueGain;
-
-	metadata.set(controls::ExposureTime, currentShutter.get<std::micro>());
-	metadata.set(controls::AnalogueGain, frameContext.agc.sensorGain);
 	metadata.set(controls::ColourTemperature, context.activeState.agc.temperatureK);
 }
 

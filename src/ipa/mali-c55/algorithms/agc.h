@@ -11,7 +11,7 @@
 
 #include "libcamera/internal/bayer_format.h"
 
-#include "libipa/agc_mean_luminance.h"
+#include "libipa/agc.h"
 #include "libipa/histogram.h"
 
 #include "algorithm.h"
@@ -68,7 +68,7 @@ private:
 	void fillWeightsArrayBuffer(MaliC55Params *params, enum MaliC55Blocks type);
 
 	AgcStatistics statistics_;
-	AgcMeanLuminance agc_;
+	AgcAlgorithm agc_;
 };
 
 } /* namespace ipa::mali_c55::algorithms */
