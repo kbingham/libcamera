@@ -311,13 +311,6 @@ void IPASoftIsp::processStats(const uint32_t frame,
 		algo->process(context_, frame, frameContext, stats_, metadata);
 	metadataReady.emit(frame, metadata);
 
-	/* Sanity check */
-	if (!sensorControls.contains(V4L2_CID_EXPOSURE) ||
-	    !sensorControls.contains(V4L2_CID_ANALOGUE_GAIN)) {
-		LOG(IPASoftIsp, Error) << "Control(s) missing";
-		return;
-	}
-
 	ControlList ctrls(sensorInfoMap_);
 
 	auto &againNew = frameContext.sensor.gain;
