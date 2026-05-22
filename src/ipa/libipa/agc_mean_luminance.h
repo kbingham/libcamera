@@ -13,8 +13,6 @@
 
 #include <libcamera/base/utils.h>
 
-#include <libcamera/controls.h>
-
 #include "libcamera/internal/value_node.h"
 
 #include "exposure_mode_helper.h"
@@ -63,11 +61,6 @@ public:
 		return exposureModeHelpers_;
 	}
 
-	ControlInfoMap::Map controls()
-	{
-		return controls_;
-	}
-
 	struct Params {
 		const Traits &traits;
 		const Histogram &yHist;
@@ -108,7 +101,6 @@ private:
 	std::vector<AgcConstraint> additionalConstraints_;
 	std::map<int32_t, std::vector<AgcConstraint>> constraintModes_;
 	std::map<int32_t, ExposureModeHelper> exposureModeHelpers_;
-	ControlInfoMap::Map controls_;
 };
 
 } /* namespace ipa */

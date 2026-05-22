@@ -236,8 +236,6 @@ int AgcMeanLuminance::parseConstraint(const ValueNode &modeDict, int32_t id)
 
 int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 {
-	std::vector<ControlValue> availableConstraintModes;
-
 	const ValueNode &constraintModes = tuningData[controls::AeConstraintMode.name()];
 	if (constraintModes.isDictionary()) {
 		for (const auto &[modeName, modeDict] : constraintModes.asDict()) {
@@ -257,8 +255,6 @@ int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 			int ret = parseConstraint(modeDict, it->second);
 			if (ret)
 				return ret;
-
-			availableConstraintModes.push_back(it->second);
 		}
 	}
 
@@ -277,18 +273,13 @@ int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 		};
 
 		constraintModes_[controls::ConstraintNormal].push_back(std::move(constraint));
-		availableConstraintModes.push_back(controls::ConstraintNormal);
 	}
-
-	controls_[&controls::AeConstraintMode] = ControlInfo(availableConstraintModes);
 
 	return 0;
 }
 
 int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 {
-	std::vector<ControlValue> availableExposureModes;
-
 	const ValueNode &exposureModes = tuningData[controls::AeExposureMode.name()];
 	if (exposureModes.isDictionary()) {
 		for (const auto &[modeName, modeValues] : exposureModes.asDict()) {
@@ -331,7 +322,6 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 			}
 
 			exposureModeHelpers_.try_emplace(it->second, stages);
-			availableExposureModes.push_back(it->second);
 		}
 	}
 
@@ -341,13 +331,9 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 	 * in the ExposureModeHelper simply driving the exposure time as high as
 	 * possible before touching gain.
 	 */
-	if (availableExposureModes.empty()) {
+	if (exposureModeHelpers_.empty())
 		exposureModeHelpers_.try_emplace(controls::ExposureNormal,
 						 Span<std::pair<utils::Duration, double>>{});
-		availableExposureModes.push_back(controls::ExposureNormal);
-	}
-
-	controls_[&controls::AeExposureMode] = ControlInfo(availableExposureModes);
 
 	return 0;
 }
@@ -470,11 +456,6 @@ void AgcMeanLuminance::setLimits(utils::Duration minExposureTime,
 /**
  * \fn AgcMeanLuminance::exposureModeHelpers()
  * \brief Get the ExposureModeHelpers that have been parsed from tuning data
- */
-
-/**
- * \fn AgcMeanLuminance::controls()
- * \brief Get the controls that have been generated after parsing tuning data
  */
 
 /**
