@@ -15,6 +15,7 @@
 #include <libipa/fc_queue.h>
 
 #include "libipa/awb.h"
+#include "libipa/ccm.h"
 #include "libipa/fixedpoint.h"
 
 namespace libcamera {
@@ -56,6 +57,7 @@ struct IPAActiveState {
 	} agc;
 
 	ipa::awb::ActiveState awb;
+	ipa::ccm::ActiveState ccm;
 };
 
 struct IPAFrameContext : public FrameContext {
@@ -66,6 +68,7 @@ struct IPAFrameContext : public FrameContext {
 	} agc;
 
 	ipa::awb::FrameContext awb;
+	ipa::ccm::FrameContext ccm;
 };
 
 struct IPAContext {
