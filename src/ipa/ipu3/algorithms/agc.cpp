@@ -8,7 +8,6 @@
 #include "agc.h"
 
 #include <algorithm>
-#include <chrono>
 
 #include <libcamera/base/log.h>
 #include <libcamera/base/utils.h>
@@ -48,17 +47,10 @@ namespace ipa::ipu3::algorithms {
 
 LOG_DEFINE_CATEGORY(IPU3Agc)
 
-/* Minimum limit for analogue gain value */
-static constexpr double kMinAnalogueGain = 1.0;
-
-/* \todo Honour the FrameDurationLimits control instead of hardcoding a limit */
-static constexpr utils::Duration kMaxExposureTime = 60ms;
-
 /* Histogram constants */
 static constexpr uint32_t knumHistogramBins = 256;
 
 Agc::Agc()
-	: minExposureTime_(0s), maxExposureTime_(0s)
 {
 }
 
@@ -74,15 +66,12 @@ Agc::Agc()
  */
 int Agc::init(IPAContext &context, const ValueNode &tuningData)
 {
-	int ret;
-
-	ret = agc_.parseTuningData(tuningData);
-	if (ret)
-		return ret;
-
-	context.ctrlMap.merge(agc_.controls());
-
-	return 0;
+	return agc_.init(tuningData, {
+		.sensor = context.camHelper.get(),
+		.sensorInfo = context.sensorInfo,
+		.sensorControls = context.sensorControls,
+		.ctrlMap = context.ctrlMap,
+	});
 }
 
 /**
@@ -95,32 +84,35 @@ int Agc::init(IPAContext &context, const ValueNode &tuningData)
 int Agc::configure(IPAContext &context,
 		   [[maybe_unused]] const IPAConfigInfo &configInfo)
 {
-	const IPASessionConfiguration &configuration = context.configuration;
-	IPAActiveState &activeState = context.activeState;
+	stride_ =  context.configuration.grid.stride;
+	bdsGrid_ = context.configuration.grid.bdsGrid;
 
-	stride_ = configuration.grid.stride;
-	bdsGrid_ = configuration.grid.bdsGrid;
+	return agc_.configure(context.configuration.agc, context.activeState.agc, {
+		.sensor = context.camHelper.get(),
+		.sensorInfo = context.sensorInfo,
+		.sensorControls = context.sensorControls,
+		.ctrlMap = context.ctrlMap,
+	});
+}
 
-	minExposureTime_ = configuration.agc.minExposureTime;
-	maxExposureTime_ = std::min(configuration.agc.maxExposureTime,
-				    kMaxExposureTime);
+/**
+ * \copydoc libcamera::ipa::Algorithm::queueRequest
+ */
+void Agc::queueRequest(IPAContext &context, [[maybe_unused]] const uint32_t frame,
+		       IPAFrameContext &frameContext, const ControlList &controls)
+{
+	agc_.queueRequest(context.configuration.agc, context.activeState.agc,
+			  frameContext.agc, controls);
+}
 
-	minAnalogueGain_ = std::max(configuration.agc.minAnalogueGain, kMinAnalogueGain);
-	maxAnalogueGain_ = configuration.agc.maxAnalogueGain;
-
-	/* Configure the default exposure and gain. */
-	activeState.agc.gain = minAnalogueGain_;
-	activeState.agc.exposure = 10ms / configuration.sensor.lineDuration;
-
-	context.activeState.agc.constraintMode = agc_.constraintModes().begin()->first;
-	context.activeState.agc.exposureMode = agc_.exposureModeHelpers().begin()->first;
-
-	/* \todo Run this again when FrameDurationLimits is passed in */
-	agc_.setLimits(minExposureTime_, maxExposureTime_, minAnalogueGain_,
-		       maxAnalogueGain_, {});
-	agc_.resetFrameCount();
-
-	return 0;
+/**
+ * \copydoc libcamera::ipa::Algorithm::prepare
+ */
+void Agc::prepare(IPAContext &context, [[maybe_unused]] const uint32_t frame,
+		  IPAFrameContext &frameContext,
+		  [[maybe_unused]] ipu3_uapi_params *params)
+{
+	agc_.prepare(context.activeState.agc, frameContext.agc);
 }
 
 Histogram Agc::parseStatistics(const ipu3_uapi_stats_3a *stats,
@@ -228,16 +220,7 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 {
 	Histogram hist = parseStatistics(stats, context.configuration.grid.bdsGrid);
 
-	/*
-	 * The Agc algorithm needs to know the effective exposure value that was
-	 * applied to the sensor when the statistics were collected.
-	 */
-	utils::Duration exposureTime = context.configuration.sensor.lineDuration
-				     * frameContext.sensor.exposure;
-	double analogueGain = frameContext.sensor.gain;
-	utils::Duration effectiveExposureValue = exposureTime * analogueGain;
-
-	const auto &newEv = agc_.calculateNewEv({
+	agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {{
 		.traits = AgcTraits{
 			rgbTriples_,
 			{{
@@ -248,29 +231,9 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 			bdsGrid_,
 		},
 		.yHist = hist,
-		.effectiveExposureValue = effectiveExposureValue,
-		.constraintModeIndex = context.activeState.agc.constraintMode,
-		.exposureModeIndex = context.activeState.agc.exposureMode,
-	});
-
-	LOG(IPU3Agc, Debug)
-		<< "Divided up exposure time, analogue gain and digital gain are "
-		<< newEv.exposureTime << ", " << newEv.analogueGain << " and " << newEv.digitalGain;
-
-	IPAActiveState &activeState = context.activeState;
-	/* Update the estimated exposure time and gain. */
-	activeState.agc.exposure = newEv.exposureTime / context.configuration.sensor.lineDuration;
-	activeState.agc.gain = newEv.analogueGain;
-
-	metadata.set(controls::AnalogueGain, frameContext.sensor.gain);
-	metadata.set(controls::ExposureTime, exposureTime.get<std::micro>());
-
-	/* \todo Use VBlank value calculated from each frame exposure. */
-	uint32_t vTotal = context.configuration.sensor.size.height
-			+ context.configuration.sensor.defVBlank;
-	utils::Duration frameDuration = context.configuration.sensor.lineDuration
-				      * vTotal;
-	metadata.set(controls::FrameDuration, frameDuration.get<std::micro>());
+		.exposure = frameContext.sensor.exposure,
+		.gain = frameContext.sensor.gain,
+	}}, metadata);
 }
 
 REGISTER_IPA_ALGORITHM(Agc, "Agc")

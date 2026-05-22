@@ -15,6 +15,10 @@
 #include <libcamera/controls.h>
 #include <libcamera/geometry.h>
 
+#include <libcamera/ipa/core_ipa_interface.h>
+
+#include <libipa/agc.h>
+#include <libipa/camera_sensor_helper.h>
 #include <libipa/fc_queue.h>
 
 namespace libcamera {
@@ -32,18 +36,7 @@ struct IPASessionConfiguration {
 		ipu3_uapi_grid_config afGrid;
 	} af;
 
-	struct {
-		utils::Duration minExposureTime;
-		utils::Duration maxExposureTime;
-		double minAnalogueGain;
-		double maxAnalogueGain;
-	} agc;
-
-	struct {
-		int32_t defVBlank;
-		utils::Duration lineDuration;
-		Size size;
-	} sensor;
+	agc::Session agc;
 };
 
 struct IPAActiveState {
@@ -53,12 +46,7 @@ struct IPAActiveState {
 		bool stable;
 	} af;
 
-	struct {
-		uint32_t exposure;
-		double gain;
-		uint32_t constraintMode;
-		uint32_t exposureMode;
-	} agc;
+	agc::ActiveState agc;
 
 	struct {
 		struct {
@@ -81,6 +69,8 @@ struct IPAFrameContext : public FrameContext {
 		uint32_t exposure;
 		double gain;
 	} sensor;
+
+	agc::FrameContext agc;
 };
 
 struct IPAContext {
@@ -90,9 +80,13 @@ struct IPAContext {
 	}
 
 	IPASessionConfiguration configuration;
+	IPACameraSensorInfo sensorInfo;
+	ControlInfoMap sensorControls;
 	IPAActiveState activeState;
 
 	FCQueue<IPAFrameContext> frameContexts;
+
+	std::unique_ptr<CameraSensorHelper> camHelper;
 
 	ControlInfoMap::Map ctrlMap;
 };

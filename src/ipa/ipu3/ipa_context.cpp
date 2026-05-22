@@ -46,11 +46,20 @@ namespace libcamera::ipa::ipu3 {
  * \var IPAContext::configuration
  * \brief The IPA session configuration, immutable during the session
  *
+ * \var IPAContext::sensorInfo
+ * \brief The IPA camera session details, immutable during the session
+ *
+ * \var IPAContext::sensorControls
+ * \brief The camera sensor controls, immutable during the session
+ *
  * \var IPAContext::frameContexts
  * \brief Ring buffer of the IPAFrameContext(s)
  *
  * \var IPAContext::activeState
  * \brief The current state of IPA algorithms
+ *
+ * \var IPAContext::camHelper
+ * \brief The camera sensor helper
  *
  * \var IPAContext::ctrlMap
  * \brief A ControlInfoMap::Map of controls populated by the algorithms
@@ -95,48 +104,11 @@ namespace libcamera::ipa::ipu3 {
 /**
  * \var IPASessionConfiguration::agc
  * \brief AGC parameters configuration of the IPA
- *
- * \var IPASessionConfiguration::agc.minExposureTime
- * \brief Minimum exposure time supported with the configured sensor
- *
- * \var IPASessionConfiguration::agc.maxExposureTime
- * \brief Maximum exposure time supported with the configured sensor
- *
- * \var IPASessionConfiguration::agc.minAnalogueGain
- * \brief Minimum analogue gain supported with the configured sensor
- *
- * \var IPASessionConfiguration::agc.maxAnalogueGain
- * \brief Maximum analogue gain supported with the configured sensor
- */
-
-/**
- * \var IPASessionConfiguration::sensor
- * \brief Sensor-specific configuration of the IPA
- *
- * \var IPASessionConfiguration::sensor.lineDuration
- * \brief Line duration in microseconds
- *
- * \var IPASessionConfiguration::sensor.defVBlank
- * \brief The default vblank value of the sensor
- *
- * \var IPASessionConfiguration::sensor.size
- * \brief Sensor output resolution
  */
 
 /**
  * \var IPAActiveState::agc
  * \brief Context for the Automatic Gain Control algorithm
- *
- * The exposure and gain determined are expected to be applied to the sensor
- * at the earliest opportunity.
- *
- * \var IPAActiveState::agc.exposure
- * \brief Exposure time expressed as a number of lines
- *
- * \var IPAActiveState::agc.gain
- * \brief Analogue gain multiplier
- *
- * The gain should be adapted to the sensor specific gain code before applying.
  */
 
 /**
@@ -185,6 +157,9 @@ namespace libcamera::ipa::ipu3 {
  *
  * \var IPAFrameContext::sensor.gain
  * \brief Analogue gain multiplier
+ *
+ * \var IPAFrameContext::agc
+ * \brief Per-frame state for the AGC algorithm
  */
 
 } /* namespace libcamera::ipa::ipu3 */
