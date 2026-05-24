@@ -64,9 +64,6 @@ public:
 		     ControlList &metadata) override;
 
 private:
-	void fillGainParamBlock(IPAContext &context,
-				IPAFrameContext &frameContext,
-				MaliC55Params *params);
 	void fillParamsBuffer(MaliC55Params *params, enum MaliC55Blocks type);
 	void fillWeightsArrayBuffer(MaliC55Params *params, enum MaliC55Blocks type);
 
