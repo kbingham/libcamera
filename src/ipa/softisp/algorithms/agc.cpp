@@ -67,8 +67,8 @@ Agc::Agc()
 
 void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV)
 {
-	int32_t &exposure = frameContext.sensor.exposure;
-	double &again = frameContext.sensor.gain;
+	int32_t exposure = frameContext.sensor.exposure;
+	double again = frameContext.sensor.gain;
 
 	double error = kExposureOptimal - exposureMSV;
 
@@ -115,6 +115,9 @@ void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, dou
 	again = std::clamp(again, context.configuration.agc.againMin,
 			   context.configuration.agc.againMax);
 
+	frameContext.agc.exposure = exposure;
+	frameContext.agc.gain = again;
+
 	context.activeState.agc.exposure = exposure;
 	context.activeState.agc.again = again;
 
@@ -150,8 +153,8 @@ void Agc::process(IPAContext &context,
 		 * Use the new exposure and gain values calculated the last time
 		 * there were valid stats.
 		 */
-		frameContext.sensor.exposure = context.activeState.agc.exposure;
-		frameContext.sensor.gain = context.activeState.agc.again;
+		frameContext.agc.exposure = context.activeState.agc.exposure;
+		frameContext.agc.gain = context.activeState.agc.again;
 		return;
 	}
 

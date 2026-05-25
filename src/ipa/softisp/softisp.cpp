@@ -313,10 +313,11 @@ void IPASoftIsp::processStats(const uint32_t frame,
 
 	ControlList ctrls(sensorInfoMap_);
 
-	auto &againNew = frameContext.sensor.gain;
-	ctrls.set(V4L2_CID_EXPOSURE, frameContext.sensor.exposure);
-	ctrls.set(V4L2_CID_ANALOGUE_GAIN,
-		  static_cast<int32_t>(camHelper_ ? camHelper_->gainCode(againNew) : againNew));
+	int32_t againNew = camHelper_
+		? camHelper_->gainCode(frameContext.agc.gain)
+		: static_cast<int32_t>(frameContext.agc.gain);
+	ctrls.set(V4L2_CID_EXPOSURE, frameContext.agc.exposure);
+	ctrls.set(V4L2_CID_ANALOGUE_GAIN, againNew);
 
 	setSensorControls.emit(ctrls);
 }
