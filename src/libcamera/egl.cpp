@@ -98,6 +98,19 @@ void eGL::syncOutput()
 }
 
 /**
+ * \brief Flush the rendering pipeline
+ *
+ * Calls glFlush().
+ *
+ */
+void eGL::flushOutput()
+{
+	ASSERT(tid_ == Thread::currentId());
+
+	glFlush();
+}
+
+/**
  * \brief Create a DMA-BUF backed 2D texture
  * \param[in,out] eglImage EGL image to associate with the DMA-BUF
  * \param[in] fd DMA-BUF file descriptor

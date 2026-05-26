@@ -521,7 +521,7 @@ int DebayerEGL::debayerGPU(MappedFrameBuffer &in, int out_fd, const DebayerParam
 		LOG(eGL, Error) << "Drawing scene fail " << err;
 		return -ENODEV;
 	} else {
-		egl_.syncOutput();
+		egl_.flushOutput();
 	}
 
 	return 0;
@@ -558,6 +558,7 @@ void DebayerEGL::process(uint32_t frame, FrameBuffer *input, FrameBuffer *output
 	stats_->processFrame(frame, 0, input);
 	dmaSyncers.clear();
 
+	egl_.syncOutput();
 	bench_.finishFrame();
 
 	outputBufferReady.emit(output);

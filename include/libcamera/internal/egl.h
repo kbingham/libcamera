@@ -119,6 +119,7 @@ public:
 	void useProgram(GLuint programId);
 	void deleteProgram(GLuint programId);
 	void syncOutput();
+	void flushOutput();
 
 private:
 	LIBCAMERA_DISABLE_COPY_AND_MOVE(eGL)
