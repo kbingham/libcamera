@@ -552,13 +552,13 @@ void DebayerEGL::process(uint32_t frame, FrameBuffer *input, FrameBuffer *output
 		goto error;
 	}
 
-	bench_.finishFrame();
-
 	metadata.planes()[0].bytesused = output->planes()[0].length;
 
 	/* Calculate stats for the whole frame */
 	stats_->processFrame(frame, 0, input);
 	dmaSyncers.clear();
+
+	bench_.finishFrame();
 
 	outputBufferReady.emit(output);
 	inputBufferReady.emit(input);
