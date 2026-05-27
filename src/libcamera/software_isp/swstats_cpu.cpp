@@ -543,7 +543,7 @@ void SwStatsCpu::processBayerFrame2(MappedFrameBuffer &in)
  *
  * This may only be called after a successful setWindow() call.
  */
-void SwStatsCpu::processFrame(uint32_t frame, uint32_t bufferId, FrameBuffer *input)
+void SwStatsCpu::processFrame(uint32_t frame, uint32_t bufferId, MappedFrameBuffer &input)
 {
 	if (frame % kStatPerNumFrames) {
 		finishFrame(frame, bufferId);
@@ -552,14 +552,7 @@ void SwStatsCpu::processFrame(uint32_t frame, uint32_t bufferId, FrameBuffer *in
 
 	bench_.startFrame();
 	startFrame(frame);
-
-	MappedFrameBuffer in(input, MappedFrameBuffer::MapFlag::Read);
-	if (!in.isValid()) {
-		LOG(SwStatsCpu, Error) << "mmap-ing buffer(s) failed";
-		return;
-	}
-
-	(this->*processFrame_)(in);
+	(this->*processFrame_)(input);
 	finishFrame(frame, bufferId);
 	bench_.finishFrame();
 }

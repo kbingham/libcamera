@@ -56,7 +56,7 @@ public:
 	void setWindow(const Rectangle &window);
 	void startFrame(uint32_t frame);
 	void finishFrame(uint32_t frame, uint32_t bufferId);
-	void processFrame(uint32_t frame, uint32_t bufferId, FrameBuffer *input);
+	void processFrame(uint32_t frame, uint32_t bufferId, MappedFrameBuffer &input);
 
 	void processLine0(uint32_t frame, unsigned int y, const uint8_t *src[], unsigned int statsBufferIndex = 0)
 	{
