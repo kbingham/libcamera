@@ -90,6 +90,7 @@ public:
 	GLenum texture_unit_; /**< Texture unit associated with this image eg (GL_TEXTURE0) */
 	GLuint texture_; /**< OpenGL texture object ID */
 	GLuint fbo_; /**< OpenGL frame buffer object ID */
+	bool dmabuf_import_failed_ = false; /**< Previous image import failed */
 
 private:
 	LIBCAMERA_DISABLE_COPY_AND_MOVE(eGLImage)
