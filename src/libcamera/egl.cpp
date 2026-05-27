@@ -240,9 +240,6 @@ int eGL::createOutputDMABufTexture2D(eGLImage &eglImage, int fd)
 /**
  * \brief Create a 2D texture from a memory buffer
  * \param[in,out] eglImage EGL image to associate with the texture
- * \param[in] format OpenGL internal format (e.g., GL_RGB, GL_RGBA)
- * \param[in] width Texture width in pixels
- * \param[in] height Texture height in pixels
  * \param[in] data Pointer to pixel data, or nullptr for uninitialised texture
  *
  * Creates a 2D texture from a CPU-accessible memory buffer. The texture
@@ -250,7 +247,7 @@ int eGL::createOutputDMABufTexture2D(eGLImage &eglImage, int fd)
  * is useful for uploading static data like lookup tables or uniform color
  * matrices to the GPU.
  */
-void eGL::createTexture2D(eGLImage &eglImage, GLint format, uint32_t width, uint32_t height, void *data)
+void eGL::createTexture2D(eGLImage &eglImage, void *data)
 {
 	ASSERT(tid_ == Thread::currentId());
 
@@ -258,7 +255,7 @@ void eGL::createTexture2D(eGLImage &eglImage, GLint format, uint32_t width, uint
 	glBindTexture(GL_TEXTURE_2D, eglImage.texture_);
 
 	// Generate texture, bind, associate image to texture, configure, unbind
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, eglImage.format_, eglImage.width_, eglImage.height_, 0, eglImage.format_, GL_UNSIGNED_BYTE, data);
 
 	// Nearest filtering
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
