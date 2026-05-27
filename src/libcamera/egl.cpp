@@ -20,6 +20,8 @@
 
 #include <libcamera/base/thread.h>
 
+#include <GLES3/gl32.h>
+
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(eGL)
@@ -124,13 +126,31 @@ void eGL::flushOutput()
  */
 int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
 {
+	EGLint drm_format;
+
 	ASSERT(tid_ == Thread::currentId());
+
+	switch (eglImage.format_) {
+	case GL_RED:
+	case GL_LUMINANCE:
+		drm_format = DRM_FORMAT_R8;
+		break;
+	case GL_RG:
+		drm_format = DRM_FORMAT_RG88;
+		break;
+	case GL_RGBA:
+		drm_format = DRM_FORMAT_ARGB8888;
+		break;
+	default:
+		LOG(eGL, Error) << "unhandled GL format";
+		return -ENODEV;
+	}
 
 	// clang-format off
 	EGLint image_attrs[] = {
 		EGL_WIDTH, (EGLint)eglImage.width_,
 		EGL_HEIGHT, (EGLint)eglImage.height_,
-		EGL_LINUX_DRM_FOURCC_EXT, DRM_FORMAT_ARGB8888,
+		EGL_LINUX_DRM_FOURCC_EXT, drm_format,
 		EGL_DMA_BUF_PLANE0_FD_EXT, fd,
 		EGL_DMA_BUF_PLANE0_OFFSET_EXT, 0,
 		EGL_DMA_BUF_PLANE0_PITCH_EXT, (EGLint)eglImage.stride_,
