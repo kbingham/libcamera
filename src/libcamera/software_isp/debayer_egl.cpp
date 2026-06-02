@@ -79,7 +79,7 @@ int DebayerEGL::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 		return 0;
 	}
 
-	LOG(Debayer, Error)
+	LOG(Debayer, Info)
 		<< "Unsupported input format " << inputFormat;
 
 	return -EINVAL;
@@ -93,7 +93,7 @@ int DebayerEGL::getOutputConfig(PixelFormat outputFormat, DebayerOutputConfig &c
 		return 0;
 	}
 
-	LOG(Debayer, Error)
+	LOG(Debayer, Info)
 		<< "Unsupported output format " << outputFormat;
 
 	return -EINVAL;
