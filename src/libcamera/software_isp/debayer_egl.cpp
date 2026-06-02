@@ -53,16 +53,18 @@ int DebayerEGL::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 	BayerFormat bayerFormat =
 		BayerFormat::fromPixelFormat(inputFormat);
 
+	std::vector<PixelFormat> outputFormats = { formats::XRGB8888,
+						   formats::ARGB8888,
+						   formats::XBGR8888,
+						   formats::ABGR8888 };
+
 	if ((bayerFormat.bitDepth == 8 || bayerFormat.bitDepth == 10) &&
 	    bayerFormat.packing == BayerFormat::Packing::None &&
 	    isStandardBayerOrder(bayerFormat.order)) {
 		config.bpp = (bayerFormat.bitDepth + 7) & ~7;
 		config.patternSize.width = 2;
 		config.patternSize.height = 2;
-		config.outputFormats = std::vector<PixelFormat>({ formats::XRGB8888,
-								  formats::ARGB8888,
-								  formats::XBGR8888,
-								  formats::ABGR8888 });
+		config.outputFormats = outputFormats;
 		return 0;
 	}
 
@@ -72,10 +74,17 @@ int DebayerEGL::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 		config.bpp = 10;
 		config.patternSize.width = 4; /* 5 bytes per *4* pixels */
 		config.patternSize.height = 2;
-		config.outputFormats = std::vector<PixelFormat>({ formats::XRGB8888,
-								  formats::ARGB8888,
-								  formats::XBGR8888,
-								  formats::ABGR8888 });
+		config.outputFormats = outputFormats;
+		return 0;
+	}
+
+	if (bayerFormat.bitDepth == 12 &&
+	    bayerFormat.packing == BayerFormat::Packing::CSI2 &&
+	    isStandardBayerOrder(bayerFormat.order)) {
+		config.bpp = 12;
+		config.patternSize.width = 2; /* 3 bytes per *2* pixels */
+		config.patternSize.height = 2;
+		config.outputFormats = outputFormats;
 		return 0;
 	}
 

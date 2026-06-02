@@ -98,6 +98,9 @@ private:
 	/* Bayer 10 bpp packed */
 	void statsBGGR10PLine0(const uint8_t *src[], SwIspStats &stats);
 	void statsGBRG10PLine0(const uint8_t *src[], SwIspStats &stats);
+	/* Bayer 12 bpp packed */
+	void statsBGGR12PLine0(const uint8_t *src[], SwIspStats &stats);
+	void statsGBRG12PLine0(const uint8_t *src[], SwIspStats &stats);
 
 	void processBayerFrame2(MappedFrameBuffer &in);
 

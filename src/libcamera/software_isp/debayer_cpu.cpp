@@ -351,6 +351,78 @@ void DebayerCpu::debayer10P_RGRG_BGR888(uint8_t *dst, const uint8_t *src[])
 	}
 }
 
+template<bool addAlphaByte, bool ccmEnabled>
+void DebayerCpu::debayer12P_BGBG_BGR888(uint8_t *dst, const uint8_t *src[])
+{
+	const int widthInBytes = window_.width * 3 / 2;
+	const uint8_t *prev = src[0];
+	const uint8_t *curr = src[1];
+	const uint8_t *next = src[2];
+
+	for (int x = 0; x < widthInBytes;) {
+		/* Even pixel */
+		BGGR_BGR888(2, 1, 1)
+		/* Odd pixel BGGR -> GBRG */
+		GBRG_BGR888(1, 2, 1)
+		/* Skip 3rd src byte with 2 x 4 least-significant-bits */
+		x++;
+	}
+}
+
+template<bool addAlphaByte, bool ccmEnabled>
+void DebayerCpu::debayer12P_GRGR_BGR888(uint8_t *dst, const uint8_t *src[])
+{
+	const int widthInBytes = window_.width * 3 / 2;
+	const uint8_t *prev = src[0];
+	const uint8_t *curr = src[1];
+	const uint8_t *next = src[2];
+
+	for (int x = 0; x < widthInBytes;) {
+		/* Even pixel */
+		GRBG_BGR888(2, 1, 1)
+		/* Odd pixel GRBG -> RGGB */
+		RGGB_BGR888(1, 2, 1)
+		/* Skip 3rd src byte with 2 x 4 least-significant-bits */
+		x++;
+	}
+}
+
+template<bool addAlphaByte, bool ccmEnabled>
+void DebayerCpu::debayer12P_GBGB_BGR888(uint8_t *dst, const uint8_t *src[])
+{
+	const int widthInBytes = window_.width * 3 / 2;
+	const uint8_t *prev = src[0];
+	const uint8_t *curr = src[1];
+	const uint8_t *next = src[2];
+
+	for (int x = 0; x < widthInBytes;) {
+		/* Even pixel */
+		GBRG_BGR888(2, 1, 1)
+		/* Odd pixel GBRG -> BGGR */
+		BGGR_BGR888(1, 2, 1)
+		/* Skip 3rd src byte with 2 x 4 least-significant-bits */
+		x++;
+	}
+}
+
+template<bool addAlphaByte, bool ccmEnabled>
+void DebayerCpu::debayer12P_RGRG_BGR888(uint8_t *dst, const uint8_t *src[])
+{
+	const int widthInBytes = window_.width * 3 / 2;
+	const uint8_t *prev = src[0];
+	const uint8_t *curr = src[1];
+	const uint8_t *next = src[2];
+
+	for (int x = 0; x < widthInBytes;) {
+		/* Even pixel */
+		RGGB_BGR888(2, 1, 1)
+		/* Odd pixel RGGB -> GRBG */
+		GRBG_BGR888(1, 2, 1)
+		/* Skip 3rd src byte with 2 x 4 least-significant-bits */
+		x++;
+	}
+}
+
 /*
  * Setup the Debayer object according to the passed in parameters.
  * Return 0 on success, a negative errno value on failure
@@ -360,6 +432,12 @@ int DebayerCpu::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 {
 	BayerFormat bayerFormat =
 		BayerFormat::fromPixelFormat(inputFormat);
+	std::vector<PixelFormat> outputFormats = { formats::RGB888,
+						   formats::XRGB8888,
+						   formats::ARGB8888,
+						   formats::BGR888,
+						   formats::XBGR8888,
+						   formats::ABGR8888 };
 
 	if ((bayerFormat.bitDepth == 8 || bayerFormat.bitDepth == 10 || bayerFormat.bitDepth == 12) &&
 	    bayerFormat.packing == BayerFormat::Packing::None &&
@@ -367,12 +445,7 @@ int DebayerCpu::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 		config.bpp = (bayerFormat.bitDepth + 7) & ~7;
 		config.patternSize.width = 2;
 		config.patternSize.height = 2;
-		config.outputFormats = std::vector<PixelFormat>({ formats::RGB888,
-								  formats::XRGB8888,
-								  formats::ARGB8888,
-								  formats::BGR888,
-								  formats::XBGR8888,
-								  formats::ABGR8888 });
+		config.outputFormats = outputFormats;
 		return 0;
 	}
 
@@ -382,12 +455,17 @@ int DebayerCpu::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 		config.bpp = 10;
 		config.patternSize.width = 4; /* 5 bytes per *4* pixels */
 		config.patternSize.height = 2;
-		config.outputFormats = std::vector<PixelFormat>({ formats::RGB888,
-								  formats::XRGB8888,
-								  formats::ARGB8888,
-								  formats::BGR888,
-								  formats::XBGR8888,
-								  formats::ABGR8888 });
+		config.outputFormats = outputFormats;
+		return 0;
+	}
+
+	if (bayerFormat.bitDepth == 12 &&
+	    bayerFormat.packing == BayerFormat::Packing::CSI2 &&
+	    isStandardBayerOrder(bayerFormat.order)) {
+		config.bpp = 12;
+		config.patternSize.width = 2; /* 3 bytes per *2* pixels */
+		config.patternSize.height = 2;
+		config.outputFormats = outputFormats;
 		return 0;
 	}
 
@@ -532,6 +610,26 @@ int DebayerCpu::setDebayerFunctions(PixelFormat inputFormat,
 			return 0;
 		case BayerFormat::RGGB:
 			SET_DEBAYER_METHODS(debayer10P_RGRG_BGR888, debayer10P_GBGB_BGR888)
+			return 0;
+		default:
+			break;
+		}
+	}
+
+	if (bayerFormat.bitDepth == 12 &&
+	    bayerFormat.packing == BayerFormat::Packing::CSI2) {
+		switch (bayerFormat.order) {
+		case BayerFormat::BGGR:
+			SET_DEBAYER_METHODS(debayer12P_BGBG_BGR888, debayer12P_GRGR_BGR888)
+			return 0;
+		case BayerFormat::GBRG:
+			SET_DEBAYER_METHODS(debayer12P_GBGB_BGR888, debayer12P_RGRG_BGR888)
+			return 0;
+		case BayerFormat::GRBG:
+			SET_DEBAYER_METHODS(debayer12P_GRGR_BGR888, debayer12P_BGBG_BGR888)
+			return 0;
+		case BayerFormat::RGGB:
+			SET_DEBAYER_METHODS(debayer12P_RGRG_BGR888, debayer12P_GBGB_BGR888)
 			return 0;
 		default:
 			break;

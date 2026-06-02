@@ -110,6 +110,15 @@ private:
 	void debayer10P_GBGB_BGR888(uint8_t *dst, const uint8_t *src[]);
 	template<bool addAlphaByte, bool ccmEnabled>
 	void debayer10P_RGRG_BGR888(uint8_t *dst, const uint8_t *src[]);
+	/* CSI-2 packed 12-bit raw bayer format (all the 4 orders) */
+	template<bool addAlphaByte, bool ccmEnabled>
+	void debayer12P_BGBG_BGR888(uint8_t *dst, const uint8_t *src[]);
+	template<bool addAlphaByte, bool ccmEnabled>
+	void debayer12P_GRGR_BGR888(uint8_t *dst, const uint8_t *src[]);
+	template<bool addAlphaByte, bool ccmEnabled>
+	void debayer12P_GBGB_BGR888(uint8_t *dst, const uint8_t *src[]);
+	template<bool addAlphaByte, bool ccmEnabled>
+	void debayer12P_RGRG_BGR888(uint8_t *dst, const uint8_t *src[]);
 
 	static int getInputConfig(PixelFormat inputFormat, DebayerInputConfig &config);
 	static int getOutputConfig(PixelFormat outputFormat, DebayerOutputConfig &config);
