@@ -343,10 +343,8 @@ bool operator!=(const Vector<T, Rows> &lhs, const Vector<T, Rows> &rhs)
 }
 
 #ifndef __DOXYGEN__
-bool vectorValidateYaml(const ValueNode &obj, unsigned int size);
-#endif /* __DOXYGEN__ */
+bool vectorValidateValueNode(const ValueNode &obj, unsigned int size);
 
-#ifndef __DOXYGEN__
 template<typename T, unsigned int Rows>
 std::ostream &operator<<(std::ostream &out, const Vector<T, Rows> &v)
 {
@@ -364,7 +362,7 @@ template<typename T, unsigned int Rows>
 struct ValueNode::Accessor<Vector<T, Rows>> {
 	std::optional<Vector<T, Rows>> get(const ValueNode &obj) const
 	{
-		if (!vectorValidateYaml(obj, Rows))
+		if (!vectorValidateValueNode(obj, Rows))
 			return std::nullopt;
 
 		Vector<T, Rows> vector;
