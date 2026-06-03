@@ -61,9 +61,9 @@ namespace ipa::rkisp1::algorithms {
  * Due to the optical characteristics of the lens, the light intensity received
  * by the sensor is not uniform.
  *
- * The Lens Shading Correction algorithm applies multipliers to all pixels
- * to compensate for the lens shading effect. The coefficients are
- * specified in a downscaled table in the YAML tuning file.
+ * The Lens Shading Correction algorithm applies multipliers to all pixels to
+ * compensate for the lens shading effect. The coefficients are specified in a
+ * downscaled table in the tuning data.
  */
 
 LOG_DEFINE_CATEGORY(RkISP1Lsc)

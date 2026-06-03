@@ -358,7 +358,7 @@ bool vectorValidateValueNode(const ValueNode &obj, unsigned int size)
 
 	if (obj.size() != size) {
 		LOG(Vector, Error)
-			<< "Wrong number of values in YAML vector: expected "
+			<< "Wrong number of values in vector: expected "
 			<< size << ", got " << obj.size();
 		return false;
 	}
