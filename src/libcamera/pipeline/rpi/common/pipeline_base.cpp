@@ -342,12 +342,12 @@ bool PipelineHandlerBase::updateStreamConfig(StreamConfiguration *stream,
 	}
 
 	if (stream->colorSpace != format.colorSpace) {
-		stream->colorSpace = format.colorSpace;
-		adjusted = true;
 		LOG(RPI, Debug)
 			<< "Color space changed from "
 			<< ColorSpace::toString(stream->colorSpace) << " to "
 			<< ColorSpace::toString(format.colorSpace);
+		stream->colorSpace = format.colorSpace;
+		adjusted = true;
 	}
 
 	stream->stride = format.planes[0].bpl;
