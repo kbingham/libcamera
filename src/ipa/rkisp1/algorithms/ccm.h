@@ -41,7 +41,6 @@ public:
 		     ControlList &metadata) override;
 
 private:
-	void parseYaml(const ValueNode &tuningData);
 	void setParameters(struct rkisp1_cif_isp_ctk_config &config,
 			   const Matrix<float, 3, 3> &matrix,
 			   const Matrix<int16_t, 3, 1> &offsets);
