@@ -184,20 +184,19 @@ public:
 	{
 	}
 
-	int parseLscData(const ValueNode &yamlSets,
+	int parseLscData(const ValueNode &sets,
 			 LensShadingCorrection::ShadingDescriptorMap &lscData);
 
 private:
 	Size sensorSize_;
 };
 
-int LscPolynomialLoader::parseLscData(const ValueNode &yamlSets,
+int LscPolynomialLoader::parseLscData(const ValueNode &sets,
 				      LensShadingCorrection::ShadingDescriptorMap &lscData)
 {
-	const auto &sets = yamlSets.asList();
-	for (const auto &yamlSet : sets) {
+	for (const auto &set : sets.asList()) {
 		std::optional<LscPolynomial> pr, pgr, pgb, pb;
-		uint32_t ct = yamlSet["ct"].get<uint32_t>(0);
+		uint32_t ct = set["ct"].get<uint32_t>(0);
 
 		if (lscData.count(ct)) {
 			LOG(RkISP1Lsc, Error)
@@ -206,10 +205,10 @@ int LscPolynomialLoader::parseLscData(const ValueNode &yamlSets,
 			return -EINVAL;
 		}
 
-		pr = yamlSet["r"].get<LscPolynomial>();
-		pgr = yamlSet["gr"].get<LscPolynomial>();
-		pgb = yamlSet["gb"].get<LscPolynomial>();
-		pb = yamlSet["b"].get<LscPolynomial>();
+		pr = set["r"].get<LscPolynomial>();
+		pgr = set["gr"].get<LscPolynomial>();
+		pgb = set["gb"].get<LscPolynomial>();
+		pb = set["b"].get<LscPolynomial>();
 
 		if (!(pr || pgr || pgb || pb)) {
 			LOG(RkISP1Lsc, Error)
@@ -261,7 +260,7 @@ private:
 class LscTableLoader
 {
 public:
-	int parseLscData(const ValueNode &yamlSets,
+	int parseLscData(const ValueNode &sets,
 			 LensShadingCorrection::ShadingDescriptorMap &lscData);
 
 private:
@@ -269,13 +268,11 @@ private:
 					 const char *prop);
 };
 
-int LscTableLoader::parseLscData(const ValueNode &yamlSets,
+int LscTableLoader::parseLscData(const ValueNode &sets,
 				 LensShadingCorrection::ShadingDescriptorMap &lscData)
 {
-	const auto &sets = yamlSets.asList();
-
-	for (const auto &yamlSet : sets) {
-		uint32_t ct = yamlSet["ct"].get<uint32_t>(0);
+	for (const auto &set : sets.asList()) {
+		uint32_t ct = set["ct"].get<uint32_t>(0);
 
 		if (lscData.count(ct)) {
 			LOG(RkISP1Lsc, Error)
@@ -284,14 +281,14 @@ int LscTableLoader::parseLscData(const ValueNode &yamlSets,
 			return -EINVAL;
 		}
 
-		LensShadingCorrection::Components set;
-		set.r = parseTable(yamlSet, "r");
-		set.gr = parseTable(yamlSet, "gr");
-		set.gb = parseTable(yamlSet, "gb");
-		set.b = parseTable(yamlSet, "b");
+		LensShadingCorrection::Components components;
+		components.r = parseTable(set, "r");
+		components.gr = parseTable(set, "gr");
+		components.gb = parseTable(set, "gb");
+		components.b = parseTable(set, "b");
 
-		if (set.r.empty() || set.gr.empty() ||
-		    set.gb.empty() || set.b.empty()) {
+		if (components.r.empty() || components.gr.empty() ||
+		    components.gb.empty() || components.b.empty()) {
 			LOG(RkISP1Lsc, Error)
 				<< "Set for color temperature " << ct
 				<< " is missing tables";
@@ -299,7 +296,7 @@ int LscTableLoader::parseLscData(const ValueNode &yamlSets,
 		}
 
 		lscData.emplace(
-			ct, std::make_unique<LscTableShadingDescriptor>(std::move(set)));
+			ct, std::make_unique<LscTableShadingDescriptor>(std::move(components)));
 	}
 
 	if (lscData.empty()) {
@@ -384,8 +381,8 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 		return -EINVAL;
 
 	/* Get all defined sets to apply. */
-	const ValueNode &yamlSets = tuningData["sets"];
-	if (!yamlSets.isList()) {
+	const ValueNode &sets = tuningData["sets"];
+	if (!sets.isList()) {
 		LOG(RkISP1Lsc, Error)
 			<< "'sets' parameter not found in tuning file";
 		return -EINVAL;
@@ -398,7 +395,7 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 	if (type == "table") {
 		LOG(RkISP1Lsc, Debug) << "Loading tabular LSC data.";
 		auto loader = LscTableLoader();
-		ret = loader.parseLscData(yamlSets, lscData);
+		ret = loader.parseLscData(sets, lscData);
 	} else if (type == "polynomial") {
 		LOG(RkISP1Lsc, Debug) << "Loading polynomial LSC data.";
 		/*
@@ -406,7 +403,7 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 		 * Let's wait how the internal discussions progress.
 		 */
 		auto loader = LscPolynomialLoader(context.sensorInfo.activeAreaSize);
-		ret = loader.parseLscData(yamlSets, lscData);
+		ret = loader.parseLscData(sets, lscData);
 	} else {
 		LOG(RkISP1Lsc, Error) << "Unsupported LSC data type '"
 				      << type << "'";

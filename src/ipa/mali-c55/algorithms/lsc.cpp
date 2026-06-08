@@ -26,16 +26,15 @@ int Lsc::init([[maybe_unused]] IPAContext &context, const ValueNode &tuningData)
 
 	meshScale_ = tuningData["meshScale"].get<uint32_t>(0);
 
-	const ValueNode &yamlSets = tuningData["sets"];
-	if (!yamlSets.isList()) {
+	const ValueNode &sets = tuningData["sets"];
+	if (!sets.isList()) {
 		LOG(MaliC55Lsc, Error) << "LSC tables missing or invalid";
 		return -EINVAL;
 	}
 
 	size_t tableSize = 0;
-	const auto &sets = yamlSets.asList();
-	for (const auto &yamlSet : sets) {
-		uint32_t ct = yamlSet["ct"].get<uint32_t>(0);
+	for (const auto &set : sets.asList()) {
+		uint32_t ct = set["ct"].get<uint32_t>(0);
 
 		if (!ct) {
 			LOG(MaliC55Lsc, Error) << "Invalid colour temperature";
@@ -50,11 +49,11 @@ int Lsc::init([[maybe_unused]] IPAContext &context, const ValueNode &tuningData)
 		}
 
 		std::vector<uint8_t> rTable =
-			yamlSet["r"].get<std::vector<uint8_t>>().value_or(utils::defopt);
+			set["r"].get<std::vector<uint8_t>>().value_or(utils::defopt);
 		std::vector<uint8_t> gTable =
-			yamlSet["g"].get<std::vector<uint8_t>>().value_or(utils::defopt);
+			set["g"].get<std::vector<uint8_t>>().value_or(utils::defopt);
 		std::vector<uint8_t> bTable =
-			yamlSet["b"].get<std::vector<uint8_t>>().value_or(utils::defopt);
+			set["b"].get<std::vector<uint8_t>>().value_or(utils::defopt);
 
 		/*
 		 * Some validation to do; only 16x16 and 32x32 tables of

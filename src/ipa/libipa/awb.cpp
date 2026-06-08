@@ -167,14 +167,14 @@ int AwbAlgorithm::parseModeConfigs(const ValueNode &tuningData,
 {
 	std::vector<ControlValue> availableModes;
 
-	const ValueNode &yamlModes = tuningData[controls::AwbMode.name()];
-	if (!yamlModes.isDictionary()) {
+	const ValueNode &modes = tuningData[controls::AwbMode.name()];
+	if (!modes.isDictionary()) {
 		LOG(Awb, Error)
 			<< "AwbModes must be a dictionary.";
 		return -EINVAL;
 	}
 
-	for (const auto &[modeName, modeDict] : yamlModes.asDict()) {
+	for (const auto &[modeName, modeDict] : modes.asDict()) {
 		if (controls::AwbModeNameValueMap.find(modeName) ==
 		    controls::AwbModeNameValueMap.end()) {
 			LOG(Awb, Warning)
