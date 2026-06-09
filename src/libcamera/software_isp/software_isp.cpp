@@ -256,6 +256,19 @@ SoftwareIsp::strideAndFrameSize(const PixelFormat &outputFormat, const Size &siz
 }
 
 /**
+ * Get the preferred input stride in bytes for the given input format and size
+ * \param[in] inputFormat The input format
+ * \param[in] size The input size (width and height in pixels)
+ * \return The preferred input stride in bytes or 0 if there is no preference
+ */
+uint32_t SoftwareIsp::preferredInputStride(const PixelFormat &inputFormat, const Size &size)
+{
+	ASSERT(debayer_);
+
+	return debayer_->preferredInputStride(inputFormat, size);
+}
+
+/**
  * \brief Configure the SoftwareIsp object according to the passed in parameters
  * \param[in] inputCfg The input configuration
  * \param[in] outputCfgs The output configurations

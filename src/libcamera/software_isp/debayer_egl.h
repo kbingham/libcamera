@@ -50,6 +50,7 @@ public:
 
 	std::vector<PixelFormat> formats(PixelFormat input) override;
 	std::tuple<unsigned int, unsigned int> strideAndFrameSize(const PixelFormat &outputFormat, const Size &size) override;
+	uint32_t preferredInputStride(const PixelFormat &inputFormat, const Size &size) override;
 
 	void process(uint32_t frame, FrameBuffer *input, FrameBuffer *output, const DebayerParams &params) override;
 	int start() override;
