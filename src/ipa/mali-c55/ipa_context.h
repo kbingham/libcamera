@@ -10,6 +10,8 @@
 #include <libcamera/base/utils.h>
 #include <libcamera/controls.h>
 
+#include <libcamera/ipa/core_ipa_interface.h>
+
 #include "libcamera/internal/bayer_format.h"
 
 #include <libipa/fc_queue.h>
@@ -77,6 +79,7 @@ struct IPAContext {
 	{
 	}
 
+	IPACameraSensorInfo sensorInfo;
 	IPASessionConfiguration configuration;
 	IPAActiveState activeState;
 
