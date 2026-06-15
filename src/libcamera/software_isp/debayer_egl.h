@@ -102,6 +102,7 @@ private:
 	/* Contrast */
 	GLint contrastExpUniformDataIn_;
 
+	Size nativeOutputSize_;
 	Rectangle window_;
 	std::unique_ptr<SwStatsCpu> stats_;
 	eGL egl_;

@@ -337,6 +337,7 @@ int DebayerEGL::configure(const StreamConfiguration &inputCfg,
 
 	outputPixelFormat_ = outputCfg.pixelFormat;
 	outputSize_ = outputCfg.size;
+	nativeOutputSize_ = outSizeRange.max;
 
 	window_.x = ((inputCfg.size.width - outputCfg.size.width) / 2) &
 		    ~(inputConfig_.patternSize.width - 1);
@@ -408,11 +409,12 @@ void DebayerEGL::setShaderVariableValues(const DebayerParams &params)
 			   1.0f / (height_ - 1) };
 	GLfloat Stride = (GLfloat)width_ / (shaderStridePixels_ / bytesPerPixel_);
 	/*
-	 * Scale input to output size, keeping the aspect ratio and preferring
-	 * cropping over black bars.
+	 * Scale the output size from the native size the algorithm produces for
+	 * the input size. Keep the aspect ratio and prefer cropping over black
+	 * bars.
 	 */
-	GLfloat scale = std::max((GLfloat)window_.width / width_,
-				 (GLfloat)window_.height / height_);
+	GLfloat scale = std::max((GLfloat)outputSize_.width / nativeOutputSize_.width,
+				 (GLfloat)outputSize_.height / nativeOutputSize_.height);
 	GLfloat trans = -(1.0f - scale);
 	GLfloat projMatrix[] = {
 		scale, 0, 0, 0,
