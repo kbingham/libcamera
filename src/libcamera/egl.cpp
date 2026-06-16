@@ -359,6 +359,7 @@ int eGL::initEGLContext()
 
 	makeCurrent();
 
+	LOG(eGL, Info) << "EGL: GL_RENDERER: " << glGetString(GL_RENDERER);
 	LOG(eGL, Info) << "EGL: GL_VERSION: " << glGetString(GL_VERSION);
 
 	return 0;
