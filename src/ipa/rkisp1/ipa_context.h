@@ -118,6 +118,8 @@ struct IPAActiveState {
 	} ccm;
 
 	struct {
+		float requestedBrightness;
+		float actualBrightness;
 		BrightnessQ brightness;
 		ContrastQ contrast;
 		HueQ hue;
@@ -181,6 +183,7 @@ struct IPAFrameContext : public FrameContext {
 	} awb;
 
 	struct {
+		float actualBrightness;
 		BrightnessQ brightness;
 		ContrastQ contrast;
 		HueQ hue;
