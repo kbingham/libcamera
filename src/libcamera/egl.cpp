@@ -267,6 +267,50 @@ void eGL::createTexture2D(eGLImage &eglImage, void *data)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
+EGLDisplay eGL::probeDisplay()
+{
+	EGLDisplay display;
+
+	if (!eglBindAPI(EGL_OPENGL_ES_API)) {
+		LOG(eGL, Info) << "API bind fail";
+		return EGL_NO_DISPLAY;
+	}
+
+	display = eglGetPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA,
+					EGL_DEFAULT_DISPLAY,
+					nullptr);
+
+	if (display == EGL_NO_DISPLAY) {
+		LOG(eGL, Info) << "Unable to get EGL display";
+		return EGL_NO_DISPLAY;
+	}
+
+	if (eglInitialize(display, nullptr, nullptr) != EGL_TRUE) {
+		LOG(eGL, Error) << "eglInitialize fail";
+		return EGL_NO_DISPLAY;
+	}
+
+	return display;
+}
+
+/**
+ * \brief Probe whether EGL surfaceless rendering is available
+ *
+ * Checks if an EGL surfaceless display can be obtained and initialised.
+ * The display is immediately terminated so that no resources are leaked.
+ *
+ * \return True if EGL surfaceless rendering is available, false otherwise
+ */
+bool eGL::isAvailable()
+{
+	EGLDisplay display = probeDisplay();
+	if (display == EGL_NO_DISPLAY)
+		return false;
+
+	eglTerminate(display);
+	return true;
+}
+
 /**
  * \brief Initialise the EGL context
  *
@@ -297,21 +341,9 @@ int eGL::initEGLContext()
 	EGLint numConfigs;
 	EGLConfig config;
 
-	if (!eglBindAPI(EGL_OPENGL_ES_API)) {
-		LOG(eGL, Error) << "API bind fail";
-		goto fail;
-	}
-
-	display_ = eglGetPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA,
-					 EGL_DEFAULT_DISPLAY,
-					 nullptr);
+	display_ = probeDisplay();
 	if (display_ == EGL_NO_DISPLAY) {
-		LOG(eGL, Error) << "Unable to get EGL display";
-		goto fail;
-	}
-
-	if (eglInitialize(display_, nullptr, nullptr) != EGL_TRUE) {
-		LOG(eGL, Error) << "eglInitialize fail";
+		LOG(eGL, Error) << "Unable to probe display";
 		goto fail;
 	}
 
