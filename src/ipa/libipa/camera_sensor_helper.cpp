@@ -677,6 +677,18 @@ public:
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov01a10", CameraSensorHelperOv01a10)
 
+class CameraSensorHelperOv08d10 : public CameraSensorHelper
+{
+public:
+	CameraSensorHelperOv08d10()
+	{
+		/* From Linux kernel driver: 0x40 at 10bits. */
+		blackLevel_ = 4096;
+		gain_ = AnalogueGainLinear{ 1, 0, 0, 128 };
+	}
+};
+REGISTER_CAMERA_SENSOR_HELPER("ov08d10", CameraSensorHelperOv08d10)
+
 class CameraSensorHelperOv08x40 : public CameraSensorHelper
 {
 public:
