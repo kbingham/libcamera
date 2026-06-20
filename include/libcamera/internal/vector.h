@@ -263,7 +263,7 @@ public:
 	}
 
 private:
-	template<class BinaryOp>
+	template<typename BinaryOp>
 	static constexpr Vector apply(const Vector &lhs, const Vector &rhs, BinaryOp op)
 	{
 		Vector result;
@@ -274,7 +274,7 @@ private:
 		return result;
 	}
 
-	template<class U, class BinaryOp>
+	template<typename U, typename BinaryOp>
 	static constexpr Vector apply(const Vector &lhs, U rhs, BinaryOp op)
 	{
 		Vector result;
@@ -285,7 +285,7 @@ private:
 		return result;
 	}
 
-	template<class BinaryOp>
+	template<typename BinaryOp>
 	Vector &apply(const Vector &other, BinaryOp op)
 	{
 		auto itOther = other.data_.begin();
@@ -295,7 +295,7 @@ private:
 		return *this;
 	}
 
-	template<class U, class BinaryOp>
+	template<typename U, typename BinaryOp>
 	Vector &apply(U scalar, BinaryOp op)
 	{
 		std::for_each(data_.begin(), data_.end(),
