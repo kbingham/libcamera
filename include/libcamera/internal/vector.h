@@ -274,13 +274,13 @@ private:
 		return result;
 	}
 
-	template<typename BinaryOp, typename U>
-	static constexpr Vector apply(const Vector &lhs, BinaryOp op, U rhs)
+	template<typename Op, typename... U>
+	static constexpr Vector apply(const Vector &vector, Op op, U... scalar)
 	{
 		Vector result;
-		std::transform(lhs.data_.begin(), lhs.data_.end(),
+		std::transform(vector.data_.begin(), vector.data_.end(),
 			       result.data_.begin(),
-			       [&op, rhs](T v) { return op(v, rhs); });
+			       [&op, scalar...](T v) { return op(v, scalar...); });
 
 		return result;
 	}
@@ -295,11 +295,11 @@ private:
 		return *this;
 	}
 
-	template<typename BinaryOp, typename U>
-	Vector &apply(BinaryOp op, U scalar)
+	template<typename Op, typename... U>
+	Vector &apply(Op op, U... scalar)
 	{
 		std::for_each(data_.begin(), data_.end(),
-			      [&op, scalar](T &v) { v = op(v, scalar); });
+			      [&op, scalar...](T &v) { v = op(v, scalar...); });
 
 		return *this;
 	}
