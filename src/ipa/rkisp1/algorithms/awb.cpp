@@ -332,7 +332,7 @@ void Awb::process(IPAContext &context,
 	 * divisions by zero when computing the raw means in subsequent
 	 * iterations.
 	 */
-	awbResult.gains = awbResult.gains.max(1.0 / 256).min(1023.0 / 256);
+	awbResult.gains = awbResult.gains.clamp(1.0 / 256, 1023.0 / 256);
 
 	/* Filter the values to avoid oscillations. */
 	double speed = 0.2;
