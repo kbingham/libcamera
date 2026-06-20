@@ -225,6 +225,14 @@ LOG_DEFINE_CATEGORY(Vector)
  */
 
 /**
+ * \fn Vector::clamp(T low, T high) const
+ * \brief Clamp the vector element-wise between \a low and \a high
+ * \param[in] low The lower limit
+ * \param[in] high The upper limit
+ * \return A vector with each element clamped between \a low and \a high
+ */
+
+/**
  * \fn Vector::dot(const Vector<T, Rows> &other) const
  * \brief Compute the dot product
  * \param[in] other The other vector
