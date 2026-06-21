@@ -77,5 +77,29 @@ namespace ipa {
  * \param size The size of the reference image
  */
 
-} // namespace ipa
-} // namespace libcamera
+} /* namespace ipa */
+
+#ifndef __DOXYGEN__
+template<>
+std::optional<ipa::LscPolynomial>
+ValueNode::Accessor<ipa::LscPolynomial>::get(const ValueNode &obj) const
+{
+	std::optional<double> cx = obj["cx"].get<double>();
+	std::optional<double> cy = obj["cy"].get<double>();
+	std::optional<double> k0 = obj["k0"].get<double>();
+	std::optional<double> k1 = obj["k1"].get<double>();
+	std::optional<double> k2 = obj["k2"].get<double>();
+	std::optional<double> k3 = obj["k3"].get<double>();
+	std::optional<double> k4 = obj["k4"].get<double>();
+
+	if (!(cx && cy && k0 && k1 && k2 && k3 && k4)) {
+		LOG(LscPolynomial, Error)
+			<< "Polynomial is missing a parameter";
+		return std::nullopt;
+	}
+
+	return ipa::LscPolynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
+}
+#endif /* __DOXYGEN__ */
+
+} /* namespace libcamera */
