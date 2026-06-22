@@ -120,42 +120,42 @@ public:
 
 	Vector &operator+=(const Vector &other)
 	{
-		return apply([](T a, T b) { return a + b; }, other);
+		return apply(std::plus<>{}, other);
 	}
 
 	Vector &operator+=(T scalar)
 	{
-		return apply([](T a, T b) { return a + b; }, scalar);
+		return apply(std::plus<>{}, scalar);
 	}
 
 	Vector &operator-=(const Vector &other)
 	{
-		return apply([](T a, T b) { return a - b; }, other);
+		return apply(std::minus<>{}, other);
 	}
 
 	Vector &operator-=(T scalar)
 	{
-		return apply([](T a, T b) { return a - b; }, scalar);
+		return apply(std::minus<>{}, scalar);
 	}
 
 	Vector &operator*=(const Vector &other)
 	{
-		return apply([](T a, T b) { return a * b; }, other);
+		return apply(std::multiplies<>{}, other);
 	}
 
 	Vector &operator*=(T scalar)
 	{
-		return apply([](T a, T b) { return a * b; }, scalar);
+		return apply(std::multiplies<>{}, scalar);
 	}
 
 	Vector &operator/=(const Vector &other)
 	{
-		return apply([](T a, T b) { return a / b; }, other);
+		return apply(std::divides<>{}, other);
 	}
 
 	Vector &operator/=(T scalar)
 	{
-		return apply([](T a, T b) { return a / b; }, scalar);
+		return apply(std::divides<>{}, scalar);
 	}
 
 	Vector &operator>>=(unsigned int shift)
