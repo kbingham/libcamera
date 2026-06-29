@@ -24,7 +24,7 @@
 #include "libcamera/internal/formats.h"
 #include "libcamera/internal/framebuffer.h"
 
-#include "../glsl_shaders.h"
+#include "../shaders/glsl_shaders.h"
 
 namespace libcamera {
 
