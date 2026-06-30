@@ -463,8 +463,7 @@ void eGL::pushEnv(std::vector<std::string> &shaderEnv, const char *str)
 /**
  * \brief Compile a vertex shader
  * \param[out] shaderId OpenGL shader object ID
- * \param[in] shaderData Pointer to shader source code
- * \param[in] shaderDataLen Length of shader source in bytes
+ * \param[in] shaderData Shader source code
  * \param[in] shaderEnv Span of preprocessor definitions to prepend
  *
  * Compiles a vertex shader from source code with optional preprocessor
@@ -472,18 +471,17 @@ void eGL::pushEnv(std::vector<std::string> &shaderEnv, const char *str)
  *
  * \return 0 on success, or -EINVAL on compilation failure
  */
-int eGL::compileVertexShader(GLuint &shaderId, const unsigned char *shaderData,
-			     unsigned int shaderDataLen,
+int eGL::compileVertexShader(GLuint &shaderId,
+			     Span<const unsigned char> shaderData,
 			     Span<const std::string> shaderEnv)
 {
-	return compileShader(GL_VERTEX_SHADER, shaderId, shaderData, shaderDataLen, shaderEnv);
+	return compileShader(GL_VERTEX_SHADER, shaderId, shaderData, shaderEnv);
 }
 
 /**
  * \brief Compile a fragment shader
  * \param[out] shaderId OpenGL shader object ID
- * \param[in] shaderData Pointer to shader source code
- * \param[in] shaderDataLen Length of shader source in bytes
+ * \param[in] shaderData Shader source code
  * \param[in] shaderEnv Span of preprocessor definitions to prepend
  *
  * Compiles a fragment shader from source code with optional preprocessor
@@ -491,19 +489,18 @@ int eGL::compileVertexShader(GLuint &shaderId, const unsigned char *shaderData,
  *
  * \return 0 on success, or -EINVAL on compilation failure
  */
-int eGL::compileFragmentShader(GLuint &shaderId, const unsigned char *shaderData,
-			       unsigned int shaderDataLen,
+int eGL::compileFragmentShader(GLuint &shaderId,
+			       Span<const unsigned char> shaderData,
 			       Span<const std::string> shaderEnv)
 {
-	return compileShader(GL_FRAGMENT_SHADER, shaderId, shaderData, shaderDataLen, shaderEnv);
+	return compileShader(GL_FRAGMENT_SHADER, shaderId, shaderData, shaderEnv);
 }
 
 /**
  * \brief Compile a shader of specified type
  * \param[in] shaderType GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
  * \param[out] shaderId OpenGL shader object ID
- * \param[in] shaderData Pointer to shader source code
- * \param[in] shaderDataLen Length of shader source in bytes
+ * \param[in] shaderData Shader source code
  * \param[in] shaderEnv Span of preprocessor definitions to prepend
  *
  * Internal helper function for shader compilation. Prepends environment
@@ -511,8 +508,8 @@ int eGL::compileFragmentShader(GLuint &shaderId, const unsigned char *shaderData
  *
  * \return 0 on success, or -EINVAL on compilation failure
  */
-int eGL::compileShader(int shaderType, GLuint &shaderId, const unsigned char *shaderData,
-		       unsigned int shaderDataLen,
+int eGL::compileShader(int shaderType, GLuint &shaderId,
+		       Span<const unsigned char> shaderData,
 		       Span<const std::string> shaderEnv)
 {
 	GLint success;
@@ -531,8 +528,8 @@ int eGL::compileShader(int shaderType, GLuint &shaderId, const unsigned char *sh
 	}
 
 	// Now the main body of the shader program
-	shaderSourceData[i] = reinterpret_cast<const GLchar *>(shaderData);
-	shaderDataLengths[i] = shaderDataLen;
+	shaderSourceData[i] = reinterpret_cast<const GLchar *>(shaderData.data());
+	shaderDataLengths[i] = shaderData.size();
 
 	// And create the shader
 	shaderId = glCreateShader(shaderType);

@@ -251,15 +251,15 @@ int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputForm
 		break;
 	};
 
-	if (egl_.compileVertexShader(vertexShaderId_, vertexShaderData.data(),
-				     vertexShaderData.size(), shaderEnv)) {
+	if (egl_.compileVertexShader(vertexShaderId_, vertexShaderData,
+				     shaderEnv)) {
 		LOG(Debayer, Error) << "Compile vertex shader fail";
 		return -ENODEV;
 	}
 	utils::scope_exit vShaderGuard([&] { glDeleteShader(vertexShaderId_); });
 
-	if (egl_.compileFragmentShader(fragmentShaderId_, fragmentShaderData.data(),
-				       fragmentShaderData.size(), shaderEnv)) {
+	if (egl_.compileFragmentShader(fragmentShaderId_, fragmentShaderData,
+				       shaderEnv)) {
 		LOG(Debayer, Error) << "Compile fragment shader fail";
 		return -ENODEV;
 	}

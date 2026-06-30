@@ -112,11 +112,9 @@ public:
 	void pushEnv(std::vector<std::string> &shaderEnv, const char *str);
 	void makeCurrent();
 
-	int compileVertexShader(GLuint &shaderId, const unsigned char *shaderData,
-				unsigned int shaderDataLen,
+	int compileVertexShader(GLuint &shaderId, Span<const unsigned char> shaderData,
 				Span<const std::string> shaderEnv);
-	int compileFragmentShader(GLuint &shaderId, const unsigned char *shaderData,
-				  unsigned int shaderDataLen,
+	int compileFragmentShader(GLuint &shaderId, Span<const unsigned char> shaderData,
 				  Span<const std::string> shaderEnv);
 	int linkProgram(GLuint &programId, GLuint fragmentshaderId, GLuint vertexshaderId);
 	void dumpShaderSource(GLuint shaderId);
@@ -135,8 +133,7 @@ private:
 	EGLSurface surface_ = EGL_NO_SURFACE;
 
 	static EGLDisplay probeDisplay();
-	int compileShader(int shaderType, GLuint &shaderId, const unsigned char *shaderData,
-			  unsigned int shaderDataLen,
+	int compileShader(int shaderType, GLuint &shaderId, Span<const unsigned char> shaderData,
 			  Span<const std::string> shaderEnv);
 
 	int createDMABufTexture2D(eGLImage &eglImage, int fd, bool output);
