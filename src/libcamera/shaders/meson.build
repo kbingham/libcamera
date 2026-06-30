@@ -9,12 +9,12 @@ shader_files = files([
     'identity.vert',
 ])
 
-# Generate headers from shaders
-libcamera_shader_headers = custom_target(
+# Generate header from shaders
+libcamera_shader_header = custom_target(
     'gen-shader-headers',
     input : [shader_files],
     output : 'glsl_shaders.h',
-    command : [gen_shader_headers, '-o', '@OUTPUT@', '@INPUT@'],
+    command : [gen_shader_header, '-o', '@OUTPUT@', '@INPUT@'],
 )
 
-libcamera_internal_headers += libcamera_shader_headers
+libcamera_internal_headers += libcamera_shader_header
