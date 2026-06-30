@@ -11,6 +11,7 @@
 #include <memory>
 
 #include "libipa/interpolator.h"
+#include "libipa/lsc_base.h"
 
 #include "algorithm.h"
 
@@ -18,20 +19,9 @@ namespace libcamera {
 
 namespace ipa::rkisp1::algorithms {
 
-class LscImplementation;
-
 class LensShadingCorrection : public Algorithm
 {
 public:
-	struct Components {
-		std::vector<uint16_t> r;
-		std::vector<uint16_t> gr;
-		std::vector<uint16_t> gb;
-		std::vector<uint16_t> b;
-	};
-
-	using ComponentsMap = std::map<unsigned int, Components>;
-
 	LensShadingCorrection();
 	~LensShadingCorrection() = default;
 
@@ -49,7 +39,7 @@ public:
 		     ControlList &metadata) override;
 private:
 	void setParameters(rkisp1_cif_isp_lsc_config &config);
-	void copyTable(rkisp1_cif_isp_lsc_config &config, const Components &set0);
+	void copyTable(rkisp1_cif_isp_lsc_config &config, const lsc::Components &set0);
 
 	std::vector<double> xSize_;
 	std::vector<double> ySize_;
@@ -61,22 +51,9 @@ private:
 	unsigned int lastAppliedCt_;
 	unsigned int lastAppliedQuantizedCt_;
 
-	ipa::Interpolator<Components> sets_;
+	ipa::Interpolator<lsc::Components> sets_;
 
 	std::unique_ptr<LscImplementation> algo_;
-};
-
-class LscImplementation
-{
-public:
-	virtual ~LscImplementation() {}
-
-	virtual int parseLscData(const ValueNode &sets) = 0;
-
-	virtual LensShadingCorrection::ComponentsMap
-	sampleForCrop(const Rectangle &cropRectangle,
-		      Span<const double> xSizes,
-		      Span<const double> ySizes) = 0;
 };
 
 } /* namespace ipa::rkisp1::algorithms */

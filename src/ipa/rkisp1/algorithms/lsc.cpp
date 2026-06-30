@@ -38,10 +38,10 @@ void interpolateVector(const std::vector<T> &a, const std::vector<T> &b,
 }
 
 template<>
-void Interpolator<rkisp1::algorithms::LensShadingCorrection::Components>::
-	interpolate(const rkisp1::algorithms::LensShadingCorrection::Components &a,
-		    const rkisp1::algorithms::LensShadingCorrection::Components &b,
-		    rkisp1::algorithms::LensShadingCorrection::Components &dest,
+void Interpolator<lsc::Components>::
+	interpolate(const lsc::Components &a,
+		    const lsc::Components &b,
+		    lsc::Components &dest,
 		    double lambda)
 {
 	interpolateVector(a.r, b.r, dest.r, lambda);
@@ -80,7 +80,7 @@ public:
 
 	int parseLscData(const ValueNode &sets) override;
 
-	LensShadingCorrection::ComponentsMap
+	lsc::ComponentsMap
 	sampleForCrop(const Rectangle &cropRectangle,
 		      Span<const double> xSizes,
 		      Span<const double> ySizes) override;
@@ -138,7 +138,7 @@ int LscPolynomialImpl::parseLscData(const ValueNode &sets)
 	return 0;
 }
 
-LensShadingCorrection::ComponentsMap
+lsc::ComponentsMap
 LscPolynomialImpl::sampleForCrop(const Rectangle &cropRectangle,
 				 Span<const double> xSizes,
 				 Span<const double> ySizes)
@@ -146,7 +146,7 @@ LscPolynomialImpl::sampleForCrop(const Rectangle &cropRectangle,
 	std::vector<double> xPos = sizesListToPositions(xSizes);
 	std::vector<double> yPos = sizesListToPositions(ySizes);
 
-	LensShadingCorrection::ComponentsMap components;
+	lsc::ComponentsMap components;
 
 	for (const auto &[k, p] : lscData_) {
 		components[k] = {
@@ -226,7 +226,7 @@ class LscTableImpl : public LscImplementation
 public:
 	int parseLscData(const ValueNode &sets) override;
 
-	LensShadingCorrection::ComponentsMap
+	lsc::ComponentsMap
 	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
 		      [[maybe_unused]] Span<const double> xSizes,
 		      [[maybe_unused]] Span<const double> ySizes) override
@@ -240,7 +240,7 @@ private:
 	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
 					 const char *prop);
 
-	LensShadingCorrection::ComponentsMap lscData_;
+	lsc::ComponentsMap lscData_;
 };
 
 int LscTableImpl::parseLscData(const ValueNode &sets)
@@ -255,7 +255,7 @@ int LscTableImpl::parseLscData(const ValueNode &sets)
 			return -EINVAL;
 		}
 
-		LensShadingCorrection::Components components;
+		lsc::Components components;
 		components.r = parseTable(set, "r");
 		components.gr = parseTable(set, "gr");
 		components.gb = parseTable(set, "gb");
@@ -435,8 +435,8 @@ int LensShadingCorrection::configure(IPAContext &context,
 	}
 
 	LOG(RkISP1Lsc, Debug) << "Sample LSC data for " << configInfo.analogCrop;
-	ComponentsMap shadingData = algo_->sampleForCrop(configInfo.analogCrop,
-							 xSize_, ySize_);
+	lsc::ComponentsMap shadingData = algo_->sampleForCrop(configInfo.analogCrop,
+							      xSize_, ySize_);
 	sets_.setData(std::move(shadingData));
 
 	context.activeState.lsc.enabled = true;
@@ -452,7 +452,7 @@ void LensShadingCorrection::setParameters(rkisp1_cif_isp_lsc_config &config)
 }
 
 void LensShadingCorrection::copyTable(rkisp1_cif_isp_lsc_config &config,
-				      const Components &set)
+				      const lsc::Components &set)
 {
 	std::copy(set.r.begin(), set.r.end(), &config.r_data_tbl[0][0]);
 	std::copy(set.gr.begin(), set.gr.end(), &config.gr_data_tbl[0][0]);
@@ -518,7 +518,7 @@ void LensShadingCorrection::prepare([[maybe_unused]] IPAContext &context,
 
 	setParameters(*config);
 
-	const Components &set = sets_.getInterpolated(quantizedCt);
+	const lsc::Components &set = sets_.getInterpolated(quantizedCt);
 	copyTable(*config, set);
 
 	lastAppliedCt_ = ct;
