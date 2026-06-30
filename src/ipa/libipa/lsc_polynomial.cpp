@@ -47,7 +47,6 @@ namespace lsc {
  */
 
 /**
- * \fn Polynomial::sampleAtNormalizedPixelPos(double x, double y)
  * \brief Sample the polynomial at the given normalized pixel position
  *
  * This functions samples the polynomial at the given pixel position divided by
@@ -57,9 +56,20 @@ namespace lsc {
  * \param y y position in normalized coordinates
  * \return The sampled value
  */
+double Polynomial::sampleAtNormalizedPixelPos(double x, double y) const
+{
+	double dx = x - cnx_;
+	double dy = y - cny_;
+	double r = sqrt(dx * dx + dy * dy);
+	double res = 1.0;
+
+	for (unsigned int i = 0; i < coefficients_.size(); i++)
+		res += coefficients_[i] * std::pow(r, (i + 1) * 2);
+
+	return res;
+}
 
 /**
- * \fn Polynomial::getM()
  * \brief Get the value m as described in the dng specification
  *
  * Returns m according to dng spec. m represents the Euclidean distance
@@ -68,9 +78,17 @@ namespace lsc {
  *
  * \return The sampled value
  */
+double Polynomial::getM() const
+{
+	double cpx = imageSize_.width * cx_;
+	double cpy = imageSize_.height * cy_;
+	double mx = std::max(cpx, std::fabs(imageSize_.width - cpx));
+	double my = std::max(cpy, std::fabs(imageSize_.height - cpy));
+
+	return sqrt(mx * mx + my * my);
+}
 
 /**
- * \fn Polynomial::setReferenceImageSize(const Size &size)
  * \brief Set the reference image size
  *
  * Set the reference image size that is used for subsequent calls to getM() and
@@ -78,6 +96,16 @@ namespace lsc {
  *
  * \param size The size of the reference image
  */
+void Polynomial::setReferenceImageSize(const Size &size)
+{
+	assert(!size.isNull());
+	imageSize_ = size;
+
+	/* Calculate normalized centers */
+	double m = getM();
+	cnx_ = (size.width * cx_) / m;
+	cny_ = (size.height * cy_) / m;
+}
 
 } /* namespace lsc */
 

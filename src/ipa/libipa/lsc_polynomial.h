@@ -37,38 +37,9 @@ public:
 	{
 	}
 
-	double sampleAtNormalizedPixelPos(double x, double y) const
-	{
-		double dx = x - cnx_;
-		double dy = y - cny_;
-		double r = sqrt(dx * dx + dy * dy);
-		double res = 1.0;
-		for (unsigned int i = 0; i < coefficients_.size(); i++) {
-			res += coefficients_[i] * std::pow(r, (i + 1) * 2);
-		}
-		return res;
-	}
-
-	double getM() const
-	{
-		double cpx = imageSize_.width * cx_;
-		double cpy = imageSize_.height * cy_;
-		double mx = std::max(cpx, std::fabs(imageSize_.width - cpx));
-		double my = std::max(cpy, std::fabs(imageSize_.height - cpy));
-
-		return sqrt(mx * mx + my * my);
-	}
-
-	void setReferenceImageSize(const Size &size)
-	{
-		assert(!size.isNull());
-		imageSize_ = size;
-
-		/* Calculate normalized centers */
-		double m = getM();
-		cnx_ = (size.width * cx_) / m;
-		cny_ = (size.height * cy_) / m;
-	}
+	double sampleAtNormalizedPixelPos(double x, double y) const;
+	double getM() const;
+	void setReferenceImageSize(const Size &size);
 
 private:
 	double cx_;
@@ -76,7 +47,6 @@ private:
 	double cnx_;
 	double cny_;
 	std::array<double, 5> coefficients_;
-
 	Size imageSize_;
 };
 
