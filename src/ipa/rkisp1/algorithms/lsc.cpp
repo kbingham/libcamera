@@ -65,10 +65,10 @@ class LscPolynomialImpl : public LscImplementation
 {
 private:
 	struct PolynomialComponents {
-		LscPolynomial pr;
-		LscPolynomial pgr;
-		LscPolynomial pgb;
-		LscPolynomial pb;
+		lsc::Polynomial pr;
+		lsc::Polynomial pgr;
+		lsc::Polynomial pgb;
+		lsc::Polynomial pb;
 	};
 	using PolynomialComponentsMap = std::map<unsigned int, PolynomialComponents>;
 
@@ -87,7 +87,7 @@ public:
 
 private:
 	std::vector<double> sizesListToPositions(Span<const double> sizes);
-	std::vector<uint16_t> samplePolynomial(const LscPolynomial &poly,
+	std::vector<uint16_t> samplePolynomial(const lsc::Polynomial &poly,
 					       Span<const double> xPositions,
 					       Span<const double> yPositions,
 					       const Rectangle &cropRectangle);
@@ -98,7 +98,7 @@ private:
 int LscPolynomialImpl::parseLscData(const ValueNode &sets)
 {
 	for (const auto &set : sets.asList()) {
-		std::optional<LscPolynomial> pr, pgr, pgb, pb;
+		std::optional<lsc::Polynomial> pr, pgr, pgb, pb;
 		uint32_t ct = set["ct"].get<uint32_t>(0);
 
 		if (lscData_.count(ct)) {
@@ -108,10 +108,10 @@ int LscPolynomialImpl::parseLscData(const ValueNode &sets)
 			return -EINVAL;
 		}
 
-		pr = set["r"].get<LscPolynomial>();
-		pgr = set["gr"].get<LscPolynomial>();
-		pgb = set["gb"].get<LscPolynomial>();
-		pb = set["b"].get<LscPolynomial>();
+		pr = set["r"].get<lsc::Polynomial>();
+		pgr = set["gr"].get<lsc::Polynomial>();
+		pgb = set["gb"].get<lsc::Polynomial>();
+		pb = set["b"].get<lsc::Polynomial>();
 
 		if (!(pr || pgr || pgb || pb)) {
 			LOG(RkISP1Lsc, Error)
@@ -161,7 +161,7 @@ LscPolynomialImpl::sampleForCrop(const Rectangle &cropRectangle,
 }
 
 std::vector<uint16_t>
-LscPolynomialImpl::samplePolynomial(const LscPolynomial &poly,
+LscPolynomialImpl::samplePolynomial(const lsc::Polynomial &poly,
 				    Span<const double> xPositions,
 				    Span<const double> yPositions,
 				    const Rectangle &cropRectangle)

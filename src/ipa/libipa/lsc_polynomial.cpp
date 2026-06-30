@@ -20,8 +20,10 @@ LOG_DEFINE_CATEGORY(LscPolynomial)
 
 namespace ipa {
 
+namespace lsc {
+
 /**
- * \class LscPolynomial
+ * \class Polynomial
  * \brief Class for handling even polynomials used in lens shading correction
  *
  * Shading artifacts of camera lenses can be modeled using even radial
@@ -31,7 +33,7 @@ namespace ipa {
  */
 
 /**
- * \fn LscPolynomial::LscPolynomial(double cx = 0.0, double cy = 0.0, double k0 = 0.0,
+ * \fn Polynomial::Polynomial(double cx = 0.0, double cy = 0.0, double k0 = 0.0,
 		      double k1 = 0.0, double k2 = 0.0, double k3 = 0.0,
 		      double k4 = 0.0)
  * \brief Construct a polynomial using the given coefficients
@@ -45,7 +47,7 @@ namespace ipa {
  */
 
 /**
- * \fn LscPolynomial::sampleAtNormalizedPixelPos(double x, double y)
+ * \fn Polynomial::sampleAtNormalizedPixelPos(double x, double y)
  * \brief Sample the polynomial at the given normalized pixel position
  *
  * This functions samples the polynomial at the given pixel position divided by
@@ -57,7 +59,7 @@ namespace ipa {
  */
 
 /**
- * \fn LscPolynomial::getM()
+ * \fn Polynomial::getM()
  * \brief Get the value m as described in the dng specification
  *
  * Returns m according to dng spec. m represents the Euclidean distance
@@ -68,7 +70,7 @@ namespace ipa {
  */
 
 /**
- * \fn LscPolynomial::setReferenceImageSize(const Size &size)
+ * \fn Polynomial::setReferenceImageSize(const Size &size)
  * \brief Set the reference image size
  *
  * Set the reference image size that is used for subsequent calls to getM() and
@@ -77,12 +79,14 @@ namespace ipa {
  * \param size The size of the reference image
  */
 
+} /* namespace lsc */
+
 } /* namespace ipa */
 
 #ifndef __DOXYGEN__
 template<>
-std::optional<ipa::LscPolynomial>
-ValueNode::Accessor<ipa::LscPolynomial>::get(const ValueNode &obj) const
+std::optional<ipa::lsc::Polynomial>
+ValueNode::Accessor<ipa::lsc::Polynomial>::get(const ValueNode &obj) const
 {
 	std::optional<double> cx = obj["cx"].get<double>();
 	std::optional<double> cy = obj["cy"].get<double>();
@@ -98,7 +102,7 @@ ValueNode::Accessor<ipa::LscPolynomial>::get(const ValueNode &obj) const
 		return std::nullopt;
 	}
 
-	return ipa::LscPolynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
+	return ipa::lsc::Polynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
 }
 #endif /* __DOXYGEN__ */
 
