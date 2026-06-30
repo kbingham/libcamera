@@ -17,6 +17,7 @@
 #include <tuple>
 #include <vector>
 
+#include <libcamera/base/span.h>
 #include <libcamera/base/utils.h>
 
 #include <libcamera/formats.h>
@@ -145,10 +146,8 @@ int DebayerEGL::getShaderVariableLocations(void)
 int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputFormat)
 {
 	std::vector<std::string> shaderEnv;
-	unsigned int fragmentShaderDataLen = 0;
-	const unsigned char *fragmentShaderData = 0;
-	unsigned int vertexShaderDataLen = 0;
-	const unsigned char *vertexShaderData = 0;
+	Span<const unsigned char> fragmentShaderData;
+	Span<const unsigned char> vertexShaderData;
 	GLenum err;
 
 	/* Target gles 100 glsl requires "#version x" as first directive in shader */
@@ -216,9 +215,7 @@ int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputForm
 	case libcamera::formats::SGRBG8:
 	case libcamera::formats::SRGGB8:
 		fragmentShaderData = bayer_unpacked_frag;
-		fragmentShaderDataLen = bayer_unpacked_frag_len;
 		vertexShaderData = bayer_unpacked_vert;
-		vertexShaderDataLen = bayer_unpacked_vert_len;
 		break;
 	case libcamera::formats::SBGGR10_CSI2P:
 	case libcamera::formats::SGBRG10_CSI2P:
@@ -227,16 +224,12 @@ int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputForm
 		egl_.pushEnv(shaderEnv, "#define RAW10P");
 		if (BayerFormat::fromPixelFormat(inputFormat).packing == BayerFormat::Packing::None) {
 			fragmentShaderData = bayer_unpacked_frag;
-			fragmentShaderDataLen = bayer_unpacked_frag_len;
 			vertexShaderData = bayer_unpacked_vert;
-			vertexShaderDataLen = bayer_unpacked_vert_len;
 			glFormat_ = GL_RG;
 			bytesPerPixel_ = 2;
 		} else {
 			fragmentShaderData = bayer_1x_packed_frag;
-			fragmentShaderDataLen = bayer_1x_packed_frag_len;
 			vertexShaderData = identity_vert;
-			vertexShaderDataLen = identity_vert_len;
 			shaderStridePixels_ = width_;
 		}
 		break;
@@ -247,28 +240,26 @@ int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputForm
 		egl_.pushEnv(shaderEnv, "#define RAW12P");
 		if (BayerFormat::fromPixelFormat(inputFormat).packing == BayerFormat::Packing::None) {
 			fragmentShaderData = bayer_unpacked_frag;
-			fragmentShaderDataLen = bayer_unpacked_frag_len;
 			vertexShaderData = bayer_unpacked_vert;
-			vertexShaderDataLen = bayer_unpacked_vert_len;
 			glFormat_ = GL_RG;
 			bytesPerPixel_ = 2;
 		} else {
 			fragmentShaderData = bayer_1x_packed_frag;
-			fragmentShaderDataLen = bayer_1x_packed_frag_len;
 			vertexShaderData = identity_vert;
-			vertexShaderDataLen = identity_vert_len;
 			shaderStridePixels_ = width_;
 		}
 		break;
 	};
 
-	if (egl_.compileVertexShader(vertexShaderId_, vertexShaderData, vertexShaderDataLen, shaderEnv)) {
+	if (egl_.compileVertexShader(vertexShaderId_, vertexShaderData.data(),
+				     vertexShaderData.size(), shaderEnv)) {
 		LOG(Debayer, Error) << "Compile vertex shader fail";
 		return -ENODEV;
 	}
 	utils::scope_exit vShaderGuard([&] { glDeleteShader(vertexShaderId_); });
 
-	if (egl_.compileFragmentShader(fragmentShaderId_, fragmentShaderData, fragmentShaderDataLen, shaderEnv)) {
+	if (egl_.compileFragmentShader(fragmentShaderId_, fragmentShaderData.data(),
+				       fragmentShaderData.size(), shaderEnv)) {
 		LOG(Debayer, Error) << "Compile fragment shader fail";
 		return -ENODEV;
 	}
