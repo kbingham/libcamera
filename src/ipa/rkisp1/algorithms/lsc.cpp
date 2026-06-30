@@ -54,17 +54,6 @@ void Interpolator<rkisp1::algorithms::LensShadingCorrection::Components>::
 
 namespace ipa::rkisp1::algorithms {
 
-/**
- * \class LensShadingCorrection
- * \brief RkISP1 Lens Shading Correction control
- *
- * Due to the optical characteristics of the lens, the light intensity received
- * by the sensor is not uniform.
- *
- * The Lens Shading Correction algorithm applies multipliers to all pixels to
- * compensate for the lens shading effect. The coefficients are specified in a
- * downscaled table in the tuning data.
- */
 
 LOG_DEFINE_CATEGORY(RkISP1Lsc)
 
@@ -72,54 +61,110 @@ namespace {
 
 constexpr int kColourTemperatureQuantization = 10;
 
-class LscPolynomialShadingDescriptor : public LensShadingCorrection::ShadingDescriptor
+class LscPolynomialImpl : public LscImplementation
 {
+private:
+	struct PolynomialComponents {
+		LscPolynomial pr;
+		LscPolynomial pgr;
+		LscPolynomial pgb;
+		LscPolynomial pb;
+	};
+	using PolynomialComponentsMap = std::map<unsigned int, PolynomialComponents>;
+
 public:
-	LscPolynomialShadingDescriptor(const LscPolynomial &pr, const LscPolynomial &pgr,
-				       const LscPolynomial &pgb, const LscPolynomial &pb)
-		: pr_(pr), pgr_(pgr), pgb_(pgb), pb_(pb)
+	LscPolynomialImpl(const Size &sensorSize)
+		: sensorSize_(sensorSize)
 	{
 	}
 
-	LensShadingCorrection::Components sampleForCrop(const Rectangle &cropRectangle,
-							Span<const double> xSizes,
-							Span<const double> ySizes) override;
+	int parseLscData(const ValueNode &sets) override;
+
+	LensShadingCorrection::ComponentsMap
+	sampleForCrop(const Rectangle &cropRectangle,
+		      Span<const double> xSizes,
+		      Span<const double> ySizes) override;
 
 private:
+	std::vector<double> sizesListToPositions(Span<const double> sizes);
 	std::vector<uint16_t> samplePolynomial(const LscPolynomial &poly,
 					       Span<const double> xPositions,
 					       Span<const double> yPositions,
 					       const Rectangle &cropRectangle);
-
-	std::vector<double> sizesListToPositions(Span<const double> sizes);
-
-	LscPolynomial pr_;
-	LscPolynomial pgr_;
-	LscPolynomial pgb_;
-	LscPolynomial pb_;
+	PolynomialComponentsMap lscData_;
+	Size sensorSize_;
 };
 
-LensShadingCorrection::Components
-LscPolynomialShadingDescriptor::sampleForCrop(const Rectangle &cropRectangle,
-					      Span<const double> xSizes,
-					      Span<const double> ySizes)
+int LscPolynomialImpl::parseLscData(const ValueNode &sets)
+{
+	for (const auto &set : sets.asList()) {
+		std::optional<LscPolynomial> pr, pgr, pgb, pb;
+		uint32_t ct = set["ct"].get<uint32_t>(0);
+
+		if (lscData_.count(ct)) {
+			LOG(RkISP1Lsc, Error)
+				<< "Multiple sets found for "
+				<< "color temperature " << ct;
+			return -EINVAL;
+		}
+
+		pr = set["r"].get<LscPolynomial>();
+		pgr = set["gr"].get<LscPolynomial>();
+		pgb = set["gb"].get<LscPolynomial>();
+		pb = set["b"].get<LscPolynomial>();
+
+		if (!(pr || pgr || pgb || pb)) {
+			LOG(RkISP1Lsc, Error)
+				<< "Failed to parse polynomial for "
+				<< "colour temperature " << ct;
+			return -EINVAL;
+		}
+
+		pr->setReferenceImageSize(sensorSize_);
+		pgr->setReferenceImageSize(sensorSize_);
+		pgb->setReferenceImageSize(sensorSize_);
+		pb->setReferenceImageSize(sensorSize_);
+
+		lscData_.emplace(std::piecewise_construct,
+				 std::forward_as_tuple(ct),
+				 std::forward_as_tuple(PolynomialComponents{ *pr, *pgr, *pgb, *pb }));
+	}
+
+	if (lscData_.empty()) {
+		LOG(RkISP1Lsc, Error) << "Failed to load any sets";
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+LensShadingCorrection::ComponentsMap
+LscPolynomialImpl::sampleForCrop(const Rectangle &cropRectangle,
+				 Span<const double> xSizes,
+				 Span<const double> ySizes)
 {
 	std::vector<double> xPos = sizesListToPositions(xSizes);
 	std::vector<double> yPos = sizesListToPositions(ySizes);
 
-	return {
-		.r = samplePolynomial(pr_, xPos, yPos, cropRectangle),
-		.gr = samplePolynomial(pgr_, xPos, yPos, cropRectangle),
-		.gb = samplePolynomial(pgb_, xPos, yPos, cropRectangle),
-		.b = samplePolynomial(pb_, xPos, yPos, cropRectangle)
-	};
+	LensShadingCorrection::ComponentsMap components;
+
+	for (const auto &[k, p] : lscData_) {
+		components[k] = {
+			samplePolynomial(p.pr, xPos, yPos, cropRectangle),
+			samplePolynomial(p.pgr, xPos, yPos, cropRectangle),
+			samplePolynomial(p.pgb, xPos, yPos, cropRectangle),
+			samplePolynomial(p.pb, xPos, yPos, cropRectangle)
+		};
+	}
+
+	return components;
 }
 
 std::vector<uint16_t>
-LscPolynomialShadingDescriptor::samplePolynomial(const LscPolynomial &poly,
-						 Span<const double> xPositions,
-						 Span<const double> yPositions,
-						 const Rectangle &cropRectangle)
+LscPolynomialImpl::samplePolynomial(const LscPolynomial &poly,
+				    Span<const double> xPositions,
+				    Span<const double> yPositions,
+				    const Rectangle &cropRectangle)
 {
 	double m = poly.getM();
 	double x0 = cropRectangle.x / m;
@@ -160,7 +205,7 @@ LscPolynomialShadingDescriptor::samplePolynomial(const LscPolynomial &poly,
  * output: 0.0   0.2   0.5   0.8   1.0
  */
 std::vector<double>
-LscPolynomialShadingDescriptor::sizesListToPositions(Span<const double> sizes)
+LscPolynomialImpl::sizesListToPositions(Span<const double> sizes)
 {
 	const int half = sizes.size();
 	std::vector<double> positions(half * 2 + 1);
@@ -176,74 +221,12 @@ LscPolynomialShadingDescriptor::sizesListToPositions(Span<const double> sizes)
 	return positions;
 }
 
-class LscPolynomialLoader
+class LscTableImpl : public LscImplementation
 {
 public:
-	LscPolynomialLoader(const Size &sensorSize)
-		: sensorSize_(sensorSize)
-	{
-	}
+	int parseLscData(const ValueNode &sets) override;
 
-	int parseLscData(const ValueNode &sets,
-			 LensShadingCorrection::ShadingDescriptorMap &lscData);
-
-private:
-	Size sensorSize_;
-};
-
-int LscPolynomialLoader::parseLscData(const ValueNode &sets,
-				      LensShadingCorrection::ShadingDescriptorMap &lscData)
-{
-	for (const auto &set : sets.asList()) {
-		std::optional<LscPolynomial> pr, pgr, pgb, pb;
-		uint32_t ct = set["ct"].get<uint32_t>(0);
-
-		if (lscData.count(ct)) {
-			LOG(RkISP1Lsc, Error)
-				<< "Multiple sets found for "
-				<< "color temperature " << ct;
-			return -EINVAL;
-		}
-
-		pr = set["r"].get<LscPolynomial>();
-		pgr = set["gr"].get<LscPolynomial>();
-		pgb = set["gb"].get<LscPolynomial>();
-		pb = set["b"].get<LscPolynomial>();
-
-		if (!(pr || pgr || pgb || pb)) {
-			LOG(RkISP1Lsc, Error)
-				<< "Failed to parse polynomial for "
-				<< "colour temperature " << ct;
-			return -EINVAL;
-		}
-
-		pr->setReferenceImageSize(sensorSize_);
-		pgr->setReferenceImageSize(sensorSize_);
-		pgb->setReferenceImageSize(sensorSize_);
-		pb->setReferenceImageSize(sensorSize_);
-
-		lscData.emplace(
-			ct, std::make_unique<LscPolynomialShadingDescriptor>(
-				    *pr, *pgr, *pgb, *pb));
-	}
-
-	if (lscData.empty()) {
-		LOG(RkISP1Lsc, Error) << "Failed to load any sets";
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
-class LscTableShadingDescriptor : public LensShadingCorrection::ShadingDescriptor
-{
-public:
-	LscTableShadingDescriptor(LensShadingCorrection::Components components)
-		: lscData_(std::move(components))
-	{
-	}
-
-	LensShadingCorrection::Components
+	LensShadingCorrection::ComponentsMap
 	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
 		      [[maybe_unused]] Span<const double> xSizes,
 		      [[maybe_unused]] Span<const double> ySizes) override
@@ -254,27 +237,18 @@ public:
 	}
 
 private:
-	LensShadingCorrection::Components lscData_;
-};
-
-class LscTableLoader
-{
-public:
-	int parseLscData(const ValueNode &sets,
-			 LensShadingCorrection::ShadingDescriptorMap &lscData);
-
-private:
 	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
 					 const char *prop);
+
+	LensShadingCorrection::ComponentsMap lscData_;
 };
 
-int LscTableLoader::parseLscData(const ValueNode &sets,
-				 LensShadingCorrection::ShadingDescriptorMap &lscData)
+int LscTableImpl::parseLscData(const ValueNode &sets)
 {
 	for (const auto &set : sets.asList()) {
 		uint32_t ct = set["ct"].get<uint32_t>(0);
 
-		if (lscData.count(ct)) {
+		if (lscData_.count(ct)) {
 			LOG(RkISP1Lsc, Error)
 				<< "Multiple sets found for color temperature "
 				<< ct;
@@ -295,11 +269,10 @@ int LscTableLoader::parseLscData(const ValueNode &sets,
 			return -EINVAL;
 		}
 
-		lscData.emplace(
-			ct, std::make_unique<LscTableShadingDescriptor>(std::move(components)));
+		lscData_.emplace(ct, std::move(components));
 	}
 
-	if (lscData.empty()) {
+	if (lscData_.empty()) {
 		LOG(RkISP1Lsc, Error) << "Failed to load any sets";
 		return -EINVAL;
 	}
@@ -307,7 +280,7 @@ int LscTableLoader::parseLscData(const ValueNode &sets,
 	return 0;
 }
 
-std::vector<uint16_t> LscTableLoader::parseTable(const ValueNode &tuningData,
+std::vector<uint16_t> LscTableImpl::parseTable(const ValueNode &tuningData,
 						 const char *prop)
 {
 	static constexpr unsigned int kLscNumSamples =
@@ -363,6 +336,18 @@ unsigned int quantize(unsigned int value, unsigned int step)
 
 } /* namespace */
 
+/**
+ * \class LensShadingCorrection
+ * \brief RkISP1 Lens Shading Correction control
+ *
+ * Due to the optical characteristics of the lens, the light intensity received
+ * by the sensor is not uniform.
+ *
+ * The Lens Shading Correction algorithm applies multipliers to all pixels to
+ * compensate for the lens shading effect. The coefficients are specified in a
+ * downscaled table in the tuning data.
+ */
+
 LensShadingCorrection::LensShadingCorrection()
 	: lastAppliedCt_(0), lastAppliedQuantizedCt_(0)
 {
@@ -388,22 +373,21 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 		return -EINVAL;
 	}
 
-	ShadingDescriptorMap lscData;
-	int ret = 0;
+	int ret;
 
 	std::string type = tuningData["type"].get<std::string>("table");
 	if (type == "table") {
 		LOG(RkISP1Lsc, Debug) << "Loading tabular LSC data.";
-		auto loader = LscTableLoader();
-		ret = loader.parseLscData(sets, lscData);
+		algo_ = std::make_unique<LscTableImpl>();
+		ret = algo_->parseLscData(sets);
 	} else if (type == "polynomial") {
 		LOG(RkISP1Lsc, Debug) << "Loading polynomial LSC data.";
 		/*
 		 * \todo: Most likely the reference frame should be native_size.
 		 * Let's wait how the internal discussions progress.
 		 */
-		auto loader = LscPolynomialLoader(context.sensorInfo.activeAreaSize);
-		ret = loader.parseLscData(sets, lscData);
+		algo_ = std::make_unique<LscPolynomialImpl>(context.sensorInfo.activeAreaSize);
+		ret = algo_->parseLscData(sets);
 	} else {
 		LOG(RkISP1Lsc, Error) << "Unsupported LSC data type '"
 				      << type << "'";
@@ -415,8 +399,6 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 
 	context.ctrlMap[&controls::LensShadingCorrectionEnable] =
 		ControlInfo(false, true, true);
-
-	shadingDescriptors_ = std::move(lscData);
 
 	return 0;
 }
@@ -453,11 +435,8 @@ int LensShadingCorrection::configure(IPAContext &context,
 	}
 
 	LOG(RkISP1Lsc, Debug) << "Sample LSC data for " << configInfo.analogCrop;
-	std::map<unsigned int, LensShadingCorrection::Components> shadingData;
-	for (const auto &[t, descriptor] : shadingDescriptors_)
-		shadingData[t] = descriptor->sampleForCrop(configInfo.analogCrop,
-							   xSize_, ySize_);
-
+	ComponentsMap shadingData = algo_->sampleForCrop(configInfo.analogCrop,
+							 xSize_, ySize_);
 	sets_.setData(std::move(shadingData));
 
 	context.activeState.lsc.enabled = true;
