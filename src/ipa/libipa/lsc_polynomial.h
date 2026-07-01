@@ -2,25 +2,23 @@
 /*
  * Copyright (C) 2024, Ideas On Board
  *
- * Helper for radial polynomial used in lens shading correction.
+ * Polynomial based lens shading correction
  */
 #pragma once
 
-#include <algorithm>
 #include <array>
-#include <assert.h>
-#include <cmath>
+#include <map>
+#include <vector>
 
-#include <libcamera/base/log.h>
 #include <libcamera/base/span.h>
 
 #include <libcamera/geometry.h>
 
 #include "libcamera/internal/value_node.h"
 
-namespace libcamera {
+#include "lsc_base.h"
 
-LOG_DECLARE_CATEGORY(LscPolynomial)
+namespace libcamera {
 
 namespace ipa {
 
@@ -51,6 +49,40 @@ private:
 };
 
 } /* namespace lsc */
+
+class LscPolynomial : public LscImplementation
+{
+private:
+	struct PolynomialComponents {
+		lsc::Polynomial pr;
+		lsc::Polynomial pgr;
+		lsc::Polynomial pgb;
+		lsc::Polynomial pb;
+	};
+	using PolynomialComponentsMap = std::map<unsigned int, PolynomialComponents>;
+
+public:
+	LscPolynomial(const Size &sensorSize)
+		: sensorSize_(sensorSize)
+	{
+	}
+
+	int parseLscData(const ValueNode &sets) override;
+
+	lsc::ComponentsMap
+	sampleForCrop(const Rectangle &cropRectangle,
+		      Span<const double> xSizes,
+		      Span<const double> ySizes) override;
+
+private:
+	std::vector<double> sizesListToPositions(Span<const double> sizes);
+	std::vector<uint16_t> samplePolynomial(const lsc::Polynomial &poly,
+					       Span<const double> xPositions,
+					       Span<const double> yPositions,
+					       const Rectangle &cropRectangle);
+	PolynomialComponentsMap lscData_;
+	Size sensorSize_;
+};
 
 } /* namespace ipa */
 
