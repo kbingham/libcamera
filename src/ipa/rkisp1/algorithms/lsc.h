@@ -7,10 +7,13 @@
 
 #pragma once
 
-#include <memory>
+#include <vector>
 
-#include "libipa/interpolator.h"
-#include "libipa/lsc_base.h"
+#include <linux/rkisp1-config.h>
+
+#include "libcamera/internal/value_node.h"
+
+#include "libipa/lsc.h"
 
 #include "algorithm.h"
 
@@ -52,9 +55,7 @@ private:
 	unsigned int lastAppliedCt_;
 	unsigned int lastAppliedQuantizedCt_;
 
-	ipa::Interpolator<lsc::Components> sets_;
-
-	std::unique_ptr<LscImplementation> algo_;
+	LscAlgorithm lscAlgo_;
 };
 
 } /* namespace ipa::rkisp1::algorithms */

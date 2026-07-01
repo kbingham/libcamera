@@ -30,6 +30,7 @@
 #include "libipa/ccm.h"
 #include "libipa/fc_queue.h"
 #include "libipa/fixedpoint.h"
+#include "libipa/lsc.h"
 
 namespace libcamera {
 
@@ -141,9 +142,7 @@ struct IPAActiveState {
 		double strength;
 	} wdr;
 
-	struct {
-		bool enabled;
-	} lsc;
+	ipa::lsc::ActiveState lsc;
 };
 
 struct IPAFrameContext : public FrameContext {
@@ -217,10 +216,7 @@ struct IPAFrameContext : public FrameContext {
 		double gain;
 	} wdr;
 
-	struct {
-		bool enabled;
-		bool update;
-	} lsc;
+	ipa::lsc::FrameContext lsc;
 };
 
 struct IPAContext {

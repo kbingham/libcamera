@@ -14,12 +14,6 @@
 #include <libcamera/base/log.h>
 #include <libcamera/base/utils.h>
 
-#include "libcamera/internal/value_node.h"
-
-#include "libipa/lsc_polynomial.h"
-#include "libipa/lsc_table.h"
-#include "linux/rkisp1-config.h"
-
 /**
  * \file lsc.h
  */
@@ -129,42 +123,8 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 	xPos_ = sizesListToPositions(xSize_);
 	yPos_ = sizesListToPositions(ySize_);
 
-	/* Get all defined sets to apply. */
-	const ValueNode &sets = tuningData["sets"];
-	if (!sets.isList()) {
-		LOG(RkISP1Lsc, Error)
-			<< "'sets' parameter not found in tuning file";
-		return -EINVAL;
-	}
-
-	int ret;
-
-	std::string type = tuningData["type"].get<std::string>("table");
-	if (type == "table") {
-		LOG(RkISP1Lsc, Debug) << "Loading tabular LSC data.";
-		algo_ = std::make_unique<LscTable>();
-		ret = algo_->parseLscData(sets);
-	} else if (type == "polynomial") {
-		LOG(RkISP1Lsc, Debug) << "Loading polynomial LSC data.";
-		/*
-		 * \todo: Most likely the reference frame should be native_size.
-		 * Let's wait how the internal discussions progress.
-		 */
-		algo_ = std::make_unique<LscPolynomial>(context.sensorInfo.activeAreaSize);
-		ret = algo_->parseLscData(sets);
-	} else {
-		LOG(RkISP1Lsc, Error) << "Unsupported LSC data type '"
-				      << type << "'";
-		ret = -EINVAL;
-	}
-
-	if (ret)
-		return ret;
-
-	context.ctrlMap[&controls::LensShadingCorrectionEnable] =
-		ControlInfo(false, true, true);
-
-	return 0;
+	return lscAlgo_.init(tuningData, context.sensorInfo.activeAreaSize,
+			     context.ctrlMap);
 }
 
 /**
@@ -198,13 +158,8 @@ int LensShadingCorrection::configure(IPAContext &context,
 		yGrad_[i] = std::round(32768 / ySizes_[i]);
 	}
 
-	LOG(RkISP1Lsc, Debug) << "Sample LSC data for " << configInfo.analogCrop;
-	lsc::ComponentsMap shadingData = algo_->sampleForCrop(configInfo.analogCrop,
-							      xPos_, yPos_);
-	sets_.setData(std::move(shadingData));
-
-	context.activeState.lsc.enabled = true;
-	return 0;
+	return lscAlgo_.configure(context.activeState.lsc, configInfo.analogCrop,
+				  xPos_, yPos_);
 }
 
 void LensShadingCorrection::setParameters(rkisp1_cif_isp_lsc_config &config)
@@ -232,19 +187,8 @@ void LensShadingCorrection::queueRequest(IPAContext &context,
 					 IPAFrameContext &frameContext,
 					 const ControlList &controls)
 {
-	auto &lsc = context.activeState.lsc;
-
-	const auto &lscEnable = controls.get(controls::LensShadingCorrectionEnable);
-	if (lscEnable && *lscEnable != lsc.enabled) {
-		lsc.enabled = *lscEnable;
-
-		LOG(RkISP1Lsc, Debug)
-			<< (lsc.enabled ? "Enabling" : "Disabling") << " Lsc";
-
-		frameContext.lsc.update = true;
-	}
-
-	frameContext.lsc.enabled = lsc.enabled;
+	lscAlgo_.queueRequest(context.activeState.lsc, frameContext.lsc,
+			      controls);
 }
 
 /**
@@ -282,7 +226,7 @@ void LensShadingCorrection::prepare([[maybe_unused]] IPAContext &context,
 
 	setParameters(*config);
 
-	const lsc::Components &set = sets_.getInterpolated(quantizedCt);
+	const lsc::Components &set = lscAlgo_.interpolateComponents(quantizedCt);
 	copyTable(*config, set);
 
 	lastAppliedCt_ = ct;
@@ -302,7 +246,7 @@ void LensShadingCorrection::process([[maybe_unused]] IPAContext &context,
 				    [[maybe_unused]] const rkisp1_stat_buffer *stats,
 				    ControlList &metadata)
 {
-	metadata.set(controls::LensShadingCorrectionEnable, frameContext.lsc.enabled);
+	lscAlgo_.process(frameContext.lsc, metadata);
 }
 
 REGISTER_IPA_ALGORITHM(LensShadingCorrection, "LensShadingCorrection")
