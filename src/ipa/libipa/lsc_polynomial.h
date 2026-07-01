@@ -71,11 +71,9 @@ public:
 
 	lsc::ComponentsMap
 	sampleForCrop(const Rectangle &cropRectangle,
-		      Span<const double> xSizes,
-		      Span<const double> ySizes) override;
+		      std::vector<double> xPos, std::vector<double> yPos) override;
 
 private:
-	std::vector<double> sizesListToPositions(Span<const double> sizes);
 	std::vector<uint16_t> samplePolynomial(const lsc::Polynomial &poly,
 					       Span<const double> xPositions,
 					       Span<const double> yPositions,

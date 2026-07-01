@@ -88,8 +88,8 @@ void Interpolator<lsc::Components>::
  * \fn LscImplementation::sampleForCrop
  * \brief Re-sample the LSC components for \a cropRectangle
  * \param[in] cropRectangle The sensor analogue crop rectangle
- * \param[in] xSizes List of horizontal positions of the LSC grid nodes
- * \param[in] ySizes List of vertical positions of the LSC grid nodes
+ * \param[in] xPos List of horizontal positions of the LSC grid nodes
+ * \param[in] yPos List of vertical positions of the LSC grid nodes
  *
  * LSC tables have to be re-sampled every time a new sensor configuration is
  * used, as each streaming session might use a different sensor crop rectangle
@@ -98,7 +98,7 @@ void Interpolator<lsc::Components>::
  * \a cropRectangle represents the size of the frame on which the LSC tables
  * have to be re-sampled on.
  *
- * \a xSizes and \a ySizes represent the position of the grid nodes vertexes in
+ * \a xPos and \a yPos represent the position of the grid nodes vertexes in
  * the [0, 1] interval. For example an equally spaced grid of 16 nodes will have
  * each segment of size 0.0625 and the list of nodes position will be
  * [0, 0.0625, 0.125, 0.1875, ... , 1]. It is expected that the first position

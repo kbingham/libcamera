@@ -65,8 +65,7 @@ public:
 
 	virtual lsc::ComponentsMap
 	sampleForCrop(const Rectangle &cropRectangle,
-		      Span<const double> xSizes,
-		      Span<const double> ySizes) = 0;
+		      std::vector<double> xPos, std::vector<double> yPos) = 0;
 };
 
 } /* namespace ipa */

@@ -184,8 +184,8 @@ int LscPolynomial::parseLscData(const ValueNode &sets)
 /**
  * \brief Re-sample the LSC components for \a cropRectangle
  * \param[in] cropRectangle The sensor analogue crop rectangle
- * \param[in] xSizes List of horizontal positions of the LSc grid nodes
- * \param[in] ySizes List of vertical positions of the LSC grid nodes
+ * \param[in] xPos List of horizontal positions of the LSC grid nodes
+ * \param[in] yPos List of vertical positions of the LSC grid nodes
  *
  * LSC tables have to be re-sampled every time a new sensor configuration is
  * used, as each streaming session might use a different sensor crop rectangle.
@@ -197,7 +197,7 @@ int LscPolynomial::parseLscData(const ValueNode &sets)
  * \a cropRectangle represents the size of the frame on which the LSC tables
  * have to be re-sampled on.
  *
- * \a xSizes and \a ySizes represent the position of the grid nodes vertexes in
+ * \a xPos and \a yPos represent the position of the grid nodes vertexes in
  * the [0, 1] interval. In example an equally spaced grid of 16 nodes will have
  * each segment of size 0.0625 and the list of nodes position will be
  * [0, 0.0625, 0.125, 0.1875, ... , 1]. It is expected that the first position
@@ -205,11 +205,8 @@ int LscPolynomial::parseLscData(const ValueNode &sets)
  */
 lsc::ComponentsMap
 LscPolynomial::sampleForCrop(const Rectangle &cropRectangle,
-			     Span<const double> xSizes,
-			     Span<const double> ySizes)
+			     std::vector<double> xPos, std::vector<double> yPos)
 {
-	std::vector<double> xPos = sizesListToPositions(xSizes);
-	std::vector<double> yPos = sizesListToPositions(ySizes);
 
 	lsc::ComponentsMap components;
 
@@ -257,33 +254,6 @@ LscPolynomial::samplePolynomial(const lsc::Polynomial &poly,
 		}
 	}
 	return samples;
-}
-
-/*
- * The rkisp1 LSC grid spacing is defined by the cell sizes on the top-left
- * quadrant of the grid. This is then mirrored in hardware to the other
- * quadrants. See parseSizes() for further details. For easier handling, this
- * function converts the cell sizes of half the grid to a list of position of
- * the whole grid (on one axis). Example:
- *
- * input:   | 0.2 | 0.3 |
- * output: 0.0   0.2   0.5   0.8   1.0
- */
-std::vector<double>
-LscPolynomial::sizesListToPositions(Span<const double> sizes)
-{
-	const int half = sizes.size();
-	std::vector<double> positions(half * 2 + 1);
-	double x = 0.0;
-
-	positions[half] = 0.5;
-	for (int i = 1; i <= half; i++) {
-		x += sizes[half - i];
-		positions[half - i] = 0.5 - x;
-		positions[half + i] = 0.5 + x;
-	}
-
-	return positions;
 }
 
 } /* namespace ipa */

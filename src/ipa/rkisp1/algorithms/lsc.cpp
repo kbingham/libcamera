@@ -64,6 +64,32 @@ std::vector<double> parseSizes(const ValueNode &tuningData,
 	return sizes;
 }
 
+/*
+ * The rkisp1 LSC grid spacing is defined by the cell sizes on the top-left
+ * quadrant of the grid. This is then mirrored in hardware to the other
+ * quadrants. See parseSizes() for further details. For easier handling, this
+ * function converts the cell sizes of half the grid to a list of position of
+ * the whole grid (on one axis). Example:
+ *
+ * input:   | 0.2 | 0.3 |
+ * output: 0.0   0.2   0.5   0.8   1.0
+ */
+std::vector<double> sizesListToPositions(Span<const double> sizes)
+{
+	const int half = sizes.size();
+	std::vector<double> positions(half * 2 + 1);
+	double x = 0.0;
+
+	positions[half] = 0.5;
+	for (int i = 1; i <= half; i++) {
+		x += sizes[half - i];
+		positions[half - i] = 0.5 - x;
+		positions[half + i] = 0.5 + x;
+	}
+
+	return positions;
+}
+
 unsigned int quantize(unsigned int value, unsigned int step)
 {
 	return std::lround(value / static_cast<double>(step)) * step;
@@ -99,6 +125,9 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 
 	if (xSize_.empty() || ySize_.empty())
 		return -EINVAL;
+
+	xPos_ = sizesListToPositions(xSize_);
+	yPos_ = sizesListToPositions(ySize_);
 
 	/* Get all defined sets to apply. */
 	const ValueNode &sets = tuningData["sets"];
@@ -171,7 +200,7 @@ int LensShadingCorrection::configure(IPAContext &context,
 
 	LOG(RkISP1Lsc, Debug) << "Sample LSC data for " << configInfo.analogCrop;
 	lsc::ComponentsMap shadingData = algo_->sampleForCrop(configInfo.analogCrop,
-							      xSize_, ySize_);
+							      xPos_, yPos_);
 	sets_.setData(std::move(shadingData));
 
 	context.activeState.lsc.enabled = true;
