@@ -27,7 +27,6 @@ namespace libcamera {
 
 namespace ipa::rkisp1::algorithms {
 
-
 LOG_DEFINE_CATEGORY(RkISP1Lsc)
 
 namespace {
