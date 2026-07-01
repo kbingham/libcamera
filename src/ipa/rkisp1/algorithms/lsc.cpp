@@ -17,6 +17,7 @@
 #include "libcamera/internal/value_node.h"
 
 #include "libipa/lsc_polynomial.h"
+#include "libipa/lsc_table.h"
 #include "linux/rkisp1-config.h"
 
 /**
@@ -32,84 +33,6 @@ LOG_DEFINE_CATEGORY(RkISP1Lsc)
 namespace {
 
 constexpr int kColourTemperatureQuantization = 10;
-
-class LscTableImpl : public LscImplementation
-{
-public:
-	int parseLscData(const ValueNode &sets) override;
-
-	lsc::ComponentsMap
-	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
-		      [[maybe_unused]] Span<const double> xSizes,
-		      [[maybe_unused]] Span<const double> ySizes) override
-	{
-		LOG(RkISP1Lsc, Warning)
-			<< "Tabular LSC data doesn't support resampling";
-		return lscData_;
-	}
-
-private:
-	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
-					 const char *prop);
-
-	lsc::ComponentsMap lscData_;
-};
-
-int LscTableImpl::parseLscData(const ValueNode &sets)
-{
-	for (const auto &set : sets.asList()) {
-		uint32_t ct = set["ct"].get<uint32_t>(0);
-
-		if (lscData_.count(ct)) {
-			LOG(RkISP1Lsc, Error)
-				<< "Multiple sets found for color temperature "
-				<< ct;
-			return -EINVAL;
-		}
-
-		lsc::Components components;
-		components.r = parseTable(set, "r");
-		components.gr = parseTable(set, "gr");
-		components.gb = parseTable(set, "gb");
-		components.b = parseTable(set, "b");
-
-		if (components.r.empty() || components.gr.empty() ||
-		    components.gb.empty() || components.b.empty()) {
-			LOG(RkISP1Lsc, Error)
-				<< "Set for color temperature " << ct
-				<< " is missing tables";
-			return -EINVAL;
-		}
-
-		lscData_.emplace(ct, std::move(components));
-	}
-
-	if (lscData_.empty()) {
-		LOG(RkISP1Lsc, Error) << "Failed to load any sets";
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
-std::vector<uint16_t> LscTableImpl::parseTable(const ValueNode &tuningData,
-						 const char *prop)
-{
-	static constexpr unsigned int kLscNumSamples =
-		RKISP1_CIF_ISP_LSC_SAMPLES_MAX * RKISP1_CIF_ISP_LSC_SAMPLES_MAX;
-
-	std::vector<uint16_t> table =
-		tuningData[prop].get<std::vector<uint16_t>>().value_or(utils::defopt);
-	if (table.size() != kLscNumSamples) {
-		LOG(RkISP1Lsc, Error)
-			<< "Invalid '" << prop << "' values: expected "
-			<< kLscNumSamples
-			<< " elements, got " << table.size();
-		return {};
-	}
-
-	return table;
-}
 
 std::vector<double> parseSizes(const ValueNode &tuningData,
 			       const char *prop)
@@ -190,7 +113,7 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 	std::string type = tuningData["type"].get<std::string>("table");
 	if (type == "table") {
 		LOG(RkISP1Lsc, Debug) << "Loading tabular LSC data.";
-		algo_ = std::make_unique<LscTableImpl>();
+		algo_ = std::make_unique<LscTable>();
 		ret = algo_->parseLscData(sets);
 	} else if (type == "polynomial") {
 		LOG(RkISP1Lsc, Debug) << "Loading polynomial LSC data.";
