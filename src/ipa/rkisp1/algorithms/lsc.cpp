@@ -25,33 +25,6 @@
 
 namespace libcamera {
 
-namespace ipa {
-
-template<typename T>
-void interpolateVector(const std::vector<T> &a, const std::vector<T> &b,
-		       std::vector<T> &dest, double lambda)
-{
-	ASSERT(a.size() == b.size());
-	dest.resize(a.size());
-	for (size_t i = 0; i < a.size(); i++)
-		dest[i] = a[i] * (1.0 - lambda) + b[i] * lambda;
-}
-
-template<>
-void Interpolator<lsc::Components>::
-	interpolate(const lsc::Components &a,
-		    const lsc::Components &b,
-		    lsc::Components &dest,
-		    double lambda)
-{
-	interpolateVector(a.r, b.r, dest.r, lambda);
-	interpolateVector(a.gr, b.gr, dest.gr, lambda);
-	interpolateVector(a.gb, b.gb, dest.gb, lambda);
-	interpolateVector(a.b, b.b, dest.b, lambda);
-}
-
-} /* namespace ipa */
-
 namespace ipa::rkisp1::algorithms {
 
 

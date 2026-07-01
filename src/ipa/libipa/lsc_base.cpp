@@ -49,6 +49,21 @@ namespace lsc {
 
 } /* namespace lsc */
 
+#ifndef __DOXYGEN__
+template<>
+void Interpolator<lsc::Components>::
+	interpolate(const lsc::Components &a,
+		    const lsc::Components &b,
+		    lsc::Components &dest,
+		    double lambda)
+{
+	interpolateVector(a.r, b.r, dest.r, lambda);
+	interpolateVector(a.gr, b.gr, dest.gr, lambda);
+	interpolateVector(a.gb, b.gb, dest.gb, lambda);
+	interpolateVector(a.b, b.b, dest.b, lambda);
+}
+#endif
+
 /**
  * \class LscImplementation
  * \brief Pure virtual base class for LSC algorithm implementations
