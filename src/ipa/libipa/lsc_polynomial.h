@@ -57,11 +57,6 @@ private:
 	using PolynomialComponentsMap = std::map<unsigned int, PolynomialComponents>;
 
 public:
-	LscPolynomial(const Size &sensorSize)
-		: sensorSize_(sensorSize)
-	{
-	}
-
 	int parseLscData(const ValueNode &sets,
 			 const LscDescriptor &descriptor) override;
 
@@ -75,7 +70,6 @@ private:
 					       Span<const double> yPositions,
 					       const Rectangle &cropRectangle);
 	PolynomialComponentsMap lscData_;
-	Size sensorSize_;
 };
 
 } /* namespace ipa */

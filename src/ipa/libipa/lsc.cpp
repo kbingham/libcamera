@@ -215,11 +215,7 @@ int LscAlgorithm::init(const ValueNode &tuningData, ControlInfoMap::Map &control
 		impl_ = std::make_unique<LscTable>();
 		LOG(Lsc, Debug) << "Using table-based Lsc";
 	} else if (type == "polynomial") {
-		/*
-		 * \todo Most likely the reference frame should be native_size.
-		 * Let's wait how the internal discussions progress.
-		 */
-		impl_ = std::make_unique<LscPolynomial>(descriptor.sensorSize);
+		impl_ = std::make_unique<LscPolynomial>();
 		polynomial_ = true;
 		LOG(Lsc, Debug) << "Using polynomial Lsc";
 	} else {

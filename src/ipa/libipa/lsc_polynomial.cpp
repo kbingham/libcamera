@@ -124,13 +124,6 @@ void Polynomial::setReferenceImageSize(const Size &size)
  */
 
 /**
- * \fn LscPolynomial::LscPolynomial
- * \param[in] sensorSize The physical sensor size
- *
- * Construct an LscPolynomial
- */
-
-/**
  * \brief Parse polynomial LSC data
  * \param[in] sets The tuning file content
  * \param[in] descriptor The LSC engine descriptor
