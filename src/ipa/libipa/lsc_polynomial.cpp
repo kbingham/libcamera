@@ -133,44 +133,42 @@ void Polynomial::setReferenceImageSize(const Size &size)
 /**
  * \brief Parse polynomial LSC data
  * \param[in] sets The tuning file content
+ * \param[in] descriptor The LSC engine descriptor
  *
  * Parse the LSC data in polyomial form from the \a sets tuning data.
  *
  * \return 0 on success or a negative error number otherwise
  */
-int LscPolynomial::parseLscData(const ValueNode &sets)
+int LscPolynomial::parseLscData(const ValueNode &sets,
+				const LscDescriptor &descriptor)
 {
 	for (const auto &set : sets.asList()) {
-		std::optional<lsc::Polynomial> pr, pgr, pgb, pb;
 		uint32_t ct = set["ct"].get<uint32_t>(0);
 
-		if (lscData_.count(ct)) {
+		PolynomialComponents components;
+		for (auto &k : descriptor.keys) {
+			auto polynomial = set[k].get<lsc::Polynomial>();
+			if (!polynomial) {
+				LOG(LscPolynomial, Error)
+					<< "Missing polynomial for component "
+					<< k;
+				return -EINVAL;
+			}
+
+			auto [it, inserted] =
+				components.try_emplace(k, std::move(*polynomial));
+			ASSERT(inserted);
+
+			it->second.setReferenceImageSize(descriptor.sensorSize);
+		}
+
+		auto [it, inserted] = lscData_.try_emplace(ct, std::move(components));
+		if (!inserted) {
 			LOG(LscPolynomial, Error)
 				<< "Multiple sets found for "
 				<< "color temperature " << ct;
 			return -EINVAL;
 		}
-
-		pr = set["r"].get<lsc::Polynomial>();
-		pgr = set["gr"].get<lsc::Polynomial>();
-		pgb = set["gb"].get<lsc::Polynomial>();
-		pb = set["b"].get<lsc::Polynomial>();
-
-		if (!(pr || pgr || pgb || pb)) {
-			LOG(LscPolynomial, Error)
-				<< "Failed to parse polynomial for "
-				<< "colour temperature " << ct;
-			return -EINVAL;
-		}
-
-		pr->setReferenceImageSize(sensorSize_);
-		pgr->setReferenceImageSize(sensorSize_);
-		pgb->setReferenceImageSize(sensorSize_);
-		pb->setReferenceImageSize(sensorSize_);
-
-		lscData_.emplace(std::piecewise_construct,
-				 std::forward_as_tuple(ct),
-				 std::forward_as_tuple(PolynomialComponents{ *pr, *pgr, *pgb, *pb }));
 	}
 
 	if (lscData_.empty()) {
@@ -210,13 +208,12 @@ LscPolynomial::sampleForCrop(const Rectangle &cropRectangle,
 
 	lsc::ComponentsMap components;
 
-	for (const auto &[k, p] : lscData_) {
-		components[k] = {
-			samplePolynomial(p.pr, xPos, yPos, cropRectangle),
-			samplePolynomial(p.pgr, xPos, yPos, cropRectangle),
-			samplePolynomial(p.pgb, xPos, yPos, cropRectangle),
-			samplePolynomial(p.pb, xPos, yPos, cropRectangle)
-		};
+	for (const auto &[t, c] : lscData_) {
+		lsc::Components &comp = components[t];
+
+		for (const auto &[k, p] : c)
+			comp.try_emplace(k, samplePolynomial(p, xPos, yPos,
+							     cropRectangle));
 	}
 
 	return components;

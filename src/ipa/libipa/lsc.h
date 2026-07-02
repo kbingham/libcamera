@@ -38,8 +38,8 @@ struct FrameContext {
 class LscAlgorithm
 {
 public:
-	int init(const ValueNode &tuningData, const Size &sensorSize,
-		 ControlInfoMap::Map &controls);
+	int init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
+		 const LscDescriptor &descriptor);
 
 	int configure(lsc::ActiveState &state, const Rectangle &analogCrop,
 		      const std::vector<double> &xPos,

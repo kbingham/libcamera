@@ -53,12 +53,7 @@ private:
 class LscPolynomial : public LscImplementation
 {
 private:
-	struct PolynomialComponents {
-		lsc::Polynomial pr;
-		lsc::Polynomial pgr;
-		lsc::Polynomial pgb;
-		lsc::Polynomial pb;
-	};
+	using PolynomialComponents = std::map<std::string, lsc::Polynomial, std::less<>>;
 	using PolynomialComponentsMap = std::map<unsigned int, PolynomialComponents>;
 
 public:
@@ -67,7 +62,8 @@ public:
 	{
 	}
 
-	int parseLscData(const ValueNode &sets) override;
+	int parseLscData(const ValueNode &sets,
+			 const LscDescriptor &descriptor) override;
 
 	lsc::ComponentsMap
 	sampleForCrop(const Rectangle &cropRectangle,

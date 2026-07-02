@@ -19,23 +19,20 @@ namespace ipa {
 namespace lsc {
 
 /**
- * \struct Components
+ * \typedef Components
  * \brief Associate colour components with a list of gains
  *
  * LSC tables are defined as a list of gain values associated to a colour
  * component.
  *
- * \var Components::r
- * \brief The list of gains for the Red colour component
+ * As different ISPs support different colour components (usually 'r', 'gr',
+ * 'gb', 'b' or just 'r', 'g', 'b') this class associates a string
+ * identifier for the colour component to a list of gains.
  *
- * \var Components::gr
- * \brief The list of gains for the Green/Red colour component
+ * Each key name shall match an entry in the tuning file.
  *
- * \var Components::gb
- * \brief The list of gains for the Green/Blue colour component
- *
- * \var Components::b
- * \brief The list of gains for the Blue colour component
+ * The list of keys is provided to the LscAlgorithm class using \a
+ * LscDescriptor::keys.
  */
 
 /**
@@ -57,12 +54,31 @@ void Interpolator<lsc::Components>::
 		    lsc::Components &dest,
 		    double lambda)
 {
-	interpolateVector(a.r, b.r, dest.r, lambda);
-	interpolateVector(a.gr, b.gr, dest.gr, lambda);
-	interpolateVector(a.gb, b.gb, dest.gb, lambda);
-	interpolateVector(a.b, b.b, dest.b, lambda);
+	for (auto const &[k, v] : a)
+		interpolateVector(v, b.at(k), dest[k], lambda);
 }
 #endif
+
+/**
+ * \struct LscDescriptor
+ * \brief Describe the ISP LSC engine
+ *
+ * \var LscDescriptor::keys
+ * \brief The list of colour components to which a list of gains is associated
+ * with in the tuning file. Used for parsing the tuning file
+ *
+ * \var LscDescriptor::numHSamples
+ * \brief Number of horizontal gain samples of the ISP LSC grid. Used for
+ * validating the list of gains parsed from tuning file
+ *
+ * \var LscDescriptor::numVSamples
+ * \brief Number of vertical gain samples of the ISP LSC grid. Used for
+ * validating the list of gains parsed from tuning file
+ *
+ * \var LscDescriptor::sensorSize
+ * \brief The physical sensor size. This is the largest frame size used to
+ * generate the LSC table. Only used by the polynomial LSC algorithm
+ */
 
 /**
  * \class LscImplementation
@@ -80,6 +96,11 @@ void Interpolator<lsc::Components>::
  * \fn LscImplementation::parseLscData
  * \brief Parse \a tuningData
  * \param[in] tuningData The tuning data
+ * \param[in] descriptor The LSC engine descriptor
+ *
+ * Parse the tuning file using the \a descriptor to identify the colour
+ * components in the tuning data and validate the size of the loaded gains
+ * tables.
  *
  * \return 0 on success, a negative error number otherwise
  */

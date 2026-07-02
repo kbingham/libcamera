@@ -26,7 +26,8 @@ namespace ipa {
 class LscTable : public LscImplementation
 {
 public:
-	int parseLscData(const ValueNode &sets) override;
+	int parseLscData(const ValueNode &sets,
+			 const LscDescriptor &descriptor) override;
 
 	lsc::ComponentsMap
 	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
@@ -39,8 +40,12 @@ public:
 	}
 
 private:
+	int parseLscComponent(const ValueNode &yamlSet,
+			      unsigned int ct, const LscDescriptor &descriptor);
 	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
-					 const char *prop);
+					 const char *prop,
+					 unsigned int numHSamples,
+					 unsigned int numVSamples);
 
 	lsc::ComponentsMap lscData_;
 };

@@ -26,13 +26,7 @@ namespace ipa {
 
 namespace lsc {
 
-struct Components {
-	std::vector<uint16_t> r;
-	std::vector<uint16_t> gr;
-	std::vector<uint16_t> gb;
-	std::vector<uint16_t> b;
-};
-
+using Components = std::map<std::string, std::vector<uint16_t>, std::less<>>;
 using ComponentsMap = std::map<unsigned int, Components>;
 
 } /* namespace lsc */
@@ -56,12 +50,20 @@ void Interpolator<lsc::Components>::
 		    double lambda);
 #endif /* __DOXYGEN__ */
 
+struct LscDescriptor {
+	std::vector<std::string> keys;
+	unsigned int numHSamples;
+	unsigned int numVSamples;
+	Size sensorSize;
+};
+
 class LscImplementation
 {
 public:
 	virtual ~LscImplementation() {}
 
-	virtual int parseLscData(const ValueNode &tuningData) = 0;
+	virtual int parseLscData(const ValueNode &tuningData,
+				 const LscDescriptor &descriptor) = 0;
 
 	virtual lsc::ComponentsMap
 	sampleForCrop(const Rectangle &cropRectangle,

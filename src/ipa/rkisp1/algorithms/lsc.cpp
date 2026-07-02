@@ -123,8 +123,12 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 	xPos_ = sizesListToPositions(xSize_);
 	yPos_ = sizesListToPositions(ySize_);
 
-	return lscAlgo_.init(tuningData, context.sensorInfo.activeAreaSize,
-			     context.ctrlMap);
+	return lscAlgo_.init(tuningData,  context.ctrlMap, {
+				.keys = { "r", "gr", "gb", "b" },
+				.numHSamples = RKISP1_CIF_ISP_LSC_SAMPLES_MAX,
+				.numVSamples = RKISP1_CIF_ISP_LSC_SAMPLES_MAX,
+				.sensorSize = context.sensorInfo.activeAreaSize
+			     });
 }
 
 /**
@@ -173,10 +177,14 @@ void LensShadingCorrection::setParameters(rkisp1_cif_isp_lsc_config &config)
 void LensShadingCorrection::copyTable(rkisp1_cif_isp_lsc_config &config,
 				      const lsc::Components &set)
 {
-	std::copy(set.r.begin(), set.r.end(), &config.r_data_tbl[0][0]);
-	std::copy(set.gr.begin(), set.gr.end(), &config.gr_data_tbl[0][0]);
-	std::copy(set.gb.begin(), set.gb.end(), &config.gb_data_tbl[0][0]);
-	std::copy(set.b.begin(), set.b.end(), &config.b_data_tbl[0][0]);
+	const auto &r = set.at("r");
+	std::copy(r.begin(), r.end(), &config.r_data_tbl[0][0]);
+	const auto &gr = set.at("gr");
+	std::copy(gr.begin(), gr.end(), &config.gr_data_tbl[0][0]);
+	const auto &gb = set.at("gb");
+	std::copy(gb.begin(), gb.end(), &config.gb_data_tbl[0][0]);
+	const auto &b = set.at("b");
+	std::copy(b.begin(), b.end(), &config.b_data_tbl[0][0]);
 }
 
 /**

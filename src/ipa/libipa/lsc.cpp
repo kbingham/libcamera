@@ -86,16 +86,16 @@ namespace lsc {
 
 /**
  * \param[in] tuningData The tuning data
- * \param[in] sensorSize The physical sensor size
  * \param[in] controls The IPA list of supported controls
+ * \param[in] descriptor The LSC engine descriptor
  *
  * Parse \a tuningData according to the settings specified in \a descriptor to
  * populate the LSC data and registers LSC controls in \a controls.
  *
  * \return 0 on success, a negative error code otherwise
  */
-int LscAlgorithm::init(const ValueNode &tuningData, const Size &sensorSize,
-		       ControlInfoMap::Map &controls)
+int LscAlgorithm::init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
+		       const LscDescriptor &descriptor)
 {
 	polynomial_ = false;
 
@@ -108,7 +108,7 @@ int LscAlgorithm::init(const ValueNode &tuningData, const Size &sensorSize,
 		 * \todo Most likely the reference frame should be native_size.
 		 * Let's wait how the internal discussions progress.
 		 */
-		impl_ = std::make_unique<LscPolynomial>(sensorSize);
+		impl_ = std::make_unique<LscPolynomial>(descriptor.sensorSize);
 		polynomial_ = true;
 		LOG(Lsc, Debug) << "Using polynomial Lsc";
 	} else {
@@ -123,7 +123,7 @@ int LscAlgorithm::init(const ValueNode &tuningData, const Size &sensorSize,
 		return -EINVAL;
 	}
 
-	int ret = impl_->parseLscData(yamlSets);
+	int ret = impl_->parseLscData(yamlSets, descriptor);
 	if (ret)
 		return ret;
 

@@ -7,9 +7,6 @@
 
 #include "lsc_table.h"
 
-/* \todo Remove RkISP1 from libipa. */
-#include "linux/rkisp1-config.h"
-
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(LscTable)
@@ -29,38 +26,21 @@ namespace ipa {
 /**
  * \brief Parse tabular LSC data
  * \param[in] sets The tuning file content
+ * \param[in] descriptor The LSC engine descriptor
  *
  * Parse the LSC data in tabular form from the \a sets tuning data.
  *
  * \return 0 on success or a negative error number otherwise
  */
-int LscTable::parseLscData(const ValueNode &sets)
+int LscTable::parseLscData(const ValueNode &sets,
+			   const LscDescriptor &descriptor)
 {
 	for (const auto &set : sets.asList()) {
 		uint32_t ct = set["ct"].get<uint32_t>(0);
 
-		if (lscData_.count(ct)) {
-			LOG(LscTable, Error)
-				<< "Multiple sets found for color temperature "
-				<< ct;
-			return -EINVAL;
-		}
-
-		lsc::Components components;
-		components.r = parseTable(set, "r");
-		components.gr = parseTable(set, "gr");
-		components.gb = parseTable(set, "gb");
-		components.b = parseTable(set, "b");
-
-		if (components.r.empty() || components.gr.empty() ||
-		    components.gb.empty() || components.b.empty()) {
-			LOG(LscTable, Error)
-				<< "Set for color temperature " << ct
-				<< " is missing tables";
-			return -EINVAL;
-		}
-
-		lscData_.emplace(ct, std::move(components));
+		int ret = parseLscComponent(set, ct, descriptor);
+		if (ret)
+			return ret;
 	}
 
 	if (lscData_.empty()) {
@@ -71,18 +51,50 @@ int LscTable::parseLscData(const ValueNode &sets)
 	return 0;
 }
 
-std::vector<uint16_t> LscTable::parseTable(const ValueNode &tuningData,
-					   const char *prop)
+int LscTable::parseLscComponent(const ValueNode &yamlSet,
+				unsigned int ct, const LscDescriptor &descriptor)
 {
-	static constexpr unsigned int kLscNumSamples =
-		RKISP1_CIF_ISP_LSC_SAMPLES_MAX * RKISP1_CIF_ISP_LSC_SAMPLES_MAX;
+	lsc::Components component;
+	for (auto &k : descriptor.keys) {
+		auto [it, inserted] =
+			component.try_emplace(k, parseTable(yamlSet,
+							    k.c_str(),
+							    descriptor.numHSamples,
+							    descriptor.numVSamples));
+		ASSERT(inserted);
+
+		if (it->second.empty()) {
+			LOG(LscTable, Error)
+				<< "Set " << k << " for color temperature "
+				<< ct << " is missing";
+			return -EINVAL;
+		}
+	}
+
+	auto [it, inserted] = lscData_.try_emplace(ct, std::move(component));
+	if (!inserted) {
+		LOG(LscTable, Error)
+			<< "Multiple sets found for color temperature "
+			<< ct;
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+std::vector<uint16_t> LscTable::parseTable(const ValueNode &tuningData,
+					   const char *prop,
+					   unsigned int numHSamples,
+					   unsigned int numVSamples)
+{
+	unsigned int lscNumSamples = numHSamples * numVSamples;
 
 	std::vector<uint16_t> table =
 		tuningData[prop].get<std::vector<uint16_t>>().value_or(utils::defopt);
-	if (table.size() != kLscNumSamples) {
+	if (table.size() != lscNumSamples) {
 		LOG(LscTable, Error)
 			<< "Invalid '" << prop << "' values: expected "
-			<< kLscNumSamples
+			<< lscNumSamples
 			<< " elements, got " << table.size();
 		return {};
 	}
