@@ -103,6 +103,21 @@ void Interpolator<lsc::Components>::
  * each segment of size 0.0625 and the list of nodes position will be
  * [0, 0.0625, 0.125, 0.1875, ... , 1]. It is expected that the first position
  * is 0 and the last position is 1.
+ *
+ * LSC tables are expressed in two formats:
+ * - A list of gain values (LscTable)
+ * - A radial polynomial (LscPolynomial)
+ *
+ * Table-based LSC tables are generated using an image at a fixed resolution and
+ * can't at the moment be re-sampled when a different resolution is used for a
+ * streaming session. Re-sampling a grid LSC table will return the same table
+ * as loaded from the tuning file.
+ *
+ * \todo: Implement grid based re-sampling
+ *
+ * Polynomial configurations are more flexible and can be re-sampled for a given
+ * sensor frame resolution using a list of horizontal and vertical nodes that
+ * define the LSC grid on which the polynomial is re-sampled on.
  */
 
 } /* namespace ipa */
