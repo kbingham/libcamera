@@ -179,6 +179,10 @@ namespace lsc {
  *          k4: 0.0
  * \endcode
  *
+ * The LSC polynomial definition is generated at tuning time in relation
+ * to the full sensor pixel array. This needs to be specified in
+ * LscDescriptor::sensorSize.
+ *
  * At LscAlgorithm::configure() time the LSC tables are re-sampled on the
  * sensor's crop rectangle in use to adapt them to the configuration in use for
  * a streaming session. Polynomial LSC tables support re-sampling and can be
