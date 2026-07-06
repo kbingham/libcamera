@@ -65,7 +65,7 @@ private:
 	static int getOutputConfig(PixelFormat outputFormat, DebayerOutputConfig &config);
 	int initBayerShaders(PixelFormat inputFormat, PixelFormat outputFormat);
 	int getShaderVariableLocations();
-	void setShaderVariableValues(const DebayerParams &params);
+	void setShaderVariableValues(eGLImage &eGLImageIn, const DebayerParams &params);
 	int debayerGPU(FrameBuffer *input, FrameBuffer *output, const DebayerParams &params, std::optional<MappedFrameBuffer> *mappedInputBuffer, std::optional<DmaSyncer> *inputBufferDmaSyncer);
 
 	/* Shader program identifiers */

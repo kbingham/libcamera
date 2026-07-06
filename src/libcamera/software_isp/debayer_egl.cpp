@@ -388,7 +388,7 @@ uint32_t DebayerEGL::preferredInputStride(const PixelFormat &inputFormat, const 
 	return info.stride(size.width, 0, 256);
 }
 
-void DebayerEGL::setShaderVariableValues(const DebayerParams &params)
+void DebayerEGL::setShaderVariableValues(eGLImage &eglImageIn, const DebayerParams &params)
 {
 	/*
 	 * Raw Bayer 8-bit, and packed raw Bayer 10-bit/12-bit formats
@@ -444,7 +444,7 @@ void DebayerEGL::setShaderVariableValues(const DebayerParams &params)
 	 * To simultaneously sample multiple textures we need to use multiple
 	 * texture units
 	 */
-	glUniform1i(textureUniformBayerDataIn_, eglImageBayerIn_->texture_unit_uniform_id_);
+	glUniform1i(textureUniformBayerDataIn_, eglImageIn.texture_unit_uniform_id_);
 
 	/*
 	 * These values are:
@@ -533,7 +533,7 @@ int DebayerEGL::debayerGPU(FrameBuffer *input, FrameBuffer *output, const Debaye
 	/* Generate the output render framebuffer as render to texture */
 	egl_.createOutputDMABufTexture2D(*eglImageBayerOut_, output->planes()[0].fd.get());
 
-	setShaderVariableValues(params);
+	setShaderVariableValues(*eglImageBayerIn_, params);
 	glViewport(0, 0, width_, height_);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, DEBAYER_OPENGL_COORDS);
