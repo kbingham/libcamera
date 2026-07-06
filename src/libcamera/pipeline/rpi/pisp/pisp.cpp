@@ -80,7 +80,6 @@ const std::vector<std::pair<BayerFormat, unsigned int>> BayerToMbusCodeMap{
 	{ { BayerFormat::GBRG, 16, BayerFormat::Packing::PISP1 }, MEDIA_BUS_FMT_SGBRG16_1X16, },
 	{ { BayerFormat::GRBG, 16, BayerFormat::Packing::PISP1 }, MEDIA_BUS_FMT_SGRBG16_1X16, },
 	{ { BayerFormat::RGGB, 16, BayerFormat::Packing::PISP1 }, MEDIA_BUS_FMT_SRGGB16_1X16, },
-	{ { BayerFormat::RGGB, 16, BayerFormat::Packing::PISP1 }, MEDIA_BUS_FMT_SRGGB16_1X16, },
 	{ { BayerFormat::MONO, 16, BayerFormat::Packing::None }, MEDIA_BUS_FMT_Y16_1X16, },
 	{ { BayerFormat::MONO, 16, BayerFormat::Packing::PISP1 }, MEDIA_BUS_FMT_Y16_1X16, },
 };
