@@ -330,6 +330,19 @@ bool eGL::isAvailable()
 }
 
 /**
+ * \brief Create a 2D texture attached to an FBO for render-to-texture
+ * \param[in,out] eglImage EGL image to associate with the texture
+ *
+ * Creates a 2D texture in VRAM. Subsequetly attach the texture to the
+ * texture unit specified in the eGLImage object.
+ */
+void eGL::createOutputTexture2D(eGLImage &eglImage)
+{
+	createTexture2D(eglImage, NULL);
+	attachTextureToFBO(eglImage);
+}
+
+/**
  * \brief Initialise the EGL context
  *
  * Sets up the EGL display, creates an OpenGL ES 2.0 context, and retrieves
