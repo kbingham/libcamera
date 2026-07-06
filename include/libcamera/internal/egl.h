@@ -109,6 +109,8 @@ public:
 	int createOutputDMABufTexture2D(eGLImage &eglImage, int fd);
 	void createTexture2D(eGLImage &eglImage, void *data);
 
+	int attachTextureToFBO(eGLImage &eglImage);
+
 	void pushEnv(std::vector<std::string> &shaderEnv, const char *str);
 	void makeCurrent();
 

@@ -113,6 +113,32 @@ void eGL::flushOutput()
 }
 
 /**
+ * \brief Attach a texture to a frame-buffer-object
+ *
+ * \param[in,out] eglImage EGL image containing texture to attach to FBO
+ *
+ * Helper function to make attachment of texture to FBO easy to reuse.
+ *
+ * \return 0 on success, or -ENODEV on failure
+ */
+int eGL::attachTextureToFBO(eGLImage &eglImage)
+{
+	int ret = 0;
+
+	// Generate a framebuffer from our texture direct to dma-buf handle buffer
+	glBindFramebuffer(GL_FRAMEBUFFER, eglImage.fbo_);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eglImage.texture_, 0);
+
+	GLenum err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (err != GL_FRAMEBUFFER_COMPLETE) {
+		LOG(eGL, Error) << "glFrameBufferTexture2D error " << err;
+		ret = -ENODEV;
+	}
+
+	return ret;
+}
+
+/**
  * \brief Create a DMA-BUF backed 2D texture
  * \param[in,out] eglImage EGL image to associate with the DMA-BUF
  * \param[in] fd DMA-BUF file descriptor
@@ -127,6 +153,7 @@ void eGL::flushOutput()
 int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
 {
 	EGLint drm_format;
+	int ret = 0;
 
 	ASSERT(tid_ == Thread::currentId());
 
@@ -186,19 +213,10 @@ int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	if (output) {
-		// Generate a framebuffer from our texture direct to dma-buf handle buffer
-		glBindFramebuffer(GL_FRAMEBUFFER, eglImage.fbo_);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eglImage.texture_, 0);
+	if (output)
+		ret = attachTextureToFBO(eglImage);
 
-		GLenum err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		if (err != GL_FRAMEBUFFER_COMPLETE) {
-			LOG(eGL, Error) << "glFrameBufferTexture2D error " << err;
-			return -ENODEV;
-		}
-	}
-
-	return 0;
+	return ret;
 }
 
 /**
