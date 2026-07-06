@@ -139,6 +139,23 @@ int eGL::attachTextureToFBO(eGLImage &eglImage)
 }
 
 /**
+ * \brief Activate a texture unit and bind a texture to that unit
+ * \param[in,out] eglImage EGL image containing data related to unit and texture id
+ *
+ * When we create a texture we will bind a texture unit and texture id so
+ * we can set filters. For the case where a texture already exists though
+ * we need to activate and bind an existing texture. This helper function
+ * facilitates both cases.
+ *
+ */
+void eGL::activateBindTexture(eGLImage &eglImage)
+{
+	// Bind texture unit and texture
+	glActiveTexture(eglImage.texture_unit_);
+	glBindTexture(GL_TEXTURE_2D, eglImage.texture_);
+}
+
+/**
  * \brief Create a DMA-BUF backed 2D texture
  * \param[in,out] eglImage EGL image to associate with the DMA-BUF
  * \param[in] fd DMA-BUF file descriptor
@@ -197,9 +214,7 @@ int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
 		return -ENODEV;
 	}
 
-	// Bind texture unit and texture
-	glActiveTexture(eglImage.texture_unit_);
-	glBindTexture(GL_TEXTURE_2D, eglImage.texture_);
+	activateBindTexture(eglImage);
 
 	// Generate texture with filter semantics
 	glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
@@ -270,8 +285,7 @@ void eGL::createTexture2D(eGLImage &eglImage, void *data)
 {
 	ASSERT(tid_ == Thread::currentId());
 
-	glActiveTexture(eglImage.texture_unit_);
-	glBindTexture(GL_TEXTURE_2D, eglImage.texture_);
+	activateBindTexture(eglImage);
 
 	// Generate texture, bind, associate image to texture, configure, unbind
 	glTexImage2D(GL_TEXTURE_2D, 0, eglImage.format_, eglImage.width_, eglImage.height_, 0, eglImage.format_, GL_UNSIGNED_BYTE, data);

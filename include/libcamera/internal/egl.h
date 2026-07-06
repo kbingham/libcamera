@@ -111,6 +111,7 @@ public:
 	void createOutputTexture2D(eGLImage &eglImage);
 
 	int attachTextureToFBO(eGLImage &eglImage);
+	void activateBindTexture(eGLImage &eglImage);
 
 	void pushEnv(std::vector<std::string> &shaderEnv, const char *str);
 	void makeCurrent();
