@@ -94,9 +94,11 @@ struct ValueNode::Accessor<ipa::LscPolynomial> {
 		std::optional<double> k3 = obj["k3"].get<double>();
 		std::optional<double> k4 = obj["k4"].get<double>();
 
-		if (!(cx && cy && k0 && k1 && k2 && k3 && k4))
+		if (!(cx && cy && k0 && k1 && k2 && k3 && k4)) {
 			LOG(LscPolynomial, Error)
 				<< "Polynomial is missing a parameter";
+			return std::nullopt;
+		}
 
 		return ipa::LscPolynomial(*cx, *cy, *k0, *k1, *k2, *k3, *k4);
 	}
