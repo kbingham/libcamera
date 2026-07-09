@@ -764,6 +764,7 @@ class CameraSensorHelperOv5693 : public CameraSensorHelper
 public:
 	CameraSensorHelperOv5693()
 	{
+		blackLevel_ = 1024;
 		gain_ = AnalogueGainLinear{ 1, 0, 0, 16 };
 	}
 };
