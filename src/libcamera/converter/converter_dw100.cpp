@@ -15,6 +15,7 @@
 #include <libcamera/stream.h>
 
 #include "libcamera/internal/converter.h"
+#include "libcamera/internal/converter/converter_dw100_vertexmap.h"
 #include "libcamera/internal/converter/converter_v4l2_m2m.h"
 #include "libcamera/internal/media_device.h"
 #include "libcamera/internal/v4l2_videodevice.h"
@@ -99,7 +100,7 @@ ConverterDW100Module::createModule(DeviceEnumerator *enumerator)
  */
 int ConverterDW100Module::init(const ValueNode &params)
 {
-	DewarpParms dp;
+	Dw100VertexMap::DewarpParams dp;
 
 	auto &cm = params["cm"];
 	auto &coefficients = params["coefficients"];
@@ -131,7 +132,13 @@ int ConverterDW100Module::init(const ValueNode &params)
 		LOG(Converter, Error) << "Dewarp parameters 'coefficients' value is not a list";
 		return -EINVAL;
 	}
-	dp.coeffs = std::move(*coeffs);
+
+	int ret = dp.setCoefficients(*coeffs);
+	if (ret) {
+		LOG(Converter, Error)
+			<< "Dewarp 'coefficients' must have 4, 5, 8 or 12 values";
+		return -EINVAL;
+	}
 
 	dewarpParams_ = dp;
 
@@ -163,7 +170,7 @@ int ConverterDW100Module::configure(const StreamConfiguration &inputCfg,
 		vertexMap.setSensorCrop(sensorCrop_);
 
 		if (dewarpParams_)
-			vertexMap.setDewarpParams(dewarpParams_->cm, dewarpParams_->coeffs);
+			vertexMap.setDewarpParams(*dewarpParams_);
 		info.update = true;
 	}
 
