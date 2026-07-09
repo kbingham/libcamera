@@ -234,6 +234,9 @@ int dw100VerticesForLength(const int length)
  * \var Dw100VertexMap::DewarpParams::cm
  * \brief The camera matrix
  *
+ * \var Dw100VertexMap::DewarpParams::cmNew
+ * \brief The new camera matrix after dewarping
+ *
  * \var Dw100VertexMap::DewarpParams::coefficients
  * \brief Structure containing the lens dewarp coefficients
 
@@ -665,10 +668,11 @@ Vector2d Dw100VertexMap::dewarpPoint(const Vector2d &p)
 	double x, y;
 	double xout, yout;
 	auto &cm = dewarpParams_->cm;
+	auto &cmNew = dewarpParams_->cmNew;
 	auto &c = dewarpParams_->coefficients;
 
-	y = (p.y() - cm[1][2]) / cm[1][1];
-	x = (p.x() - cm[0][2] - y * cm[0][1]) / cm[0][0];
+	y = (p.y() - cmNew[1][2]) / cmNew[1][1];
+	x = (p.x() - cmNew[0][2] - y * cmNew[0][1]) / cmNew[0][0];
 
 	double r2 = x * x + y * y;
 	double r4 = r2 * r2;

@@ -104,9 +104,10 @@ int ConverterDW100Module::init(const ValueNode &params)
 
 	auto &cm = params["cm"];
 	auto &coefficients = params["coefficients"];
+	auto &cmNew = params["cmNew"];
 
 	/* If nothing is provided, the dewarper is still functional */
-	if (!cm && !coefficients)
+	if (!cm && !coefficients && !cmNew)
 		return 0;
 
 	if (!cm) {
@@ -138,6 +139,18 @@ int ConverterDW100Module::init(const ValueNode &params)
 		LOG(Converter, Error)
 			<< "Dewarp 'coefficients' must have 4, 5, 8 or 12 values";
 		return -EINVAL;
+	}
+
+	if (cmNew) {
+		matrix = cmNew.get<Matrix<double, 3, 3>>();
+		if (!matrix) {
+			LOG(Converter, Error) << "Failed to load 'cmNew' value";
+			return -EINVAL;
+		}
+
+		dp.cmNew = *matrix;
+	} else {
+		dp.cmNew = dp.cm;
 	}
 
 	dewarpParams_ = dp;
