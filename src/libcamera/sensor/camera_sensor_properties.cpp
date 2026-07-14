@@ -258,7 +258,11 @@ const CameraSensorProperties *CameraSensorProperties::get(const std::string &sen
 		} },
 		{ "imx335", {
 			.unitCellSize = { 2000, 2000 },
-			.testPatternModes = {},
+			.testPatternModes = {
+				{ controls::draft::TestPatternModeOff, 0 },
+				{ controls::draft::TestPatternModeSolidColor, 4 },
+				{ controls::draft::TestPatternModeColorBars, 12 },
+			},
 			.sensorDelays = { },
 		} },
 		{ "imx355", {
