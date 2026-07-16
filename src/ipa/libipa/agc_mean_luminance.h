@@ -79,10 +79,16 @@ public:
 		return controls_;
 	}
 
+	struct Params {
+		const Traits &traits;
+		const Histogram &yHist;
+		utils::Duration effectiveExposureValue;
+		uint32_t constraintModeIndex;
+		uint32_t exposureModeIndex;
+	};
+
 	std::tuple<utils::Duration, double, double, double>
-	calculateNewEv(uint32_t constraintModeIndex, uint32_t exposureModeIndex,
-		       const Histogram &yHist, utils::Duration effectiveExposureValue,
-		       const Traits &traits);
+	calculateNewEv(const Params &params);
 
 	double effectiveYTarget() const;
 

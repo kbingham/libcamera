@@ -236,22 +236,24 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 				     * frameContext.sensor.exposure;
 	double analogueGain = frameContext.sensor.gain;
 	utils::Duration effectiveExposureValue = exposureTime * analogueGain;
-	AgcTraits agcTraits{
-		rgbTriples_,
-		{{
-			context.activeState.awb.gains.red,
-			context.activeState.awb.gains.blue,
-			context.activeState.awb.gains.green,
-		}},
-		bdsGrid_,
-	};
 
 	utils::Duration newExposureTime;
 	double aGain, qGain, dGain;
-	std::tie(newExposureTime, aGain, qGain, dGain) =
-		agc_.calculateNewEv(context.activeState.agc.constraintMode,
-				    context.activeState.agc.exposureMode, hist,
-				    effectiveExposureValue, agcTraits);
+	std::tie(newExposureTime, aGain, qGain, dGain) = agc_.calculateNewEv({
+		.traits = AgcTraits{
+			rgbTriples_,
+			{{
+				context.activeState.awb.gains.red,
+				context.activeState.awb.gains.blue,
+				context.activeState.awb.gains.green,
+			}},
+			bdsGrid_,
+		},
+		.yHist = hist,
+		.effectiveExposureValue = effectiveExposureValue,
+		.constraintModeIndex = context.activeState.agc.constraintMode,
+		.exposureModeIndex = context.activeState.agc.exposureMode,
+	});
 
 	LOG(IPU3Agc, Debug)
 		<< "Divided up exposure time, analogue gain and digital gain are "

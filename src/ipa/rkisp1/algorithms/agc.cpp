@@ -717,20 +717,22 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 	/* The lower 4 bits are fractional and meant to be discarded. */
 	Histogram hist({ params->hist.hist_bins, context.hw.numHistogramBins },
 		       [](uint32_t x) { return x >> 4; });
-	AgcTraits agcTraits{
-		{ params->ae.exp_mean, context.hw.numAeCells },
-		meteringModes_.at(frameContext.agc.meteringMode),
-	};
 
 	agc_.setExposureCompensation(pow(2.0, frameContext.agc.exposureValue));
 	agc_.setLux(frameContext.lux.lux);
 
 	utils::Duration newExposureTime;
 	double aGain, qGain, dGain;
-	std::tie(newExposureTime, aGain, qGain, dGain) =
-		agc_.calculateNewEv(frameContext.agc.constraintMode,
-				    frameContext.agc.exposureMode,
-				    hist, effectiveExposureValue, agcTraits);
+	std::tie(newExposureTime, aGain, qGain, dGain) = agc_.calculateNewEv({
+		.traits = AgcTraits{
+			{ params->ae.exp_mean, context.hw.numAeCells },
+			meteringModes_.at(frameContext.agc.meteringMode),
+		},
+		.yHist = hist,
+		.effectiveExposureValue = effectiveExposureValue,
+		.constraintModeIndex = frameContext.agc.constraintMode,
+		.exposureModeIndex = frameContext.agc.exposureMode,
+	});
 
 	LOG(RkISP1Agc, Debug)
 		<< "Divided up exposure time, analogue gain, quantization gain"

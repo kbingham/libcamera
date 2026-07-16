@@ -648,15 +648,29 @@ utils::Duration AgcMeanLuminance::filterExposure(utils::Duration exposureValue)
 }
 
 /**
+ * \struct AgcMeanLuminance::Params
+ * \brief Collection of parameters for the mean luminance AGC algorithm
+ *
+ * \var AgcMeanLuminance::Params::traits
+ * \brief The traits object implementing the necessary functions
+ *
+ * \var AgcMeanLuminance::Params::yHist
+ * \brief A histogram from the ISP statistics to use in constraining the calculated gain
+ *
+ * \var AgcMeanLuminance::Params::effectiveExposureValue
+ * \brief The EV applied to the frame from which the statistics in use derive
+ *
+ * \var AgcMeanLuminance::Params::constraintModeIndex
+ * \brief The index of the constraint mode to use
+ *
+ * \var AgcMeanLuminance::Params::exposureModeIndex
+ * \brief The index of the exposure mode to use
+ */
+
+/**
  * \brief Calculate the new exposure value and split it between exposure time
  * and gain
- * \param[in] constraintModeIndex The index of the current constraint mode
- * \param[in] exposureModeIndex The index of the current exposure mode
- * \param[in] yHist A Histogram from the ISP statistics to use in constraining
- * the calculated gain
- * \param[in] effectiveExposureValue The EV applied to the frame from which the
- * statistics in use derive
- * \param[in] traits The traits object implementing the necessary functions
+ * \param[in] params The set of parameters for the exppsure value calculation
  *
  * Calculate a new exposure value to try to obtain the target. The calculated
  * exposure value is filtered to prevent rapid changes from frame to frame, and
@@ -666,20 +680,16 @@ utils::Duration AgcMeanLuminance::filterExposure(utils::Duration exposureValue)
  * gain
  */
 std::tuple<utils::Duration, double, double, double>
-AgcMeanLuminance::calculateNewEv(uint32_t constraintModeIndex,
-				 uint32_t exposureModeIndex,
-				 const Histogram &yHist,
-				 utils::Duration effectiveExposureValue,
-				 const Traits &traits)
+AgcMeanLuminance::calculateNewEv(const Params &params)
 {
 	/*
 	 * The pipeline handler should validate that we have received an allowed
 	 * value for AeExposureMode.
 	 */
 	ExposureModeHelper &exposureModeHelper =
-		exposureModeHelpers_.at(exposureModeIndex);
+		exposureModeHelpers_.at(params.exposureModeIndex);
 
-	if (effectiveExposureValue == 0s) {
+	if (params.effectiveExposureValue == 0s) {
 		LOG(AgcMeanLuminance, Error)
 			<< "Effective exposure value is 0. This is a bug in AGC "
 			   "and must be fixed for proper operation.";
@@ -691,8 +701,8 @@ AgcMeanLuminance::calculateNewEv(uint32_t constraintModeIndex,
 		return exposureModeHelper.splitExposure(10ms);
 	}
 
-	double gain = estimateInitialGain(traits);
-	gain = constraintClampGain(constraintModeIndex, yHist, gain);
+	double gain = estimateInitialGain(params.traits);
+	gain = constraintClampGain(params.constraintModeIndex, params.yHist, gain);
 
 	/*
 	 * We don't check whether we're already close to the target, because
@@ -701,7 +711,7 @@ AgcMeanLuminance::calculateNewEv(uint32_t constraintModeIndex,
 	 * pass through the splitExposure() function.
 	 */
 
-	utils::Duration newExposureValue = effectiveExposureValue * gain;
+	utils::Duration newExposureValue = params.effectiveExposureValue * gain;
 
 	/*
 	 * We filter the exposure value to make sure changes are not too jarring
