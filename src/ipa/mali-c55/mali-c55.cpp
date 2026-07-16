@@ -27,6 +27,7 @@
 #include "libcamera/internal/yaml_parser.h"
 
 #include "algorithms/algorithm.h"
+#include "libipa/agc.h"
 #include "libipa/camera_sensor_helper.h"
 
 #include "ipa_context.h"
@@ -143,20 +144,19 @@ void IPAMaliC55::setControls()
 {
 	IPAActiveState &activeState = context_.activeState;
 	uint32_t exposure;
-	uint32_t gain;
+	double gain;
 
 	if (activeState.agc.autoEnabled) {
 		exposure = activeState.agc.automatic.exposure;
-		gain = camHelper_->gainCode(activeState.agc.automatic.sensorGain);
+		gain = activeState.agc.automatic.sensorGain;
 	} else {
 		exposure = activeState.agc.manual.exposure;
-		gain = camHelper_->gainCode(activeState.agc.manual.sensorGain);
+		gain = activeState.agc.manual.sensorGain;
 	}
 
 	ControlList ctrls(sensorControls_);
-	ctrls.set(V4L2_CID_EXPOSURE, static_cast<int32_t>(exposure));
-	ctrls.set(V4L2_CID_ANALOGUE_GAIN, static_cast<int32_t>(gain));
-
+	agc::prepareControls(ctrls, camHelper_.get(),
+			     exposure, gain);
 	setSensorControls.emit(ctrls);
 }
 
@@ -354,10 +354,8 @@ void IPAMaliC55::processStats(unsigned int request, unsigned int bufferId,
 	stats = reinterpret_cast<mali_c55_stats_buffer *>(
 		buffers_.at(bufferId).planes()[0].data());
 
-	frameContext.agc.exposure =
-		sensorControls.get(V4L2_CID_EXPOSURE).get<int32_t>();
-	frameContext.agc.sensorGain =
-		camHelper_->gain(sensorControls.get(V4L2_CID_ANALOGUE_GAIN).get<int32_t>());
+	std::tie(frameContext.agc.exposure, frameContext.agc.sensorGain) =
+		agc::extractControls(sensorControls, camHelper_.get());
 
 	ControlList metadata(controls::controls);
 

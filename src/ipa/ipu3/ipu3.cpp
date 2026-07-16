@@ -36,6 +36,7 @@
 #include "libcamera/internal/mapped_framebuffer.h"
 #include "libcamera/internal/yaml_parser.h"
 
+#include "libipa/agc.h"
 #include "libipa/camera_sensor_helper.h"
 
 #include "ipa_context.h"
@@ -596,8 +597,8 @@ void IPAIPU3::processStats(const uint32_t frame,
 
 	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
 
-	frameContext.sensor.exposure = sensorControls.get(V4L2_CID_EXPOSURE).get<int32_t>();
-	frameContext.sensor.gain = camHelper_->gain(sensorControls.get(V4L2_CID_ANALOGUE_GAIN).get<int32_t>());
+	std::tie(frameContext.sensor.exposure, frameContext.sensor.gain) =
+		agc::extractControls(sensorControls, camHelper_.get());
 
 	ControlList metadata(controls::controls);
 
@@ -642,12 +643,10 @@ void IPAIPU3::queueRequest(const uint32_t frame, const ControlList &controls)
  */
 void IPAIPU3::setControls(unsigned int frame)
 {
-	int32_t exposure = context_.activeState.agc.exposure;
-	int32_t gain = camHelper_->gainCode(context_.activeState.agc.gain);
-
 	ControlList ctrls(sensorCtrls_);
-	ctrls.set(V4L2_CID_EXPOSURE, exposure);
-	ctrls.set(V4L2_CID_ANALOGUE_GAIN, gain);
+	agc::prepareControls(ctrls, camHelper_.get(),
+			     context_.activeState.agc.exposure,
+			     context_.activeState.agc.gain);
 
 	ControlList lensCtrls(lensCtrls_);
 	lensCtrls.set(V4L2_CID_FOCUS_ABSOLUTE,

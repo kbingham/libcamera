@@ -27,6 +27,7 @@
 #include "libcamera/internal/yaml_parser.h"
 
 #include "algorithms/adjust.h"
+#include "libipa/agc.h"
 #include "libipa/camera_sensor_helper.h"
 
 #include "module.h"
@@ -301,10 +302,8 @@ void IPASoftIsp::processStats(const uint32_t frame,
 {
 	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
 
-	frameContext.sensor.exposure =
-		sensorControls.get(V4L2_CID_EXPOSURE).get<int32_t>();
-	int32_t again = sensorControls.get(V4L2_CID_ANALOGUE_GAIN).get<int32_t>();
-	frameContext.sensor.gain = camHelper_ ? camHelper_->gain(again) : again;
+	std::tie(frameContext.sensor.exposure, frameContext.sensor.gain) =
+		agc::extractControls(sensorControls, camHelper_.get());
 
 	ControlList metadata(controls::controls);
 	for (const auto &algo : algorithms())
@@ -312,13 +311,8 @@ void IPASoftIsp::processStats(const uint32_t frame,
 	metadataReady.emit(frame, metadata);
 
 	ControlList ctrls(sensorInfoMap_);
-
-	int32_t againNew = camHelper_
-		? camHelper_->gainCode(frameContext.agc.gain)
-		: static_cast<int32_t>(frameContext.agc.gain);
-	ctrls.set(V4L2_CID_EXPOSURE, frameContext.agc.exposure);
-	ctrls.set(V4L2_CID_ANALOGUE_GAIN, againNew);
-
+	agc::prepareControls(ctrls, camHelper_.get(),
+			     frameContext.agc.exposure, frameContext.agc.gain);
 	setSensorControls.emit(ctrls);
 }
 

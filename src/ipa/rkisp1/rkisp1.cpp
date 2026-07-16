@@ -29,6 +29,7 @@
 #include "libcamera/internal/yaml_parser.h"
 
 #include "algorithms/algorithm.h"
+#include "libipa/agc.h"
 
 #include "ipa_context.h"
 #include "params.h"
@@ -324,10 +325,8 @@ void IPARkISP1::processStats(const uint32_t frame, const uint32_t bufferId,
 		stats = reinterpret_cast<rkisp1_stat_buffer *>(
 			mappedBuffers_.at(bufferId).planes()[0].data());
 
-	frameContext.sensor.exposure =
-		sensorControls.get(V4L2_CID_EXPOSURE).get<int32_t>();
-	frameContext.sensor.gain =
-		context_.camHelper->gain(sensorControls.get(V4L2_CID_ANALOGUE_GAIN).get<int32_t>());
+	std::tie(frameContext.sensor.exposure, frameContext.sensor.gain) =
+		agc::extractControls(sensorControls, context_.camHelper.get());
 
 	ControlList metadata(controls::controls);
 
@@ -361,7 +360,6 @@ void IPARkISP1::setControls(unsigned int frame)
 
 	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
 	uint32_t exposure = frameContext.agc.exposure;
-	uint32_t gain = context_.camHelper->gainCode(frameContext.agc.gain);
 	uint32_t vblank = frameContext.agc.vblank;
 
 	LOG(IPARkISP1, Debug)
@@ -369,8 +367,8 @@ void IPARkISP1::setControls(unsigned int frame)
 		<< ", gain " << frameContext.agc.gain << ", vblank " << vblank;
 
 	ControlList ctrls(context_.sensorControls);
-	ctrls.set(V4L2_CID_EXPOSURE, static_cast<int32_t>(exposure));
-	ctrls.set(V4L2_CID_ANALOGUE_GAIN, static_cast<int32_t>(gain));
+	agc::prepareControls(ctrls, context_.camHelper.get(),
+			     exposure, frameContext.agc.gain);
 	ctrls.set(V4L2_CID_VBLANK, static_cast<int32_t>(vblank));
 
 	setSensorControls.emit(frame, ctrls);
