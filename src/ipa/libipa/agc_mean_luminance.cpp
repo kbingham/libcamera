@@ -648,7 +648,7 @@ utils::Duration AgcMeanLuminance::filterExposure(utils::Duration exposureValue)
 }
 
 /**
- * \brief Calculate the new exposure value and splut it between exposure time
+ * \brief Calculate the new exposure value and split it between exposure time
  * and gain
  * \param[in] constraintModeIndex The index of the current constraint mode
  * \param[in] exposureModeIndex The index of the current exposure mode
