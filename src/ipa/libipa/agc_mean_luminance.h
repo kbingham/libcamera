@@ -87,6 +87,7 @@ public:
 	};
 
 	struct Result : ExposureModeHelper::Result {
+		double yTarget;
 	};
 
 	[[nodiscard]] Result calculateNewEv(const Params &params);
@@ -103,7 +104,7 @@ private:
 	int parseConstraint(const ValueNode &modeDict, int32_t id);
 	int parseConstraintModes(const ValueNode &tuningData);
 	int parseExposureModes(const ValueNode &tuningData);
-	double estimateInitialGain(const Traits &traits) const;
+	double estimateInitialGain(const Traits &traits, double yTarget) const;
 	double constraintClampGain(uint32_t constraintModeIndex,
 				   const Histogram &hist,
 				   double gain) const;

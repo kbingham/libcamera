@@ -742,7 +742,7 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 	activeState.agc.automatic.exposure = newEv.exposureTime / lineDuration;
 	activeState.agc.automatic.gain = newEv.analogueGain;
 	activeState.agc.automatic.quantizationGain = newEv.quantizationGain;
-	activeState.agc.automatic.yTarget = agc_.effectiveYTarget();
+	activeState.agc.automatic.yTarget = newEv.yTarget;
 	/*
 	 * Expand the target frame duration so that we do not run faster than
 	 * the minimum frame duration when we have short exposures.
