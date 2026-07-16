@@ -295,7 +295,7 @@ int Agc::configure(IPAContext &context, const IPACameraSensorInfo &configInfo)
 		       context.configuration.sensor.minAnalogueGain,
 		       context.configuration.sensor.maxAnalogueGain, {});
 
-	context.activeState.agc.automatic.yTarget = agc_.effectiveYTarget();
+	context.activeState.agc.automatic.yTarget = agc_.effectiveYTarget(0, 1);
 
 	agc_.resetFrameCount();
 
@@ -718,9 +718,6 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 	Histogram hist({ params->hist.hist_bins, context.hw.numHistogramBins },
 		       [](uint32_t x) { return x >> 4; });
 
-	agc_.setExposureCompensation(pow(2.0, frameContext.agc.exposureValue));
-	agc_.setLux(frameContext.lux.lux);
-
 	const auto &newEv = agc_.calculateNewEv({
 		.traits = AgcTraits{
 			{ params->ae.exp_mean, context.hw.numAeCells },
@@ -730,6 +727,8 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 		.effectiveExposureValue = effectiveExposureValue,
 		.constraintModeIndex = frameContext.agc.constraintMode,
 		.exposureModeIndex = frameContext.agc.exposureMode,
+		.lux = frameContext.lux.lux,
+		.exposureCompensation = pow(2.0, frameContext.agc.exposureValue),
 	});
 
 	LOG(RkISP1Agc, Debug)

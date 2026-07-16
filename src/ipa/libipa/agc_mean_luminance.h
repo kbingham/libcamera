@@ -50,16 +50,6 @@ public:
 	void configure(utils::Duration lineDuration, const CameraSensorHelper *sensorHelper);
 	int parseTuningData(const ValueNode &tuningData);
 
-	void setExposureCompensation(double gain)
-	{
-		exposureCompensation_ = gain;
-	}
-
-	void setLux(unsigned int lux)
-	{
-		lux_ = lux;
-	}
-
 	void setLimits(utils::Duration minExposureTime, utils::Duration maxExposureTime,
 		       double minGain, double maxGain, std::vector<AgcConstraint> constraints);
 
@@ -84,6 +74,8 @@ public:
 		utils::Duration effectiveExposureValue;
 		uint32_t constraintModeIndex;
 		uint32_t exposureModeIndex;
+		double lux = 0;
+		double exposureCompensation = 1;
 	};
 
 	struct Result : ExposureModeHelper::Result {
@@ -92,7 +84,7 @@ public:
 
 	[[nodiscard]] Result calculateNewEv(const Params &params);
 
-	double effectiveYTarget() const;
+	double effectiveYTarget(double lux, double exposureCompensation) const;
 
 	void resetFrameCount()
 	{
@@ -105,17 +97,13 @@ private:
 	int parseConstraintModes(const ValueNode &tuningData);
 	int parseExposureModes(const ValueNode &tuningData);
 	double estimateInitialGain(const Traits &traits, double yTarget) const;
-	double constraintClampGain(uint32_t constraintModeIndex,
-				   const Histogram &hist,
-				   double gain) const;
+	double constraintClampGain(const Params &params, double gain) const;
 	utils::Duration filterExposure(utils::Duration exposureValue);
 
 	utils::Duration filteredExposure_;
 	mutable bool luxWarningEnabled_;
-	double exposureCompensation_;
 	Pwl relativeLuminanceTarget_;
 	uint64_t frameCount_;
-	unsigned int lux_;
 
 	std::vector<AgcConstraint> additionalConstraints_;
 	std::map<int32_t, std::vector<AgcConstraint>> constraintModes_;
