@@ -105,7 +105,7 @@ private:
 	double estimateInitialGain(const Traits &traits) const;
 	double constraintClampGain(uint32_t constraintModeIndex,
 				   const Histogram &hist,
-				   double gain);
+				   double gain) const;
 	utils::Duration filterExposure(utils::Duration exposureValue);
 
 	utils::Duration filteredExposure_;
