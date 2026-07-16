@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -30,8 +29,14 @@ public:
 	void setLimits(utils::Duration minExposureTime, utils::Duration maxExposureTime,
 		       double minGain, double maxGain);
 
-	std::tuple<utils::Duration, double, double, double>
-	splitExposure(utils::Duration exposure) const;
+	struct Result {
+		utils::Duration exposureTime;
+		double analogueGain;
+		double quantizationGain;
+		double digitalGain;
+	};
+
+	[[nodiscard]] Result splitExposure(utils::Duration exposure) const;
 
 	utils::Duration minExposureTime() const { return minExposureTime_; }
 	utils::Duration maxExposureTime() const { return maxExposureTime_; }

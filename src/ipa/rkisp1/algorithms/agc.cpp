@@ -721,9 +721,7 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 	agc_.setExposureCompensation(pow(2.0, frameContext.agc.exposureValue));
 	agc_.setLux(frameContext.lux.lux);
 
-	utils::Duration newExposureTime;
-	double aGain, qGain, dGain;
-	std::tie(newExposureTime, aGain, qGain, dGain) = agc_.calculateNewEv({
+	const auto &newEv = agc_.calculateNewEv({
 		.traits = AgcTraits{
 			{ params->ae.exp_mean, context.hw.numAeCells },
 			meteringModes_.at(frameContext.agc.meteringMode),
@@ -736,21 +734,21 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 
 	LOG(RkISP1Agc, Debug)
 		<< "Divided up exposure time, analogue gain, quantization gain"
-		<< " and digital gain are " << newExposureTime << ", " << aGain
-		<< ", " << qGain << " and " << dGain;
+		<< " and digital gain are " << newEv.exposureTime << ", " << newEv.analogueGain
+		<< ", " << newEv.quantizationGain << " and " << newEv.digitalGain;
 
 	IPAActiveState &activeState = context.activeState;
 	/* Update the estimated exposure and gain. */
-	activeState.agc.automatic.exposure = newExposureTime / lineDuration;
-	activeState.agc.automatic.gain = aGain;
-	activeState.agc.automatic.quantizationGain = qGain;
+	activeState.agc.automatic.exposure = newEv.exposureTime / lineDuration;
+	activeState.agc.automatic.gain = newEv.analogueGain;
+	activeState.agc.automatic.quantizationGain = newEv.quantizationGain;
 	activeState.agc.automatic.yTarget = agc_.effectiveYTarget();
 	/*
 	 * Expand the target frame duration so that we do not run faster than
 	 * the minimum frame duration when we have short exposures.
 	 */
 	processFrameDuration(context, frameContext,
-			     std::max(frameContext.agc.minFrameDuration, newExposureTime));
+			     std::max(frameContext.agc.minFrameDuration, newEv.exposureTime));
 
 	fillMetadata(context, frameContext, metadata);
 }

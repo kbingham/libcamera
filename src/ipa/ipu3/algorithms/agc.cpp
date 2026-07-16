@@ -237,9 +237,7 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 	double analogueGain = frameContext.sensor.gain;
 	utils::Duration effectiveExposureValue = exposureTime * analogueGain;
 
-	utils::Duration newExposureTime;
-	double aGain, qGain, dGain;
-	std::tie(newExposureTime, aGain, qGain, dGain) = agc_.calculateNewEv({
+	const auto &newEv = agc_.calculateNewEv({
 		.traits = AgcTraits{
 			rgbTriples_,
 			{{
@@ -257,12 +255,12 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 
 	LOG(IPU3Agc, Debug)
 		<< "Divided up exposure time, analogue gain and digital gain are "
-		<< newExposureTime << ", " << aGain << " and " << dGain;
+		<< newEv.exposureTime << ", " << newEv.analogueGain << " and " << newEv.digitalGain;
 
 	IPAActiveState &activeState = context.activeState;
 	/* Update the estimated exposure time and gain. */
-	activeState.agc.exposure = newExposureTime / context.configuration.sensor.lineDuration;
-	activeState.agc.gain = aGain;
+	activeState.agc.exposure = newEv.exposureTime / context.configuration.sensor.lineDuration;
+	activeState.agc.gain = newEv.analogueGain;
 
 	metadata.set(controls::AnalogueGain, frameContext.sensor.gain);
 	metadata.set(controls::ExposureTime, exposureTime.get<std::micro>());

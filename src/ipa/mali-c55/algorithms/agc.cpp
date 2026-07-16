@@ -332,9 +332,7 @@ void Agc::process(IPAContext &context,
 	utils::Duration currentShutter = exposure * configuration.sensor.lineDuration;
 	utils::Duration effectiveExposureValue = currentShutter * analogueGain;
 
-	utils::Duration shutterTime;
-	double aGain, qGain, dGain;
-	std::tie(shutterTime, aGain, qGain, dGain) = agc_.calculateNewEv({
+	const auto &newEv = agc_.calculateNewEv({
 		.traits = AgcTraits(statistics_),
 		.yHist = statistics_.yHist,
 		.effectiveExposureValue = effectiveExposureValue,
@@ -344,10 +342,10 @@ void Agc::process(IPAContext &context,
 
 	LOG(MaliC55Agc, Debug)
 		<< "Divided up shutter, analogue gain and digital gain are "
-		<< shutterTime << ", " << aGain << " and " << dGain;
+		<< newEv.exposureTime << ", " << newEv.analogueGain << " and " << newEv.digitalGain;
 
-	activeState.agc.automatic.exposure = shutterTime / configuration.sensor.lineDuration;
-	activeState.agc.automatic.sensorGain = aGain;
+	activeState.agc.automatic.exposure = newEv.exposureTime / configuration.sensor.lineDuration;
+	activeState.agc.automatic.sensorGain = newEv.analogueGain;
 
 	metadata.set(controls::ExposureTime, currentShutter.get<std::micro>());
 	metadata.set(controls::AnalogueGain, frameContext.agc.sensorGain);

@@ -668,6 +668,11 @@ utils::Duration AgcMeanLuminance::filterExposure(utils::Duration exposureValue)
  */
 
 /**
+ * \struct AgcMeanLuminance::Result
+ * \brief Collection of results of the mean luminance AGC algorithm
+ */
+
+/**
  * \brief Calculate the new exposure value and split it between exposure time
  * and gain
  * \param[in] params The set of parameters for the exppsure value calculation
@@ -679,7 +684,7 @@ utils::Duration AgcMeanLuminance::filterExposure(utils::Duration exposureValue)
  * \return Tuple of exposure time, analogue gain, quantization gain and digital
  * gain
  */
-std::tuple<utils::Duration, double, double, double>
+AgcMeanLuminance::Result
 AgcMeanLuminance::calculateNewEv(const Params &params)
 {
 	/*
@@ -698,7 +703,7 @@ AgcMeanLuminance::calculateNewEv(const Params &params)
 		 * doesn't get stuck with 0 in case the sensor driver allows a
 		 * min exposure of 0.
 		 */
-		return exposureModeHelper.splitExposure(10ms);
+		return { exposureModeHelper.splitExposure(10ms) };
 	}
 
 	double gain = estimateInitialGain(params.traits);
@@ -720,7 +725,7 @@ AgcMeanLuminance::calculateNewEv(const Params &params)
 	newExposureValue = filterExposure(newExposureValue);
 
 	frameCount_++;
-	return exposureModeHelper.splitExposure(newExposureValue);
+	return { exposureModeHelper.splitExposure(newExposureValue) };
 }
 
 /**

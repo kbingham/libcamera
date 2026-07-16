@@ -9,7 +9,6 @@
 
 #include <map>
 #include <memory>
-#include <tuple>
 #include <vector>
 
 #include <libcamera/base/utils.h>
@@ -87,8 +86,10 @@ public:
 		uint32_t exposureModeIndex;
 	};
 
-	std::tuple<utils::Duration, double, double, double>
-	calculateNewEv(const Params &params);
+	struct Result : ExposureModeHelper::Result {
+	};
+
+	[[nodiscard]] Result calculateNewEv(const Params &params);
 
 	double effectiveYTarget() const;
 
