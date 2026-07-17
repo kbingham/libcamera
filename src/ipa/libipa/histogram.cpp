@@ -75,6 +75,12 @@ Histogram::Histogram(Span<const uint32_t> data)
  */
 
 /**
+ * \fn Histogram::operator[](size_t bin) const
+ * \brief Retrieve the value for \a bin
+ * \return The value in \a bin
+ */
+
+/**
  * \brief Cumulative frequency up to a (fractional) point in a bin
  * \param[in] bin The bin up to which to cumulate
  *

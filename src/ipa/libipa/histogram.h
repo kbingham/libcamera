@@ -42,6 +42,11 @@ public:
 	double quantile(double q, uint32_t first = 0, uint32_t last = UINT_MAX) const;
 	double interQuantileMean(double lowQuantile, double hiQuantile) const;
 
+	uint32_t operator[](size_t bin) const
+	{
+		return cumulative_[bin + 1] - cumulative_[bin];
+	}
+
 private:
 	std::vector<uint64_t> cumulative_;
 };
