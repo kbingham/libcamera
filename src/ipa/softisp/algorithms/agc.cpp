@@ -67,7 +67,7 @@ Agc::Agc()
 
 void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV)
 {
-	int32_t exposure = frameContext.sensor.exposure;
+	uint32_t exposure = frameContext.sensor.exposure;
 	double again = frameContext.sensor.gain;
 
 	double error = kExposureOptimal - exposureMSV;
@@ -87,7 +87,7 @@ void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, dou
 	if (factor > 1.0f) {
 		/* Scene too dark: increase exposure first, then gain. */
 		if (exposure < context.configuration.agc.exposureMax) {
-			int32_t next = static_cast<int32_t>(exposure * factor);
+			uint32_t next = exposure * factor;
 			exposure = std::max(next, exposure + 1);
 		} else {
 			double next = again * factor;
@@ -105,7 +105,7 @@ void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, dou
 			else
 				again = next;
 		} else {
-			int32_t next = static_cast<int32_t>(exposure * factor);
+			uint32_t next = exposure * factor;
 			exposure = std::min(next, exposure - 1);
 		}
 	}
