@@ -59,7 +59,8 @@ public:
 		 const ControlInfoMap &sensorControls,
 		 ControlInfoMap *ipaControls,
 		 bool *ccmEnabled) override;
-	int configure(const IPAConfigInfo &configInfo) override;
+	int configure(const IPAConfigInfo &configInfo,
+		      ControlInfoMap *ipaControls) override;
 
 	int start() override;
 	void stop() override;
@@ -198,7 +199,7 @@ int IPASoftIsp::init(const IPASettings &settings,
 	return 0;
 }
 
-int IPASoftIsp::configure(const IPAConfigInfo &configInfo)
+int IPASoftIsp::configure(const IPAConfigInfo &configInfo, ControlInfoMap *ipaControls)
 {
 	context_.sensorControls = configInfo.sensorControls;
 
@@ -250,6 +251,8 @@ int IPASoftIsp::configure(const IPAConfigInfo &configInfo)
 		<< ", gain " << context_.configuration.agc.againMin << "-"
 		<< context_.configuration.agc.againMax
 		<< " (" << context_.configuration.agc.againMinStep << ")";
+
+	*ipaControls = { ControlInfoMap::Map(context_.ctrlMap), controls::controls };
 
 	return 0;
 }

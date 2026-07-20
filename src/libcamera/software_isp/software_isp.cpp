@@ -278,17 +278,18 @@ uint32_t SoftwareIsp::preferredInputStride(const PixelFormat &inputFormat, const
  * \brief Configure the SoftwareIsp object according to the passed in parameters
  * \param[in] inputCfg The input configuration
  * \param[in] outputCfgs The output configurations
- * \param[in] configInfo The IPA configuration data, received from the pipeline
- * handler
+ * \param[in] configInfo The IPA configuration data, received from the pipeline handler
+ * \param[out] ipaControls The IPA controls to update
  * \return 0 on success, a negative errno on failure
  */
 int SoftwareIsp::configure(const StreamConfiguration &inputCfg,
 			   const std::vector<std::reference_wrapper<const StreamConfiguration>> &outputCfgs,
-			   const ipa::softisp::IPAConfigInfo &configInfo)
+			   const ipa::softisp::IPAConfigInfo &configInfo,
+			   ControlInfoMap *ipaControls)
 {
 	ASSERT(ipa_ && debayer_);
 
-	int ret = ipa_->configure(configInfo);
+	int ret = ipa_->configure(configInfo, ipaControls);
 	if (ret < 0)
 		return ret;
 
