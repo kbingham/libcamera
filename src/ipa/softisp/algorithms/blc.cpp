@@ -42,6 +42,18 @@ int BlackLevel::configure(IPAContext &context,
 {
 	if (definedLevel_.has_value())
 		context.configuration.black.level = definedLevel_;
+	else if (context.camHelper) {
+		if (auto bl = context.camHelper->blackLevel()) {
+			/*
+			 * The black level from CameraSensorHelper is a 16 bit value, software ISP
+			 * works with 8 bit pixel values, both regardless of the actual
+			 * sensor pixel width. Hence we obtain the pixel-based black value
+			 * by dividing the value from the helper by 256.
+			 */
+			context.configuration.black.level = *bl / 256;
+		}
+	}
+
 	context.activeState.blc.level =
 		context.configuration.black.level.value_or(16);
 	return 0;

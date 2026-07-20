@@ -77,8 +77,6 @@ private:
 
 	DebayerParams *params_;
 	SwIspStats *stats_;
-	std::unique_ptr<CameraSensorHelper> camHelper_;
-	ControlInfoMap sensorInfoMap_;
 
 	/* Local parameter storage */
 	struct IPAContext context_;
@@ -100,8 +98,8 @@ int IPASoftIsp::init(const IPASettings &settings,
 		     ControlInfoMap *ipaControls,
 		     bool *ccmEnabled)
 {
-	camHelper_ = CameraSensorHelperFactoryBase::create(settings.sensorModel);
-	if (!camHelper_) {
+	context_.camHelper = CameraSensorHelperFactoryBase::create(settings.sensorModel);
+	if (!context_.camHelper) {
 		LOG(IPASoftIsp, Warning)
 			<< "Failed to create camera sensor helper for "
 			<< settings.sensorModel;
@@ -202,10 +200,10 @@ int IPASoftIsp::init(const IPASettings &settings,
 
 int IPASoftIsp::configure(const IPAConfigInfo &configInfo)
 {
-	sensorInfoMap_ = configInfo.sensorControls;
+	context_.sensorControls = configInfo.sensorControls;
 
-	const ControlInfo &exposureInfo = sensorInfoMap_.find(V4L2_CID_EXPOSURE)->second;
-	const ControlInfo &gainInfo = sensorInfoMap_.find(V4L2_CID_ANALOGUE_GAIN)->second;
+	const ControlInfo &exposureInfo = context_.sensorControls.find(V4L2_CID_EXPOSURE)->second;
+	const ControlInfo &gainInfo = context_.sensorControls.find(V4L2_CID_ANALOGUE_GAIN)->second;
 
 	/* Clear the IPA context before the streaming session. */
 	context_.configuration = {};
@@ -225,24 +223,14 @@ int IPASoftIsp::configure(const IPAConfigInfo &configInfo)
 	int32_t againMax = gainInfo.max().get<int32_t>();
 	int32_t againDef = gainInfo.def().get<int32_t>();
 
-	if (camHelper_) {
-		context_.configuration.agc.againMin = camHelper_->gain(againMin);
-		context_.configuration.agc.againMax = camHelper_->gain(againMax);
+	if (context_.camHelper) {
+		context_.configuration.agc.againMin = context_.camHelper->gain(againMin);
+		context_.configuration.agc.againMax = context_.camHelper->gain(againMax);
 		context_.configuration.agc.again10 = std::max(context_.configuration.agc.againMin, 1.0);
 		context_.configuration.agc.againMinStep =
 			(context_.configuration.agc.againMax -
 			 context_.configuration.agc.againMin) /
 			100.0;
-		if (camHelper_->blackLevel().has_value()) {
-			/*
-			 * The black level from camHelper_ is a 16 bit value, software ISP
-			 * works with 8 bit pixel values, both regardless of the actual
-			 * sensor pixel width. Hence we obtain the pixel-based black value
-			 * by dividing the value from the helper by 256.
-			 */
-			context_.configuration.black.level =
-				camHelper_->blackLevel().value() / 256;
-		}
 	} else {
 		context_.configuration.agc.againMax = againMax;
 		context_.configuration.agc.again10 = againDef;
@@ -303,15 +291,15 @@ void IPASoftIsp::processStats(const uint32_t frame,
 	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
 
 	std::tie(frameContext.sensor.exposure, frameContext.sensor.gain) =
-		agc::extractControls(sensorControls, camHelper_.get());
+		agc::extractControls(sensorControls, context_.camHelper.get());
 
 	ControlList metadata(controls::controls);
 	for (const auto &algo : algorithms())
 		algo->process(context_, frame, frameContext, stats_, metadata);
 	metadataReady.emit(frame, metadata);
 
-	ControlList ctrls(sensorInfoMap_);
-	agc::prepareControls(ctrls, camHelper_.get(),
+	ControlList ctrls(context_.sensorControls);
+	agc::prepareControls(ctrls, context_.camHelper.get(),
 			     frameContext.agc.exposure, frameContext.agc.gain);
 	setSensorControls.emit(ctrls);
 }
