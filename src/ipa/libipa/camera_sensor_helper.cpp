@@ -654,6 +654,18 @@ public:
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx477", CameraSensorHelperImx477)
 
+class CameraSensorHelperImx662 : public CameraSensorHelper
+{
+public:
+	CameraSensorHelperImx662()
+	{
+		/* From datasheet: 0xc8 at 12bits. */
+		blackLevel_ = 3200;
+		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
+	}
+};
+REGISTER_CAMERA_SENSOR_HELPER("imx662", CameraSensorHelperImx662)
+
 class CameraSensorHelperImx678 : public CameraSensorHelper
 {
 public:
