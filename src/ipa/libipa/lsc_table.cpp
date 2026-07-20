@@ -59,7 +59,7 @@ int LscTable::parseLscData(const ValueNode &sets,
 int LscTable::parseLscComponent(const ValueNode &yamlSet,
 				unsigned int ct, const LscDescriptor &descriptor)
 {
-	lsc::Components component;
+	LscImplementation::Components component;
 	for (auto &k : descriptor.keys) {
 		auto [it, inserted] =
 			component.try_emplace(k, parseTable(yamlSet,

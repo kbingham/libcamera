@@ -194,15 +194,15 @@ int LscPolynomial::parseLscData(const ValueNode &sets,
  * [0, 0.0625, 0.125, 0.1875, ... , 1]. It is expected that the first position
  * is 0 and the last position is 1.
  */
-lsc::ComponentsMap
+LscImplementation::ComponentsMap
 LscPolynomial::sampleForCrop(const Rectangle &cropRectangle,
 			     std::vector<double> xPos, std::vector<double> yPos)
 {
 
-	lsc::ComponentsMap components;
+	LscImplementation::ComponentsMap components;
 
 	for (const auto &[t, c] : lscData_) {
-		lsc::Components &comp = components[t];
+		LscImplementation::Components &comp = components[t];
 
 		for (const auto &[k, p] : c)
 			comp.try_emplace(k, samplePolynomial(p, xPos, yPos,

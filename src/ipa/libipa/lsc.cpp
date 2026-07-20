@@ -46,11 +46,91 @@ namespace lsc {
  * \brief Boolean flag for the LscAlgorithm updated status
  */
 
+/**
+ * \typedef Components
+ * \brief Associate colour components with a list of gains in register format
+ * \tparam T The type used to store the gain values
+ *
+ * LSC tables are defined as a list of gain values associated to a colour
+ * component.
+ *
+ * As different ISPs support different colour components (usually 'r', 'gr',
+ * 'gb', 'b' or just 'r', 'g', 'b') this class associates a string
+ * identifier for the colour component to a list of gains.
+ *
+ * Each key name shall match an entry in the tuning file.
+ *
+ * The list of keys is provided to the LscAlgorithm class using \a
+ * LscDescriptor::keys.
+ *
+ * The gain values are expressed in fixed-point register format stored in
+ * variabled of type \a T, as each platform potentially has a different register
+ * width.
+ */
+
+/**
+ * \typedef ComponentsMap
+ * \brief Associate a colour temperature to a LSC table
+ * \tparam T The type of the gain values
+ *
+ * An LSC table is generated during the tuning phase for a specific colour
+ * temperature, and a tuning file usually contains LSC tables generated for
+ * several different colour temperatures.
+ */
+
 } /* namespace lsc */
+
+#ifndef __DOXYGEN__
+template<typename T>
+void interpolateVector(const std::vector<T> &a,
+		       const std::vector<T> &b,
+		       std::vector<T> &dest, double lambda)
+{
+	ASSERT(a.size() == b.size());
+	dest.resize(a.size());
+	for (size_t i = 0; i < a.size(); i++)
+		dest[i] = a[i] * (1.0 - lambda) + b[i] * lambda;
+}
+
+template<>
+void Interpolator<lsc::Components<uint16_t>>::
+	interpolate(const lsc::Components<uint16_t> &a,
+		    const lsc::Components<uint16_t> &b,
+		    lsc::Components<uint16_t> &dest,
+		    double lambda)
+{
+	for (auto const &[k, v] : a)
+		interpolateVector(v, b.at(k), dest[k], lambda);
+}
+#endif
+
+/**
+ * \class LscAlgorithmBase
+ * \brief Base class for LscAlgorithm
+ *
+ * Base class for LscAlgorithm for non-templated functions implementation
+ */
+
+/**
+ * \var LscAlgorithmBase::impl_
+ * \brief The LSC algorithm implementation
+ *
+ * There are two classes derived from LscImplementation, the LscTable and
+ * LscPolynomial ones. Which one to instantiate is decided by parsing the tuning
+ * file.
+ */
+
+/**
+ * \var LscAlgorithmBase::polynomial_
+ * \brief Boolean flag for polynomial LSC
+ *
+ * Set to true if polynomial LSC is in use.
+ */
 
 /**
  * \class LscAlgorithm
  * \brief libIPA LSC algorithm implementation
+ * \tparam U The platform fixed-point register format representation
  *
  * Due to the optical characteristics of the lens, the light intensity received
  * by the sensor is not uniform. The Lens Shading Correction algorithm applies
@@ -192,6 +272,14 @@ namespace lsc {
  *
  * \todo Implement grid based re-sampling
  *
+ * After re-sampling, the LSC tables gain values are converted from their
+ * floating point representation (LscImplementation::Components) to the
+ * platform's register representation (lsc::Components<>). Grid-based LSC tables
+ * currently already contain gains represented in register format, so no
+ * quantization is necessary but only a simple cast is required.
+ *
+ * \todo Express gains in floating point format for grid-based LSC tables
+ *
  * When the IPA algorithms wants to get access to the (re-sampled) tables to
  * program its LSC engine, it uses LscAlgorithm::interpolateComponents() to get
  * an LSC table interpolated by the LscAlgorithm class for the specified colour
@@ -209,8 +297,8 @@ namespace lsc {
  *
  * \return 0 on success, a negative error code otherwise
  */
-int LscAlgorithm::init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
-		       const LscDescriptor &descriptor)
+int LscAlgorithmBase::init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
+			   const LscDescriptor &descriptor)
 {
 	polynomial_ = false;
 
@@ -245,12 +333,15 @@ int LscAlgorithm::init(const ValueNode &tuningData, ControlInfoMap::Map &control
 }
 
 /**
+ * \fn LscAlgorithm::configure()
+ * \brief Re-sample and quantize LSC data
  * \param[in] state The LSC active state
  * \param[in] analogCrop The current sensor analog crop rectangle
  * \param[in] xPos List of horizontal positions of the LSC grid nodes
  * \param[in] yPos List of vertical positions of the LSC grid nodes
  *
- * Re-sample the LSC data for an \a analogCrop.
+ * Re-sample the LSC data for an \a analogCrop and convert gains to their
+ * register representation using the class template paramter \a U.
  *
  * LSC tables are generated at tuning time using a known sensor configuration.
  * When a new streaming session is started, it might use a different sensor
@@ -263,30 +354,12 @@ int LscAlgorithm::init(const ValueNode &tuningData, ControlInfoMap::Map &control
  *
  * \sa LscImplementation::sampleForCrop
  *
+ * Once tables have been re-sampled, they get quantized to the platform's
+ * fixed-point register representation using the LscAlgorithm template parameter
+ * \a U.
+ *
  * \return 0 on success, a negative error code otherwise
  */
-int LscAlgorithm::configure(lsc::ActiveState &state, const Rectangle &analogCrop,
-			    const std::vector<double> &xPos,
-			    const std::vector<double> &yPos)
-{
-	LOG(Lsc, Debug) << "Sample Lsc data for " << analogCrop;
-	lsc::ComponentsMap lscData =
-		impl_->sampleForCrop(analogCrop, xPos, yPos);
-
-	/*
-	 * Retain a copy of the components table.
-	 *
-	 * We could avoid a copy here if getComponents() could
-	 * return sets_.data() but I wasn't able to work around the
-	 * compiler refusing it.
-	 */
-	lscData_ = lscData;
-
-	sets_.setData(std::move(lscData));
-	state.enabled = true;
-
-	return 0;
-}
 
 /**
  * \brief Queue a request to the lsc algorithm
@@ -297,9 +370,9 @@ int LscAlgorithm::configure(lsc::ActiveState &state, const Rectangle &analogCrop
  * Queue a new list of \a controls to the lsc algorithm.
  * The only supported control is controls::LensShadingCorrectionEnable.
  */
-void LscAlgorithm::queueRequest(lsc::ActiveState &state,
-				lsc::FrameContext &context,
-				const ControlList &controls)
+void LscAlgorithmBase::queueRequest(lsc::ActiveState &state,
+				    lsc::FrameContext &context,
+				    const ControlList &controls)
 {
 	const auto &lscEnable = controls.get(controls::LensShadingCorrectionEnable);
 	if (lscEnable && *lscEnable != state.enabled) {
@@ -322,7 +395,7 @@ void LscAlgorithm::queueRequest(lsc::ActiveState &state,
  * Populates the list of \a metadata with controls handled by the LscAlgorithm
  * class. The only supported metadata is controls::LensShadingCorrectionEnable.
  */
-void LscAlgorithm::process(lsc::FrameContext &context, ControlList &metadata)
+void LscAlgorithmBase::process(lsc::FrameContext &context, ControlList &metadata)
 {
 	metadata.set(controls::LensShadingCorrectionEnable, context.enabled);
 }
@@ -350,8 +423,7 @@ void LscAlgorithm::process(lsc::FrameContext &context, ControlList &metadata)
 
 /**
  * \fn LscAlgorithm::getComponents
- *
- * Return the map of LSC data per-colour-temperature.
+ * \brief Return the map of LSC data per-colour-temperature
  *
  * Calling this function is only valid after LscAlgorithm::configure() has been
  * called. An empty components list is returned otherwise.

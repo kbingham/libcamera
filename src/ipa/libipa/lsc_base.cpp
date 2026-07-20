@@ -16,49 +16,6 @@ namespace libcamera {
 
 namespace ipa {
 
-namespace lsc {
-
-/**
- * \typedef Components
- * \brief Associate colour components with a list of gains
- *
- * LSC tables are defined as a list of gain values associated to a colour
- * component.
- *
- * As different ISPs support different colour components (usually 'r', 'gr',
- * 'gb', 'b' or just 'r', 'g', 'b') this class associates a string
- * identifier for the colour component to a list of gains.
- *
- * Each key name shall match an entry in the tuning file.
- *
- * The list of keys is provided to the LscAlgorithm class using \a
- * LscDescriptor::keys.
- */
-
-/**
- * \typedef ComponentsMap
- * \brief Associate a colour temperature to a LSC table
- *
- * An LSC table is generated during the tuning phase for a specific colour
- * temperature, and a tuning file usually contains LSC tables generated for
- * several different colour temperatures.
- */
-
-} /* namespace lsc */
-
-#ifndef __DOXYGEN__
-template<>
-void Interpolator<lsc::Components>::
-	interpolate(const lsc::Components &a,
-		    const lsc::Components &b,
-		    lsc::Components &dest,
-		    double lambda)
-{
-	for (auto const &[k, v] : a)
-		interpolateVector(v, b.at(k), dest[k], lambda);
-}
-#endif
-
 /**
  * \struct LscDescriptor
  * \brief Describe the ISP LSC engine
@@ -88,6 +45,38 @@ void Interpolator<lsc::Components>::
  * \brief Pure virtual base class for LSC algorithm implementations
  *
  * Defines the interface for the LSC algorithm implementation.
+ */
+
+/**
+ * \typedef LscImplementation::Components
+ * \brief Associate colour components with a list of gains in float format
+ *
+ * LSC tables are defined as a list of gain values associated to a colour
+ * component.
+ *
+ * As different ISP support different colour components (usually 'r', 'gr',
+ * 'gb', 'b' or just 'r', 'g', 'b') this class associates a string
+ * identifier for the colour component to a list of gains.
+ *
+ * The gain values are represented as floats and are either loaded from tuning
+ * file or are the result of a polynomial expansion, depending on the
+ * LscImplementation derived class in use (LscTable or LscPolynomial).
+ *
+ * The gain values are converted to the platform's register format before being
+ * returned to the IPA module by LscAlgorithm::configure().
+ *
+ * \todo Tabular LSC data are already expressed in register format. Make the
+ * tuning files express gains in float format as well and actually perform
+ * quantization in LscAlgorithm::configure().
+ */
+
+/**
+ * \typedef LscImplementation::ComponentsMap
+ * \brief Associate a colour temperature to a LSC table
+ *
+ * An LSC table is generated during the tuning phase for a specific colour
+ * temperature, and a tuning file usually contains LSC tables generated for
+ * several different colour temperatures.
  */
 
 /**

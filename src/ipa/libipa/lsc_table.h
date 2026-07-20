@@ -29,7 +29,7 @@ public:
 	int parseLscData(const ValueNode &sets,
 			 const LscDescriptor &descriptor) override;
 
-	lsc::ComponentsMap
+	LscImplementation::ComponentsMap
 	sampleForCrop([[maybe_unused]] const Rectangle &cropRectangle,
 		      [[maybe_unused]] std::vector<double> xPos,
 		      [[maybe_unused]] std::vector<double> yPos) override
@@ -47,7 +47,7 @@ private:
 					 unsigned int numHSamples,
 					 unsigned int numVSamples);
 
-	lsc::ComponentsMap lscData_;
+	LscImplementation::ComponentsMap lscData_;
 };
 
 } /* namespace ipa */

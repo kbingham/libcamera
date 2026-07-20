@@ -12,6 +12,7 @@
 #include <linux/rkisp1-config.h>
 
 #include "libcamera/internal/value_node.h"
+#include "libipa/fixedpoint.h"
 
 #include "libipa/lsc.h"
 
@@ -41,7 +42,8 @@ public:
 		     ControlList &metadata) override;
 private:
 	void setParameters(rkisp1_cif_isp_lsc_config &config);
-	void copyTable(rkisp1_cif_isp_lsc_config &config, const lsc::Components &set0);
+	void copyTable(rkisp1_cif_isp_lsc_config &config,
+		       const lsc::Components<uint16_t> &set);
 
 	std::vector<double> xSize_;
 	std::vector<double> ySize_;
@@ -55,7 +57,7 @@ private:
 	unsigned int lastAppliedCt_;
 	unsigned int lastAppliedQuantizedCt_;
 
-	LscAlgorithm lscAlgo_;
+	LscAlgorithm<UQ<2, 10>> lscAlgo_;
 };
 
 } /* namespace ipa::rkisp1::algorithms */

@@ -60,7 +60,7 @@ public:
 	int parseLscData(const ValueNode &sets,
 			 const LscDescriptor &descriptor) override;
 
-	lsc::ComponentsMap
+	LscImplementation::ComponentsMap
 	sampleForCrop(const Rectangle &cropRectangle,
 		      std::vector<double> xPos, std::vector<double> yPos) override;
 
