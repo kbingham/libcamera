@@ -65,10 +65,10 @@ public:
 		      std::vector<double> xPos, std::vector<double> yPos) override;
 
 private:
-	std::vector<uint16_t> samplePolynomial(const lsc::Polynomial &poly,
-					       Span<const double> xPositions,
-					       Span<const double> yPositions,
-					       const Rectangle &cropRectangle);
+	std::vector<float> samplePolynomial(const lsc::Polynomial &poly,
+					    Span<const double> xPositions,
+					    Span<const double> yPositions,
+					    const Rectangle &cropRectangle);
 	PolynomialComponentsMap lscData_;
 };
 

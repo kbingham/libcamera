@@ -212,7 +212,7 @@ LscPolynomial::sampleForCrop(const Rectangle &cropRectangle,
 	return components;
 }
 
-std::vector<uint16_t>
+std::vector<float>
 LscPolynomial::samplePolynomial(const lsc::Polynomial &poly,
 				Span<const double> xPositions,
 				Span<const double> yPositions,
@@ -223,7 +223,7 @@ LscPolynomial::samplePolynomial(const lsc::Polynomial &poly,
 	double y0 = cropRectangle.y / m;
 	double w = cropRectangle.width / m;
 	double h = cropRectangle.height / m;
-	std::vector<uint16_t> samples;
+	std::vector<float> samples;
 
 	samples.reserve(xPositions.size() * yPositions.size());
 
@@ -231,16 +231,9 @@ LscPolynomial::samplePolynomial(const lsc::Polynomial &poly,
 		for (double x : xPositions) {
 			double xp = x0 + x * w;
 			double yp = y0 + y * h;
-			/*
-			 * The hardware uses 2.10 fixed point format and limits
-			 * the legal values to [1..3.999]. Scale and clamp the
-			 * sampled value accordingly.
-			 */
-			int v = static_cast<int>(
-				poly.sampleAtNormalizedPixelPos(xp, yp) *
-				1024);
-			v = std::clamp(v, 1024, 4095);
-			samples.push_back(v);
+
+			samples.push_back(static_cast<float>
+					 (poly.sampleAtNormalizedPixelPos(xp, yp)));
 		}
 	}
 	return samples;

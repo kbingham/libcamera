@@ -42,7 +42,7 @@ public:
 private:
 	int parseLscComponent(const ValueNode &yamlSet,
 			      unsigned int ct, const LscDescriptor &descriptor);
-	std::vector<uint16_t> parseTable(const ValueNode &tuningData,
+	std::vector<float> parseTable(const ValueNode &tuningData,
 					 const char *prop,
 					 unsigned int numHSamples,
 					 unsigned int numVSamples);

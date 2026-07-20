@@ -30,6 +30,11 @@ namespace ipa {
  *
  * Parse the LSC data in tabular form from the \a sets tuning data.
  *
+ * \todo Currently the gain values parsed from tuning file are expressed in the
+ * platform fixed-point register format. Use gains in floating point
+ * representation for tabular LSC data in order to facilitate re-use of LSC
+ * tuning data across different platforms.
+ *
  * \return 0 on success or a negative error number otherwise
  */
 int LscTable::parseLscData(const ValueNode &sets,
@@ -82,15 +87,20 @@ int LscTable::parseLscComponent(const ValueNode &yamlSet,
 	return 0;
 }
 
-std::vector<uint16_t> LscTable::parseTable(const ValueNode &tuningData,
-					   const char *prop,
-					   unsigned int numHSamples,
-					   unsigned int numVSamples)
+std::vector<float> LscTable::parseTable(const ValueNode &tuningData,
+					const char *prop,
+					unsigned int numHSamples,
+					unsigned int numVSamples)
 {
 	unsigned int lscNumSamples = numHSamples * numVSamples;
 
-	std::vector<uint16_t> table =
-		tuningData[prop].get<std::vector<uint16_t>>().value_or(utils::defopt);
+	/*
+	 * Cast to float even if gains are expressed as fixed-point
+	 * representations. This prepares to express gains in floating point
+	 * formats in tuning files.
+	 */
+	std::vector<float> table =
+		tuningData[prop].get<std::vector<float>>().value_or(utils::defopt);
 	if (table.size() != lscNumSamples) {
 		LOG(LscTable, Error)
 			<< "Invalid '" << prop << "' values: expected "
