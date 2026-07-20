@@ -112,6 +112,90 @@ void Interpolator<lsc::Components<uint16_t>>::
  */
 
 /**
+ * \param[in] tuningData The tuning data
+ * \param[in] controls The IPA list of supported controls
+ * \param[in] descriptor The LSC engine descriptor
+ *
+ * Parse \a tuningData according to the settings specified in \a descriptor to
+ * populate the LSC data and registers LSC controls in \a controls.
+ *
+ * \return 0 on success, a negative error code otherwise
+ */
+int LscAlgorithmBase::init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
+			   const LscDescriptor &descriptor)
+{
+	polynomial_ = false;
+
+	std::string type = tuningData["type"].get<std::string>("table");
+	if (type == "table") {
+		impl_ = std::make_unique<LscTable>();
+		LOG(Lsc, Debug) << "Using table-based Lsc";
+	} else if (type == "polynomial") {
+		impl_ = std::make_unique<LscPolynomial>();
+		polynomial_ = true;
+		LOG(Lsc, Debug) << "Using polynomial Lsc";
+	} else {
+		LOG(Lsc, Error) << "Unsupported Lsc algorithm '"
+				<< type << "'";
+		return -EINVAL;
+	}
+
+	const ValueNode &yamlSets = tuningData["sets"];
+	if (!yamlSets.isList()) {
+		LOG(Lsc, Error) << "'sets' parameter not found in tuning file";
+		return -EINVAL;
+	}
+
+	int ret = impl_->parseLscData(yamlSets, descriptor);
+	if (ret)
+		return ret;
+
+	controls[&controls::LensShadingCorrectionEnable] =
+		ControlInfo(false, true, true);
+
+	return 0;
+}
+
+/**
+ * \brief Queue a request to the lsc algorithm
+ * \param[in] state The lsc active state
+ * \param[in] context The lsc frame context
+ * \param[in] controls The list of controls associated with a Request
+ *
+ * Queue a new list of \a controls to the lsc algorithm.
+ * The only supported control is controls::LensShadingCorrectionEnable.
+ */
+void LscAlgorithmBase::queueRequest(lsc::ActiveState &state,
+				    lsc::FrameContext &context,
+				    const ControlList &controls)
+{
+	const auto &lscEnable = controls.get(controls::LensShadingCorrectionEnable);
+	if (lscEnable && *lscEnable != state.enabled) {
+		state.enabled = *lscEnable;
+
+		LOG(Lsc, Debug)
+			<< (state.enabled ? "Enabling" : "Disabling") << " Lsc";
+
+		context.update = true;
+	}
+
+	context.enabled = state.enabled;
+}
+
+/**
+ * \brief Populate the list of lsc metadata
+ * \param[in] context The lsc frame context
+ * \param[in] metadata The list of metadata
+ *
+ * Populates the list of \a metadata with controls handled by the LscAlgorithm
+ * class. The only supported metadata is controls::LensShadingCorrectionEnable.
+ */
+void LscAlgorithmBase::process(lsc::FrameContext &context, ControlList &metadata)
+{
+	metadata.set(controls::LensShadingCorrectionEnable, context.enabled);
+}
+
+/**
  * \var LscAlgorithmBase::impl_
  * \brief The LSC algorithm implementation
  *
@@ -288,51 +372,6 @@ void Interpolator<lsc::Components<uint16_t>>::
  */
 
 /**
- * \param[in] tuningData The tuning data
- * \param[in] controls The IPA list of supported controls
- * \param[in] descriptor The LSC engine descriptor
- *
- * Parse \a tuningData according to the settings specified in \a descriptor to
- * populate the LSC data and registers LSC controls in \a controls.
- *
- * \return 0 on success, a negative error code otherwise
- */
-int LscAlgorithmBase::init(const ValueNode &tuningData, ControlInfoMap::Map &controls,
-			   const LscDescriptor &descriptor)
-{
-	polynomial_ = false;
-
-	std::string type = tuningData["type"].get<std::string>("table");
-	if (type == "table") {
-		impl_ = std::make_unique<LscTable>();
-		LOG(Lsc, Debug) << "Using table-based Lsc";
-	} else if (type == "polynomial") {
-		impl_ = std::make_unique<LscPolynomial>();
-		polynomial_ = true;
-		LOG(Lsc, Debug) << "Using polynomial Lsc";
-	} else {
-		LOG(Lsc, Error) << "Unsupported Lsc algorithm '"
-				<< type << "'";
-		return -EINVAL;
-	}
-
-	const ValueNode &yamlSets = tuningData["sets"];
-	if (!yamlSets.isList()) {
-		LOG(Lsc, Error) << "'sets' parameter not found in tuning file";
-		return -EINVAL;
-	}
-
-	int ret = impl_->parseLscData(yamlSets, descriptor);
-	if (ret)
-		return ret;
-
-	controls[&controls::LensShadingCorrectionEnable] =
-		ControlInfo(false, true, true);
-
-	return 0;
-}
-
-/**
  * \fn LscAlgorithm::configure()
  * \brief Re-sample and quantize LSC data
  * \param[in] state The LSC active state
@@ -360,45 +399,6 @@ int LscAlgorithmBase::init(const ValueNode &tuningData, ControlInfoMap::Map &con
  *
  * \return 0 on success, a negative error code otherwise
  */
-
-/**
- * \brief Queue a request to the lsc algorithm
- * \param[in] state The lsc active state
- * \param[in] context The lsc frame context
- * \param[in] controls The list of controls associated with a Request
- *
- * Queue a new list of \a controls to the lsc algorithm.
- * The only supported control is controls::LensShadingCorrectionEnable.
- */
-void LscAlgorithmBase::queueRequest(lsc::ActiveState &state,
-				    lsc::FrameContext &context,
-				    const ControlList &controls)
-{
-	const auto &lscEnable = controls.get(controls::LensShadingCorrectionEnable);
-	if (lscEnable && *lscEnable != state.enabled) {
-		state.enabled = *lscEnable;
-
-		LOG(Lsc, Debug)
-			<< (state.enabled ? "Enabling" : "Disabling") << " Lsc";
-
-		context.update = true;
-	}
-
-	context.enabled = state.enabled;
-}
-
-/**
- * \brief Populate the list of lsc metadata
- * \param[in] context The lsc frame context
- * \param[in] metadata The list of metadata
- *
- * Populates the list of \a metadata with controls handled by the LscAlgorithm
- * class. The only supported metadata is controls::LensShadingCorrectionEnable.
- */
-void LscAlgorithmBase::process(lsc::FrameContext &context, ControlList &metadata)
-{
-	metadata.set(controls::LensShadingCorrectionEnable, context.enabled);
-}
 
 /**
  * \fn LscAlgorithm::interpolateComponents
