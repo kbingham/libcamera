@@ -24,6 +24,7 @@
 
 #include "libcamera/internal/bayer_format.h"
 #include "libcamera/internal/camera_manager.h"
+#include "libcamera/internal/formats.h"
 #include "libcamera/internal/framebuffer.h"
 #include "libcamera/internal/global_configuration.h"
 #include "libcamera/internal/mapped_framebuffer.h"
@@ -474,24 +475,6 @@ int DebayerCpu::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 	return -EINVAL;
 }
 
-int DebayerCpu::getOutputConfig(PixelFormat outputFormat, DebayerOutputConfig &config)
-{
-	if (outputFormat == formats::RGB888 || outputFormat == formats::BGR888) {
-		config.bpp = 24;
-		return 0;
-	}
-
-	if (outputFormat == formats::XRGB8888 || outputFormat == formats::ARGB8888 ||
-	    outputFormat == formats::XBGR8888 || outputFormat == formats::ABGR8888) {
-		config.bpp = 32;
-		return 0;
-	}
-
-	LOG(Debayer, Info)
-		<< "Unsupported output format " << outputFormat.toString();
-	return -EINVAL;
-}
-
 /*
  * Check for standard Bayer orders and set xShift_ and swap debayer0/1, so that
  * a single pair of BGGR debayer functions can be used for all 4 standard orders.
@@ -776,15 +759,9 @@ std::vector<PixelFormat> DebayerCpu::formats(PixelFormat inputFormat)
 std::tuple<unsigned int, unsigned int>
 DebayerCpu::strideAndFrameSize(const PixelFormat &outputFormat, const Size &size)
 {
-	DebayerCpu::DebayerOutputConfig config;
-
-	if (getOutputConfig(outputFormat, config) != 0)
-		return std::make_tuple(0, 0);
-
 	/* round up to multiple of 8 for 64 bits alignment */
-	unsigned int stride = (size.width * config.bpp / 8 + 7) & ~7;
-
-	return std::make_tuple(stride, stride * size.height);
+	const PixelFormatInfo &info = PixelFormatInfo::info(outputFormat);
+	return std::make_tuple(info.stride(size.width, 0, 8), info.frameSize(size, 8));
 }
 
 void DebayerCpuThread::setupInputMemcpy(const uint8_t *linePointers[])

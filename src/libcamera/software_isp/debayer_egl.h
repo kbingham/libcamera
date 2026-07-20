@@ -63,7 +63,6 @@ public:
 
 private:
 	static int getInputConfig(PixelFormat inputFormat, DebayerInputConfig &config);
-	static int getOutputConfig(PixelFormat outputFormat, DebayerOutputConfig &config);
 	int initBayerShaders(PixelFormat inputFormat, PixelFormat outputFormat);
 	int getShaderVariableLocations();
 	void setShaderVariableValues(eGLImage &eGLImageIn, const DebayerParams &params);

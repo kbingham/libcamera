@@ -192,9 +192,6 @@ Debayer::~Debayer()
  * Defines how the output of the debayer process is laid out in memory.
  * It includes per-pixel size, stride, and total frame size.
  *
- * \var Debayer::DebayerOutputConfig::bpp
- * Bytes used per pixel in the output format.
- *
  * \var Debayer::DebayerOutputConfig::stride
  * Line stride in bytes for the output frame.
  *

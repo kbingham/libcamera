@@ -96,20 +96,6 @@ int DebayerEGL::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 	return -EINVAL;
 }
 
-int DebayerEGL::getOutputConfig(PixelFormat outputFormat, DebayerOutputConfig &config)
-{
-	if (outputFormat == formats::XRGB8888 || outputFormat == formats::ARGB8888 ||
-	    outputFormat == formats::XBGR8888 || outputFormat == formats::ABGR8888) {
-		config.bpp = 32;
-		return 0;
-	}
-
-	LOG(Debayer, Info)
-		<< "Unsupported output format " << outputFormat;
-
-	return -EINVAL;
-}
-
 int DebayerEGL::getShaderVariableLocations(void)
 {
 	attributeVertex_ = glGetAttribLocation(programId_, "vertexIn");
@@ -374,15 +360,9 @@ std::vector<PixelFormat> DebayerEGL::formats(PixelFormat inputFormat)
 std::tuple<unsigned int, unsigned int>
 DebayerEGL::strideAndFrameSize(const PixelFormat &outputFormat, const Size &size)
 {
-	DebayerEGL::DebayerOutputConfig config;
-
-	if (getOutputConfig(outputFormat, config) != 0)
-		return std::make_tuple(0, 0);
-
 	/* Align stride to 256 bytes as a generic GPU memory access alignment */
-	unsigned int stride = libcamera::utils::alignUp(size.width * config.bpp / 8, 256);
-
-	return std::make_tuple(stride, stride * size.height);
+	const PixelFormatInfo &info = PixelFormatInfo::info(outputFormat);
+	return std::make_tuple(info.stride(size.width, 0, 256), info.frameSize(size, 256));
 }
 
 uint32_t DebayerEGL::preferredInputStride(const PixelFormat &inputFormat, const Size &size)

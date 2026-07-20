@@ -69,7 +69,6 @@ public:
 	};
 
 	struct DebayerOutputConfig {
-		unsigned int bpp;
 		unsigned int stride;
 		unsigned int frameSize;
 	};
