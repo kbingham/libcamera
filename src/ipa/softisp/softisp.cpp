@@ -107,6 +107,7 @@ int IPASoftIsp::init(const IPASettings &settings,
 	}
 
 	context_.sensorInfo = sensorInfo;
+	context_.sensorControls = sensorControls;
 
 	/* Load the tuning data file */
 	File file(settings.configurationFile);
@@ -180,22 +181,6 @@ int IPASoftIsp::init(const IPASettings &settings,
 	ControlInfoMap::Map ctrlMap = context_.ctrlMap;
 	*ipaControls = ControlInfoMap(std::move(ctrlMap), controls::controls);
 
-	/*
-	 * Check if the sensor driver supports the controls required by the
-	 * Soft IPA.
-	 * Don't save the min and max control values yet, as e.g. the limits
-	 * for V4L2_CID_EXPOSURE depend on the configured sensor resolution.
-	 */
-	if (sensorControls.find(V4L2_CID_EXPOSURE) == sensorControls.end()) {
-		LOG(IPASoftIsp, Error) << "Don't have exposure control";
-		return -EINVAL;
-	}
-
-	if (sensorControls.find(V4L2_CID_ANALOGUE_GAIN) == sensorControls.end()) {
-		LOG(IPASoftIsp, Error) << "Don't have gain control";
-		return -EINVAL;
-	}
-
 	return 0;
 }
 
@@ -203,54 +188,16 @@ int IPASoftIsp::configure(const IPAConfigInfo &configInfo, ControlInfoMap *ipaCo
 {
 	context_.sensorControls = configInfo.sensorControls;
 
-	const ControlInfo &exposureInfo = context_.sensorControls.find(V4L2_CID_EXPOSURE)->second;
-	const ControlInfo &gainInfo = context_.sensorControls.find(V4L2_CID_ANALOGUE_GAIN)->second;
-
 	/* Clear the IPA context before the streaming session. */
 	context_.configuration = {};
 	context_.activeState = {};
 	context_.frameContexts.clear();
-
-	context_.configuration.agc.lineDuration =
-		context_.sensorInfo.minLineLength * 1.0s / context_.sensorInfo.pixelRate;
-	context_.configuration.agc.exposureMin = exposureInfo.min().get<int32_t>();
-	context_.configuration.agc.exposureMax = exposureInfo.max().get<int32_t>();
-	if (!context_.configuration.agc.exposureMin) {
-		LOG(IPASoftIsp, Warning) << "Minimum exposure is zero, that can't be linear";
-		context_.configuration.agc.exposureMin = 1;
-	}
-
-	int32_t againMin = gainInfo.min().get<int32_t>();
-	int32_t againMax = gainInfo.max().get<int32_t>();
-	int32_t againDef = gainInfo.def().get<int32_t>();
-
-	if (context_.camHelper) {
-		context_.configuration.agc.againMin = context_.camHelper->gain(againMin);
-		context_.configuration.agc.againMax = context_.camHelper->gain(againMax);
-		context_.configuration.agc.again10 = std::max(context_.configuration.agc.againMin, 1.0);
-		context_.configuration.agc.againMinStep =
-			(context_.configuration.agc.againMax -
-			 context_.configuration.agc.againMin) /
-			100.0;
-	} else {
-		context_.configuration.agc.againMax = againMax;
-		context_.configuration.agc.again10 = againDef;
-		context_.configuration.agc.againMin = againMin;
-		context_.configuration.agc.againMinStep = 1.0;
-	}
 
 	for (const auto &algo : algorithms()) {
 		int ret = algo->configure(context_, configInfo);
 		if (ret)
 			return ret;
 	}
-
-	LOG(IPASoftIsp, Info)
-		<< "Exposure " << context_.configuration.agc.exposureMin << "-"
-		<< context_.configuration.agc.exposureMax
-		<< ", gain " << context_.configuration.agc.againMin << "-"
-		<< context_.configuration.agc.againMax
-		<< " (" << context_.configuration.agc.againMinStep << ")";
 
 	*ipaControls = { ControlInfoMap::Map(context_.ctrlMap), controls::controls };
 

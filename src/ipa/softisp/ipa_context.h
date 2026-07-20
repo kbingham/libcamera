@@ -17,6 +17,7 @@
 #include "libcamera/internal/matrix.h"
 #include "libcamera/internal/vector.h"
 
+#include <libipa/agc.h>
 #include <libipa/awb.h>
 #include <libipa/camera_sensor_helper.h>
 #include <libipa/ccm.h>
@@ -29,11 +30,7 @@ namespace libcamera {
 namespace ipa::softisp {
 
 struct IPASessionConfiguration {
-	struct {
-		uint32_t exposureMin, exposureMax;
-		double againMin, againMax, again10, againMinStep;
-		utils::Duration lineDuration;
-	} agc;
+	ipa::agc::Session agc;
 	struct {
 		std::optional<uint8_t> level;
 	} black;
@@ -42,12 +39,7 @@ struct IPASessionConfiguration {
 struct IPAActiveState {
 	ipa::awb::ActiveState awb;
 	ipa::ccm::ActiveState ccm;
-
-	struct {
-		uint32_t exposure;
-		double again;
-		bool valid;
-	} agc;
+	ipa::agc::ActiveState agc;
 
 	struct {
 		uint8_t level;
@@ -68,11 +60,7 @@ struct IPAActiveState {
 struct IPAFrameContext : public FrameContext {
 	ipa::awb::FrameContext awb;
 	ipa::ccm::FrameContext ccm;
-
-	struct {
-		uint32_t exposure;
-		double gain;
-	} agc;
+	ipa::agc::FrameContext agc;
 
 	struct {
 		uint32_t exposure;

@@ -11,30 +11,70 @@
 
 #include <libipa/histogram.h>
 
-#include "control_ids.h"
-
 namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPASoftIspExposure)
 
 namespace ipa::softisp::algorithms {
 
+namespace {
+
+class AgcTraits : public AgcMeanLuminance::Traits
+{
+public:
+	AgcTraits(const Histogram &yHist)
+		: yHist_(yHist)
+	{
+	}
+
+	double estimateLuminance(double gain) const override
+	{
+		/*
+		 * \todo Improve by asking the weight of saturating and
+		 * non-saturating bins directly from the histogram.
+		 */
+		double sum = 0;
+
+		for (size_t i = 0; i < yHist_.bins(); i++)
+			sum += std::min<double>(yHist_.bins(), i * gain) * yHist_[i];
+
+		return sum / yHist_.total() / yHist_.bins();
+	}
+
+private:
+	const Histogram &yHist_;
+};
+
+} /* namespace */
+
+int Agc::init(IPAContext &context, const ValueNode &tuningData)
+{
+	return agc_.init(tuningData, context.camHelper.get(), {
+		.sensorInfo = context.sensorInfo,
+		.sensorControls = context.sensorControls,
+		.ctrlMap = context.ctrlMap,
+	});
+}
+
 int Agc::configure(IPAContext &context, [[maybe_unused]] const IPAConfigInfo &configInfo)
 {
-	agc_.setLimits({
-		.exposure = {
-			context.configuration.agc.exposureMin,
-			context.configuration.agc.exposureMax,
-		},
-		.gain = {
-			context.configuration.agc.againMin,
-			context.configuration.agc.againMax,
-		},
-		.gainMinStep = context.configuration.agc.againMinStep,
-		.gain1 = context.configuration.agc.again10,
+	return agc_.configure(context.configuration.agc, context.activeState.agc, {
+		.sensorInfo = context.sensorInfo,
+		.sensorControls = context.sensorControls,
+		.ctrlMap = context.ctrlMap,
 	});
+}
 
-	return 0;
+void Agc::queueRequest(IPAContext &context, [[maybe_unused]] const uint32_t frame,
+		       IPAFrameContext &frameContext, const ControlList &controls)
+{
+	agc_.queueRequest(context.configuration.agc, context.activeState.agc, frameContext.agc, controls);
+}
+
+void Agc::prepare(IPAContext &context, [[maybe_unused]] const uint32_t frame,
+		  IPAFrameContext &frameContext, [[maybe_unused]] DebayerParams *params)
+{
+	agc_.prepare(context.activeState.agc, frameContext.agc);
 }
 
 void Agc::process(IPAContext &context,
@@ -43,52 +83,26 @@ void Agc::process(IPAContext &context,
 		  const SwIspStats *stats,
 		  ControlList &metadata)
 {
-	utils::Duration exposureTime =
-		context.configuration.agc.lineDuration * frameContext.sensor.exposure;
-	metadata.set(controls::ExposureTime, exposureTime.get<std::micro>());
-	metadata.set(controls::AnalogueGain, frameContext.sensor.gain);
+	if (stats->valid) {
+		/* \todo The histogram should come already adjusted. */
+		auto histogram = stats->yHistogram;
 
-	if (!context.activeState.agc.valid) {
-		/*
-		 * Init active-state from sensor values in case updateExposure()
-		 * does not run for the first frame.
-		 */
-		context.activeState.agc.exposure = frameContext.sensor.exposure;
-		context.activeState.agc.again = frameContext.sensor.gain;
-		context.activeState.agc.valid = true;
+		const unsigned int blackLevelHistIdx =
+			context.activeState.blc.level * histogram.size() / 256;
+		for (unsigned int i = 0; i < blackLevelHistIdx; i++)
+			histogram[blackLevelHistIdx] += histogram[i];
+
+		Histogram yHist({ histogram.begin() + blackLevelHistIdx, histogram.end() });
+
+		agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {{
+			.traits = AgcTraits(yHist),
+			.yHist = yHist,
+			.exposure = frameContext.sensor.exposure,
+			.gain = frameContext.sensor.gain,
+		}}, metadata);
+	} else {
+		agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {}, metadata);
 	}
-
-	if (!stats->valid) {
-		/*
-		 * Use the new exposure and gain values calculated the last time
-		 * there were valid stats.
-		 */
-		frameContext.agc.exposure = context.activeState.agc.exposure;
-		frameContext.agc.gain = context.activeState.agc.again;
-		return;
-	}
-
-	/* \todo The histogram should come already adjusted. */
-	auto histogram = stats->yHistogram;
-	const unsigned int blackLevelHistIdx =
-		context.activeState.blc.level * histogram.size() / 256;
-
-	for (unsigned int i = 0; i < blackLevelHistIdx; i++)
-		histogram[blackLevelHistIdx] += histogram[i];
-
-	const auto &newEv = agc_.calculateNewEv({
-		.yHist = {
-			{ histogram.begin() + blackLevelHistIdx, histogram.end() },
-		},
-		.exposure = frameContext.sensor.exposure,
-		.gain = frameContext.sensor.gain,
-	});
-
-	frameContext.agc.exposure = newEv.exposure;
-	frameContext.agc.gain = newEv.analogueGain;
-
-	context.activeState.agc.exposure = frameContext.agc.exposure;
-	context.activeState.agc.again = frameContext.agc.gain;
 }
 
 REGISTER_IPA_ALGORITHM(Agc, "Agc")
