@@ -13,11 +13,13 @@
 #include <cmath>
 #include <optional>
 #include <ratio>
+#include <variant>
 
 #include <linux/v4l2-controls.h>
 
 #include <libcamera/base/log.h>
 #include <libcamera/base/span.h>
+#include <libcamera/base/utils.h>
 
 #include <libcamera/control_ids.h>
 #include <libcamera/controls.h>
@@ -80,6 +82,9 @@ namespace agc {
  *
  * \var Session::maxAnalogueGain
  * \brief Maximum analogue gain for the streaming session
+ *
+ * \var Session::defAnalogueGain
+ * \brief Default analogue gain of the configured sensor
  *
  * \var Session::minFrameDuration
  * \brief Minimum frame duration for the streaming session
@@ -223,10 +228,9 @@ namespace agc {
  *
  * The AgcAlgorithm class can be used to implement automatic exposure/gain
  * control in an IPA module, conforming to the prescribed Algorithm interface.
- * Internally AgcMeanLuminance is used, this class merely concerns itself with
- * processing the sensor properties, establishing limits, managing controls,
- * providing the resulting metadata, and driving the actual algorithm in
- * process().
+ * Internally AgcMeanLuminance or AgcMSV is used, this class merely concerns
+ * itself with processing the sensor properties, establishing limits, managing
+ * controls, and providing the resulting metadata.
  *
  * Users should compose agc::Session, agc::ActiveState, and agc::FrameContext
  * into their platform-specific session configuration, active state, and frame
@@ -241,9 +245,6 @@ namespace agc {
 /**
  * \struct AgcAlgorithm::ConfigurationParams
  * \brief Parameters for AgcAlgorithm::configure()
- *
- * \var AgcAlgorithm::ConfigurationParams::sensor
- * \brief CameraSensorHelper for the sensor
  *
  * \var AgcAlgorithm::ConfigurationParams::sensorInfo
  * \brief Current configuration of the sensor
@@ -289,24 +290,35 @@ namespace agc {
 /**
  * \brief Load tuning data and configure
  * \param[in] tuningData The tuning data
+ * \param[in] sensor The camera sensor helper
  * \param[in] config The algorithm configuration
  *
  * This function loads the tuning data and configures the algorithm as if
  * by a call to configure(), in order to provide the available controls
  * in ConfigurationParams::ctrlMap.
  *
- * The tuning data format is that of AgcMeanLuminance. Refer to
- * AgcMeanLuminance::parseTuningData() for more details.
+ * If a CameraSensorHelper is provided in \a sensor, an instance of
+ * AgcMeanLuminance is instantiated and the tuning data is loaded by
+ * calling AgcMeanLuminance::parseTuningData(). Otherwise an instance
+ * of AgcMSV is instantiated, and in this case the tuning data is ignored.
  *
  * \return 0 on success, or a negative error code
  *
  * \sa Algorithm::init()
  */
-int AgcAlgorithm::init(const ValueNode &tuningData, const ConfigurationParams &config)
+int AgcAlgorithm::init(const ValueNode &tuningData, CameraSensorHelper *sensor,
+		       const ConfigurationParams &config)
 {
-	int ret = impl_.parseTuningData(tuningData);
-	if (ret)
-		return ret;
+	if (sensor) {
+		auto &impl = impl_.emplace<AgcMeanLuminance>();
+		int ret = impl.parseTuningData(tuningData);
+		if (ret)
+			return ret;
+	} else {
+		impl_.emplace<AgcMSV>();
+	}
+
+	sensor_ = sensor;
 
 	/*
 	 * The purpose of this `configure()` is merely to provide the
@@ -362,10 +374,14 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	int32_t defExposure = v4l2Exposure.def().get<int32_t>();
 
 	/* Compute the analogue gain limits. */
+	const auto extractGain = [&](const ControlValue &v) {
+		auto gainCode = v.get<int32_t>();
+		return sensor_ ? sensor_->gain(gainCode) : gainCode;
+	};
 	const ControlInfo &v4l2Gain = config.sensorControls.find(V4L2_CID_ANALOGUE_GAIN)->second;
-	float minGain = config.sensor->gain(v4l2Gain.min().get<int32_t>());
-	float maxGain = config.sensor->gain(v4l2Gain.max().get<int32_t>());
-	float defGain = config.sensor->gain(v4l2Gain.def().get<int32_t>());
+	float minGain = extractGain(v4l2Gain.min());
+	float maxGain = extractGain(v4l2Gain.max());
+	float defGain = extractGain(v4l2Gain.def());
 
 	LOG(Agc, Debug)
 		<< "exposure: [" << minExposure << ',' << maxExposure << "], "
@@ -404,11 +420,9 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	session.maxExposureTime = maxExposure * session.lineDuration;
 	session.minAnalogueGain = minGain;
 	session.maxAnalogueGain = maxGain;
+	session.defAnalogueGain = defGain;
 	session.minFrameDuration = std::chrono::microseconds(frameDurations[0]);
 	session.maxFrameDuration = std::chrono::microseconds(frameDurations[1]);
-
-	impl_.configure(session.lineDuration, config.sensor);
-	impl_.resetFrameCount();
 
 	/* Configure the default exposure and gain. */
 	state = {};
@@ -416,16 +430,11 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	state.automatic.exposure = defExposure;
 	state.automatic.quantizationGain = 1;
 	state.automatic.digitalGain = 1;
-	state.automatic.yTarget = impl_.effectiveYTarget(0, 1);
 	state.manual.gain = state.automatic.gain;
 	state.manual.exposure = state.automatic.exposure;
 	state.autoExposureEnabled = session.autoAllowed;
 	state.autoGainEnabled = session.autoAllowed;
 	state.exposureValue = 0;
-	state.constraintMode =
-		static_cast<controls::AeConstraintModeEnum>(impl_.constraintModes().begin()->first);
-	state.exposureMode =
-		static_cast<controls::AeExposureModeEnum>(impl_.exposureModeHelpers().begin()->first);
 	state.minFrameDuration = session.minFrameDuration;
 	state.maxFrameDuration = session.maxFrameDuration;
 
@@ -476,19 +485,52 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	add(controls::AnalogueGainMode,
 	    controls::AnalogueGainModeAuto, controls::AnalogueGainModeManual);
 
-	if (session.autoAllowed) {
-		config.ctrlMap[&controls::ExposureValue] = ControlInfo(-8.0f, 8.0f, 0.0f);
+	std::visit(utils::overloaded{
+		[&](AgcMSV &) {
+			/* No constraint/exposure mode support. */
+			state.constraintMode = controls::AeConstraintModeEnum::ConstraintNormal;
+			state.exposureMode = controls::AeExposureModeEnum::ExposureNormal;
 
-		std::vector<ControlValue> options;
-		for (const auto &[id, _] : impl_.constraintModes())
-			options.emplace_back(id);
-		config.ctrlMap[&controls::AeConstraintMode] = ControlInfo(options);
+			state.automatic.yTarget = 0; /* Not supported. */
 
-		options.clear();
-		for (const auto &[id, _] : impl_.exposureModeHelpers())
-			options.emplace_back(id);
-		config.ctrlMap[&controls::AeExposureMode] = ControlInfo(options);
-	}
+			if (!session.autoAllowed)
+				return;
+
+			config.ctrlMap[&controls::AeConstraintMode] = ControlInfo(
+				std::array{ ControlValue(state.constraintMode) }
+			);
+
+			config.ctrlMap[&controls::AeExposureMode] = ControlInfo(
+				std::array{ ControlValue(state.exposureMode) }
+			);
+		},
+		[&](AgcMeanLuminance &impl) {
+			state.constraintMode =
+				static_cast<controls::AeConstraintModeEnum>(impl.constraintModes().begin()->first);
+			state.exposureMode =
+				static_cast<controls::AeExposureModeEnum>(impl.exposureModeHelpers().begin()->first);
+
+			state.automatic.yTarget = impl.effectiveYTarget(0, 1);
+
+			impl.configure(session.lineDuration, sensor_);
+			impl.resetFrameCount();
+
+			if (!session.autoAllowed)
+				return;
+
+			config.ctrlMap[&controls::ExposureValue] = ControlInfo(-8.0f, 8.0f, 0.0f);
+
+			std::vector<ControlValue> options;
+			for (const auto &[id, _] : impl.constraintModes())
+				options.emplace_back(id);
+			config.ctrlMap[&controls::AeConstraintMode] = ControlInfo(options);
+
+			options.clear();
+			for (const auto &[id, _] : impl.exposureModeHelpers())
+				options.emplace_back(id);
+			config.ctrlMap[&controls::AeExposureMode] = ControlInfo(options);
+		},
+	}, impl_);
 
 	return 0;
 }
@@ -721,36 +763,68 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
 		maxAnalogueGain = frameContext.gain;
 	}
 
-	/*
-	 * The Agc algorithm needs to know the effective exposure value that was
-	 * applied to the sensor when the statistics were collected.
-	 */
-	utils::Duration effectiveExposureValue =
-		lineDuration * params->exposure * params->gain;
+	std::visit(utils::overloaded{
+		[&](AgcMSV& impl) {
+			impl.setLimits({
+				.exposure = {
+					static_cast<uint32_t>(minExposureTime / lineDuration),
+					static_cast<uint32_t>(maxExposureTime / lineDuration),
+				},
+				.gain = {
+					minAnalogueGain,
+					maxAnalogueGain,
+				},
+				/* gain codes -> step size of 1 */
+				.gainMinStep = 1,
+				/* assume default gain is close to 1.0 */
+				.gain1 = session.defAnalogueGain,
+			});
 
-	impl_.setLimits(minExposureTime, maxExposureTime,
-			minAnalogueGain, maxAnalogueGain,
-			std::move(params->additionalConstraints));
+			const auto& newEv = impl.calculateNewEv({
+				.yHist = params->yHist,
+				.exposure = params->exposure,
+				.gain = params->gain,
+			});
 
-	const auto &newEv = impl_.calculateNewEv({
-		.traits = params->traits,
-		.yHist = params->yHist,
-		.effectiveExposureValue = effectiveExposureValue,
-		.constraintModeIndex = frameContext.constraintMode,
-		.exposureModeIndex = frameContext.exposureMode,
-		.lux = params->lux,
-		.exposureCompensation = std::pow(2.0, frameContext.exposureValue),
-	});
+			state.automatic.exposure = newEv.exposure;
+			state.automatic.gain = newEv.analogueGain;
+		},
+		[&](AgcMeanLuminance& impl) {
+			/*
+			 * The Agc algorithm needs to know the effective exposure
+			 * value that was applied to the sensor when the statistics
+			 * were collected.
+			 */
+			utils::Duration effectiveExposureValue =
+				lineDuration * params->exposure * params->gain;
 
-	/* Update the estimated exposure and gain. */
-	state.automatic.exposure = newEv.exposureTime / lineDuration;
-	state.automatic.gain = newEv.analogueGain;
-	state.automatic.quantizationGain = newEv.quantizationGain;
-	state.automatic.digitalGain = newEv.digitalGain;
-	state.automatic.yTarget = newEv.yTarget;
+			impl.setLimits(minExposureTime, maxExposureTime,
+				       minAnalogueGain, maxAnalogueGain,
+				       std::move(params->additionalConstraints));
+
+			const auto &newEv = impl.calculateNewEv({
+				.traits = params->traits,
+				.yHist = params->yHist,
+				.effectiveExposureValue = effectiveExposureValue,
+				.constraintModeIndex = frameContext.constraintMode,
+				.exposureModeIndex = frameContext.exposureMode,
+				.lux = params->lux,
+				.exposureCompensation = std::pow(2.0, frameContext.exposureValue),
+			});
+
+			/* Update the estimated exposure and gain. */
+			state.automatic.exposure = newEv.exposureTime / lineDuration;
+			state.automatic.gain = newEv.analogueGain;
+			state.automatic.quantizationGain = newEv.quantizationGain;
+			state.automatic.digitalGain = newEv.digitalGain;
+			state.automatic.yTarget = newEv.yTarget;
+		},
+	}, impl_);
+
+	const utils::Duration newExposureTime = state.automatic.exposure * lineDuration;
 
 	LOG(Agc, Debug)
-		<< "exposure-time: " << newEv.exposureTime << ", "
+		<< "exposure-time: " << newExposureTime << ", "
 		<< "analogue-gain: " << state.automatic.gain << ", "
 		<< "quantization-gain: " << state.automatic.quantizationGain << ", "
 		<< "digital-gain: " << state.automatic.digitalGain;
@@ -760,7 +834,7 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
 	 * the minimum frame duration when we have short exposures.
 	 */
 	processFrameDuration(session, frameContext,
-			     std::max(frameContext.minFrameDuration, newEv.exposureTime));
+			     std::max(frameContext.minFrameDuration, newExposureTime));
 
 	fillMetadata(session, frameContext, metadata);
 }
