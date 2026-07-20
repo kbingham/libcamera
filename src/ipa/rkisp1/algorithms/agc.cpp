@@ -8,10 +8,7 @@
 #include "agc.h"
 
 #include <algorithm>
-#include <array>
-#include <chrono>
 #include <cmath>
-#include <tuple>
 #include <vector>
 
 #include <libcamera/base/log.h>
@@ -35,89 +32,6 @@ using namespace std::literals::chrono_literals;
 namespace ipa::rkisp1::algorithms {
 
 LOG_DEFINE_CATEGORY(RkISP1Agc)
-
-namespace {
-
-void reconfigure(IPAContext &context)
-{
-	context.configuration.sensor.lineDuration =
-		context.sensorInfo.minLineLength * 1.0s / context.sensorInfo.pixelRate;
-
-	double lineDurationUs = context.configuration.sensor.lineDuration.get<std::micro>();
-
-	/*
-	 * Compute exposure time limits from the V4L2_CID_EXPOSURE control
-	 * limits and the line duration.
-	 */
-
-	const ControlInfo &v4l2Exposure = context.sensorControls.find(V4L2_CID_EXPOSURE)->second;
-	int32_t minExposure = v4l2Exposure.min().get<int32_t>();
-	int32_t maxExposure = v4l2Exposure.max().get<int32_t>();
-	int32_t defExposure = v4l2Exposure.def().get<int32_t>();
-	context.ctrlMap[&controls::ExposureTime] = ControlInfo{
-		static_cast<int32_t>(minExposure * lineDurationUs),
-		static_cast<int32_t>(maxExposure * lineDurationUs),
-		static_cast<int32_t>(defExposure * lineDurationUs),
-	};
-
-	/* Compute the analogue gain limits. */
-	const ControlInfo &v4l2Gain = context.sensorControls.find(V4L2_CID_ANALOGUE_GAIN)->second;
-	float minGain = context.camHelper->gain(v4l2Gain.min().get<int32_t>());
-	float maxGain = context.camHelper->gain(v4l2Gain.max().get<int32_t>());
-	float defGain = context.camHelper->gain(v4l2Gain.def().get<int32_t>());
-	context.ctrlMap[&controls::AnalogueGain] = ControlInfo{
-		minGain,
-		maxGain,
-		defGain,
-	};
-
-	LOG(RkISP1Agc, Debug)
-		<< "Exposure: [" << minExposure << ", " << maxExposure
-		<< "], gain: [" << minGain << ", " << maxGain << "]";
-
-	/*
-	 * Compute the frame duration limits.
-	 *
-	 * The frame length is computed assuming a fixed line length combined
-	 * with the vertical frame sizes.
-	 */
-	const ControlInfo &v4l2HBlank = context.sensorControls.find(V4L2_CID_HBLANK)->second;
-	uint32_t hblank = v4l2HBlank.def().get<int32_t>();
-	uint32_t lineLength = context.sensorInfo.outputSize.width + hblank;
-
-	const ControlInfo &v4l2VBlank = context.sensorControls.find(V4L2_CID_VBLANK)->second;
-	std::array<uint32_t, 3> frameHeights{
-		v4l2VBlank.min().get<int32_t>() + context.sensorInfo.outputSize.height,
-		v4l2VBlank.max().get<int32_t>() + context.sensorInfo.outputSize.height,
-		v4l2VBlank.def().get<int32_t>() + context.sensorInfo.outputSize.height,
-	};
-
-	std::array<int64_t, 3> frameDurations;
-	for (unsigned int i = 0; i < frameHeights.size(); ++i) {
-		uint64_t frameSize = lineLength * frameHeights[i];
-		frameDurations[i] = frameSize / (context.sensorInfo.pixelRate / 1000000U);
-	}
-
-	context.ctrlMap[&controls::FrameDurationLimits] = ControlInfo{
-		frameDurations[0],
-		frameDurations[1],
-		Span<const int64_t, 2>{ { frameDurations[2], frameDurations[2] } },
-	};
-
-	/*
-	 * When the AGC computes the new exposure values for a frame, it needs
-	 * to know the limits for exposure time and analogue gain. As it depends
-	 * on the sensor, update it with the controls.
-	 *
-	 * \todo take VBLANK into account for maximum exposure time
-	 */
-	context.configuration.sensor.minExposureTime = minExposure * context.configuration.sensor.lineDuration;
-	context.configuration.sensor.maxExposureTime = maxExposure * context.configuration.sensor.lineDuration;
-	context.configuration.sensor.minAnalogueGain = minGain;
-	context.configuration.sensor.maxAnalogueGain = maxGain;
-}
-
-} /* namespace */
 
 /**
  * \class Agc
@@ -222,7 +136,12 @@ int Agc::init(IPAContext &context, const ValueNode &tuningData)
 {
 	int ret;
 
-	ret = agc_.parseTuningData(tuningData);
+	ret = agc_.init(tuningData, {
+		.sensor = context.camHelper.get(),
+		.sensorInfo = context.sensorInfo,
+		.sensorControls = context.sensorControls,
+		.ctrlMap = context.ctrlMap,
+	});
 	if (ret)
 		return ret;
 
@@ -230,21 +149,6 @@ int Agc::init(IPAContext &context, const ValueNode &tuningData)
 	ret = parseMeteringModes(context, meteringModes);
 	if (ret)
 		return ret;
-
-	context.ctrlMap[&controls::ExposureTimeMode] =
-		ControlInfo({ { ControlValue(controls::ExposureTimeModeAuto),
-				ControlValue(controls::ExposureTimeModeManual) } },
-			    ControlValue(controls::ExposureTimeModeAuto));
-	context.ctrlMap[&controls::AnalogueGainMode] =
-		ControlInfo({ { ControlValue(controls::AnalogueGainModeAuto),
-				ControlValue(controls::AnalogueGainModeManual) } },
-			    ControlValue(controls::AnalogueGainModeAuto));
-	/* \todo Move this to the Camera class */
-	context.ctrlMap[&controls::AeEnable] = ControlInfo(false, true, true);
-	context.ctrlMap[&controls::ExposureValue] = ControlInfo(-8.0f, 8.0f, 0.0f);
-	context.ctrlMap.merge(agc_.controls());
-
-	reconfigure(context);
 
 	return 0;
 }
@@ -258,46 +162,23 @@ int Agc::init(IPAContext &context, const ValueNode &tuningData)
  */
 int Agc::configure(IPAContext &context, const IPACameraSensorInfo &configInfo)
 {
-	reconfigure(context);
+	int ret = agc_.configure(context.configuration.agc, context.activeState.agc, {
+		.sensor = context.camHelper.get(),
+		.sensorInfo = context.sensorInfo,
+		.sensorControls = context.sensorControls,
+		.ctrlMap = context.ctrlMap,
+		.autoAllowed = !context.configuration.raw,
+	});
+	if (ret)
+		return ret;
 
-	/* Configure the default exposure and gain. */
-	context.activeState.agc.automatic.gain = context.configuration.sensor.minAnalogueGain;
-	context.activeState.agc.automatic.exposure =
-		10ms / context.configuration.sensor.lineDuration;
-	context.activeState.agc.automatic.quantizationGain = 1.0;
-	context.activeState.agc.manual.gain = context.activeState.agc.automatic.gain;
-	context.activeState.agc.manual.exposure = context.activeState.agc.automatic.exposure;
-	context.activeState.agc.autoExposureEnabled = !context.configuration.raw;
-	context.activeState.agc.autoGainEnabled = !context.configuration.raw;
-	context.activeState.agc.exposureValue = 0.0;
-
-	context.activeState.agc.constraintMode =
-		static_cast<controls::AeConstraintModeEnum>(agc_.constraintModes().begin()->first);
-	context.activeState.agc.exposureMode =
-		static_cast<controls::AeExposureModeEnum>(agc_.exposureModeHelpers().begin()->first);
 	context.activeState.agc.meteringMode =
 		static_cast<controls::AeMeteringModeEnum>(meteringModes_.begin()->first);
-
-	/* Limit the frame duration to match current initialisation */
-	ControlInfo &frameDurationLimits = context.ctrlMap[&controls::FrameDurationLimits];
-	context.activeState.agc.minFrameDuration = std::chrono::microseconds(frameDurationLimits.min().get<int64_t>());
-	context.activeState.agc.maxFrameDuration = std::chrono::microseconds(frameDurationLimits.max().get<int64_t>());
 
 	context.configuration.agc.measureWindow.h_offs = 0;
 	context.configuration.agc.measureWindow.v_offs = 0;
 	context.configuration.agc.measureWindow.h_size = configInfo.outputSize.width;
 	context.configuration.agc.measureWindow.v_size = configInfo.outputSize.height;
-
-	agc_.configure(context.configuration.sensor.lineDuration, context.camHelper.get());
-
-	agc_.setLimits(context.configuration.sensor.minExposureTime,
-		       context.configuration.sensor.maxExposureTime,
-		       context.configuration.sensor.minAnalogueGain,
-		       context.configuration.sensor.maxAnalogueGain, {});
-
-	context.activeState.agc.automatic.yTarget = agc_.effectiveYTarget(0, 1);
-
-	agc_.resetFrameCount();
 
 	return 0;
 }
@@ -312,73 +193,7 @@ void Agc::queueRequest(IPAContext &context,
 {
 	auto &agc = context.activeState.agc;
 
-	if (!context.configuration.raw) {
-		const auto &aeEnable = controls.get(controls::ExposureTimeMode);
-		if (aeEnable &&
-		    (*aeEnable == controls::ExposureTimeModeAuto) != agc.autoExposureEnabled) {
-			agc.autoExposureEnabled = (*aeEnable == controls::ExposureTimeModeAuto);
-
-			LOG(RkISP1Agc, Debug)
-				<< (agc.autoExposureEnabled ? "Enabling" : "Disabling")
-				<< " AGC (exposure)";
-
-			/*
-			 * If we go from auto -> manual with no manual control
-			 * set, use the last computed value, which we don't
-			 * know until prepare() so save this information.
-			 *
-			 * \todo Check the previous frame at prepare() time
-			 * instead of saving a flag here
-			 */
-			if (!agc.autoExposureEnabled && !controls.get(controls::ExposureTime))
-				frameContext.agc.autoExposureModeChange = true;
-		}
-
-		const auto &agEnable = controls.get(controls::AnalogueGainMode);
-		if (agEnable &&
-		    (*agEnable == controls::AnalogueGainModeAuto) != agc.autoGainEnabled) {
-			agc.autoGainEnabled = (*agEnable == controls::AnalogueGainModeAuto);
-
-			LOG(RkISP1Agc, Debug)
-				<< (agc.autoGainEnabled ? "Enabling" : "Disabling")
-				<< " AGC (gain)";
-			/*
-			 * If we go from auto -> manual with no manual control
-			 * set, use the last computed value, which we don't
-			 * know until prepare() so save this information.
-			 */
-			if (!agc.autoGainEnabled && !controls.get(controls::AnalogueGain))
-				frameContext.agc.autoGainModeChange = true;
-		}
-	}
-
-	const auto &exposure = controls.get(controls::ExposureTime);
-	if (exposure && !agc.autoExposureEnabled) {
-		agc.manual.exposure = *exposure * 1.0us
-				    / context.configuration.sensor.lineDuration;
-
-		LOG(RkISP1Agc, Debug)
-			<< "Set exposure to " << agc.manual.exposure;
-	}
-
-	const auto &gain = controls.get(controls::AnalogueGain);
-	if (gain && !agc.autoGainEnabled) {
-		agc.manual.gain = *gain;
-
-		LOG(RkISP1Agc, Debug) << "Set gain to " << agc.manual.gain;
-	}
-
-	frameContext.agc.autoExposureEnabled = agc.autoExposureEnabled;
-	frameContext.agc.autoGainEnabled = agc.autoGainEnabled;
-
-	if (!frameContext.agc.autoExposureEnabled)
-		frameContext.agc.exposure = agc.manual.exposure;
-	if (!frameContext.agc.autoGainEnabled)
-		frameContext.agc.gain = agc.manual.gain;
-
-	if (!frameContext.agc.autoExposureEnabled &&
-	    !frameContext.agc.autoGainEnabled)
-		frameContext.agc.quantizationGain = 1.0;
+	agc_.queueRequest(context.configuration.agc, agc, frameContext.agc, controls);
 
 	const auto &meteringMode = controls.get(controls::AeMeteringMode);
 	if (meteringMode) {
@@ -387,42 +202,6 @@ void Agc::queueRequest(IPAContext &context,
 			static_cast<controls::AeMeteringModeEnum>(*meteringMode);
 	}
 	frameContext.agc.meteringMode = agc.meteringMode;
-
-	const auto &exposureMode = controls.get(controls::AeExposureMode);
-	if (exposureMode)
-		agc.exposureMode =
-			static_cast<controls::AeExposureModeEnum>(*exposureMode);
-	frameContext.agc.exposureMode = agc.exposureMode;
-
-	const auto &constraintMode = controls.get(controls::AeConstraintMode);
-	if (constraintMode)
-		agc.constraintMode =
-			static_cast<controls::AeConstraintModeEnum>(*constraintMode);
-	frameContext.agc.constraintMode = agc.constraintMode;
-
-	const auto &exposureValue = controls.get(controls::ExposureValue);
-	if (exposureValue)
-		agc.exposureValue = *exposureValue;
-	frameContext.agc.exposureValue = agc.exposureValue;
-
-	const auto &frameDurationLimits = controls.get(controls::FrameDurationLimits);
-	if (frameDurationLimits) {
-		/* Limit the control value to the limits in ControlInfo */
-		ControlInfo &limits = context.ctrlMap[&controls::FrameDurationLimits];
-		int64_t minFrameDuration =
-			std::clamp((*frameDurationLimits).front(),
-				   limits.min().get<int64_t>(),
-				   limits.max().get<int64_t>());
-		int64_t maxFrameDuration =
-			std::clamp((*frameDurationLimits).back(),
-				   limits.min().get<int64_t>(),
-				   limits.max().get<int64_t>());
-
-		agc.minFrameDuration = std::chrono::microseconds(minFrameDuration);
-		agc.maxFrameDuration = std::chrono::microseconds(maxFrameDuration);
-	}
-	frameContext.agc.minFrameDuration = agc.minFrameDuration;
-	frameContext.agc.maxFrameDuration = agc.maxFrameDuration;
 }
 
 /**
@@ -431,40 +210,12 @@ void Agc::queueRequest(IPAContext &context,
 void Agc::prepare(IPAContext &context, const uint32_t frame,
 		  IPAFrameContext &frameContext, RkISP1Params *params)
 {
-	uint32_t activeAutoExposure = context.activeState.agc.automatic.exposure;
-	double activeAutoGain = context.activeState.agc.automatic.gain;
-	double activeAutoQGain = context.activeState.agc.automatic.quantizationGain;
-
-	/* Populate exposure and gain in auto mode */
-	if (frameContext.agc.autoExposureEnabled) {
-		frameContext.agc.exposure = activeAutoExposure;
-		frameContext.agc.quantizationGain = activeAutoQGain;
-	}
-	if (frameContext.agc.autoGainEnabled) {
-		frameContext.agc.gain = activeAutoGain;
-		frameContext.agc.quantizationGain = activeAutoQGain;
-	}
-
-	/*
-	 * Populate manual exposure and gain from the active auto values when
-	 * transitioning from auto to manual
-	 */
-	if (!frameContext.agc.autoExposureEnabled && frameContext.agc.autoExposureModeChange) {
-		context.activeState.agc.manual.exposure = activeAutoExposure;
-		frameContext.agc.exposure = activeAutoExposure;
-	}
-	if (!frameContext.agc.autoGainEnabled && frameContext.agc.autoGainModeChange) {
-		context.activeState.agc.manual.gain = activeAutoGain;
-		frameContext.agc.gain = activeAutoGain;
-		frameContext.agc.quantizationGain = activeAutoQGain;
-	}
+	agc_.prepare(context.activeState.agc, frameContext.agc);
 
 	if (context.configuration.compress.supported) {
 		frameContext.compress.enable = true;
 		frameContext.compress.gain = frameContext.agc.quantizationGain;
 	}
-
-	frameContext.agc.yTarget = context.activeState.agc.automatic.yTarget;
 
 	if (frame > 0 && !frameContext.agc.updateMetering)
 		return;
@@ -519,50 +270,6 @@ void Agc::prepare(IPAContext &context, const uint32_t frame,
 	hstConfig->histogram_predivider =
 		computeHistogramPredivider(windowSize,
 					   static_cast<rkisp1_cif_isp_histogram_mode>(hstConfig->mode));
-}
-
-void Agc::fillMetadata(IPAContext &context, IPAFrameContext &frameContext,
-		       ControlList &metadata)
-{
-	utils::Duration exposureTime = context.configuration.sensor.lineDuration
-				     * frameContext.sensor.exposure;
-	metadata.set(controls::AnalogueGain, frameContext.sensor.gain);
-	metadata.set(controls::ExposureTime, exposureTime.get<std::micro>());
-	metadata.set(controls::FrameDuration, frameContext.agc.frameDuration.get<std::micro>());
-	metadata.set(controls::ExposureTimeMode,
-		     frameContext.agc.autoExposureEnabled
-		     ? controls::ExposureTimeModeAuto
-		     : controls::ExposureTimeModeManual);
-	metadata.set(controls::AnalogueGainMode,
-		     frameContext.agc.autoGainEnabled
-		     ? controls::AnalogueGainModeAuto
-		     : controls::AnalogueGainModeManual);
-
-	metadata.set(controls::AeMeteringMode, frameContext.agc.meteringMode);
-	metadata.set(controls::AeExposureMode, frameContext.agc.exposureMode);
-	metadata.set(controls::AeConstraintMode, frameContext.agc.constraintMode);
-	metadata.set(controls::ExposureValue, frameContext.agc.exposureValue);
-}
-
-/**
- * \brief Process frame duration and compute vblank
- * \param[in] context The shared IPA context
- * \param[in] frameContext The current frame context
- * \param[in] frameDuration The target frame duration
- *
- * Compute and populate vblank from the target frame duration.
- */
-void Agc::processFrameDuration(IPAContext &context,
-			       IPAFrameContext &frameContext,
-			       utils::Duration frameDuration)
-{
-	IPACameraSensorInfo &sensorInfo = context.sensorInfo;
-	utils::Duration lineDuration = context.configuration.sensor.lineDuration;
-
-	frameContext.agc.vblank = (frameDuration / lineDuration) - sensorInfo.outputSize.height;
-
-	/* Update frame duration accounting for line length quantization. */
-	frameContext.agc.frameDuration = (sensorInfo.outputSize.height + frameContext.agc.vblank) * lineDuration;
 }
 
 namespace {
@@ -638,21 +345,6 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 		  IPAFrameContext &frameContext, const rkisp1_stat_buffer *stats,
 		  ControlList &metadata)
 {
-	if (!stats) {
-		processFrameDuration(context, frameContext,
-				     frameContext.agc.minFrameDuration);
-		fillMetadata(context, frameContext, metadata);
-		return;
-	}
-
-	if (!(stats->meas_type & RKISP1_CIF_ISP_STAT_AUTOEXP)) {
-		fillMetadata(context, frameContext, metadata);
-		LOG(RkISP1Agc, Error) << "AUTOEXP data is missing in statistics";
-		return;
-	}
-
-	const utils::Duration &lineDuration = context.configuration.sensor.lineDuration;
-
 	/*
 	 * \todo Verify that the exposure and gain applied by the sensor for
 	 * this frame match what has been requested. This isn't a hard
@@ -661,95 +353,46 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 	 * we receive), but is important in manual mode.
 	 */
 
-	const rkisp1_cif_isp_stat *params = &stats->params;
+	const rkisp1_cif_isp_stat *params = nullptr;
 
-	/*
-	 * Set the AGC limits using the fixed exposure time and/or gain in
-	 * manual mode, or the sensor limits in auto mode.
-	 */
-	utils::Duration minExposureTime;
-	utils::Duration maxExposureTime;
-	double minAnalogueGain;
-	double maxAnalogueGain;
-
-	if (frameContext.agc.autoExposureEnabled) {
-		minExposureTime = context.configuration.sensor.minExposureTime;
-		maxExposureTime = std::clamp(frameContext.agc.maxFrameDuration,
-					     context.configuration.sensor.minExposureTime,
-					     context.configuration.sensor.maxExposureTime);
-	} else {
-		minExposureTime = context.configuration.sensor.lineDuration
-				* frameContext.agc.exposure;
-		maxExposureTime = minExposureTime;
+	if (stats) {
+		if (stats->meas_type & RKISP1_CIF_ISP_STAT_AUTOEXP)
+			params = &stats->params;
+		else
+			LOG(RkISP1Agc, Error) << "AUTOEXP data is missing in statistics";
 	}
 
-	if (frameContext.agc.autoGainEnabled) {
-		minAnalogueGain = context.configuration.sensor.minAnalogueGain;
-		maxAnalogueGain = context.configuration.sensor.maxAnalogueGain;
+	if (params) {
+		std::vector<AgcMeanLuminance::AgcConstraint> additionalConstraints;
+		if (context.activeState.wdr.mode != controls::WdrOff)
+			additionalConstraints.push_back(context.activeState.wdr.constraint);
+
+		agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {{
+			.traits = AgcTraits{
+				{ params->ae.exp_mean, context.hw.numAeCells },
+				meteringModes_.at(frameContext.agc.meteringMode),
+			},
+			.yHist = {
+				/* The lower 4 bits are fractional and meant to be discarded. */
+				{ params->hist.hist_bins, context.hw.numHistogramBins },
+				[](uint32_t x) { return x >> 4; },
+			},
+			.exposure = frameContext.sensor.exposure,
+			/*
+			 * Include the quantization gain if it was applied. Do not use
+			 * compress.gain because it will include gains that shall not be
+			 * reported to the user when HDR is implemented.
+			 */
+			.gain = frameContext.sensor.gain
+			        * (frameContext.compress.enable ? frameContext.agc.quantizationGain : 1),
+			.additionalConstraints = std::move(additionalConstraints),
+			.lux = frameContext.lux.lux,
+		}}, metadata);
 	} else {
-		minAnalogueGain = frameContext.agc.gain;
-		maxAnalogueGain = frameContext.agc.gain;
+		agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {}, metadata);
 	}
 
-	std::vector<AgcMeanLuminance::AgcConstraint> additionalConstraints;
-	if (context.activeState.wdr.mode != controls::WdrOff)
-		additionalConstraints.push_back(context.activeState.wdr.constraint);
-
-	agc_.setLimits(minExposureTime, maxExposureTime, minAnalogueGain, maxAnalogueGain,
-		       std::move(additionalConstraints));
-
-	/*
-	 * The Agc algorithm needs to know the effective exposure value that was
-	 * applied to the sensor when the statistics were collected.
-	 */
-	utils::Duration exposureTime = lineDuration * frameContext.sensor.exposure;
-	double analogueGain = frameContext.sensor.gain;
-	utils::Duration effectiveExposureValue = exposureTime * analogueGain;
-
-	/*
-	 * Include the quantization gain if it was applied. Do not use
-	 * compress.gain because it will include gains that shall not be
-	 * reported to the user when HDR is implemented.
-	 */
-	if (frameContext.compress.enable)
-		effectiveExposureValue *= frameContext.agc.quantizationGain;
-
-	/* The lower 4 bits are fractional and meant to be discarded. */
-	Histogram hist({ params->hist.hist_bins, context.hw.numHistogramBins },
-		       [](uint32_t x) { return x >> 4; });
-
-	const auto &newEv = agc_.calculateNewEv({
-		.traits = AgcTraits{
-			{ params->ae.exp_mean, context.hw.numAeCells },
-			meteringModes_.at(frameContext.agc.meteringMode),
-		},
-		.yHist = hist,
-		.effectiveExposureValue = effectiveExposureValue,
-		.constraintModeIndex = frameContext.agc.constraintMode,
-		.exposureModeIndex = frameContext.agc.exposureMode,
-		.lux = frameContext.lux.lux,
-		.exposureCompensation = pow(2.0, frameContext.agc.exposureValue),
-	});
-
-	LOG(RkISP1Agc, Debug)
-		<< "Divided up exposure time, analogue gain, quantization gain"
-		<< " and digital gain are " << newEv.exposureTime << ", " << newEv.analogueGain
-		<< ", " << newEv.quantizationGain << " and " << newEv.digitalGain;
-
-	IPAActiveState &activeState = context.activeState;
-	/* Update the estimated exposure and gain. */
-	activeState.agc.automatic.exposure = newEv.exposureTime / lineDuration;
-	activeState.agc.automatic.gain = newEv.analogueGain;
-	activeState.agc.automatic.quantizationGain = newEv.quantizationGain;
-	activeState.agc.automatic.yTarget = newEv.yTarget;
-	/*
-	 * Expand the target frame duration so that we do not run faster than
-	 * the minimum frame duration when we have short exposures.
-	 */
-	processFrameDuration(context, frameContext,
-			     std::max(frameContext.agc.minFrameDuration, newEv.exposureTime));
-
-	fillMetadata(context, frameContext, metadata);
+	metadata.set(controls::AeMeteringMode, frameContext.agc.meteringMode);
 }
 
 REGISTER_IPA_ALGORITHM(Agc, "Agc")
