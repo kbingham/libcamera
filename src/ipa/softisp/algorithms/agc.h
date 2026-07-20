@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <libipa/agc_msv.h>
+
 #include "algorithm.h"
 
 namespace libcamera {
@@ -16,8 +18,7 @@ namespace ipa::softisp::algorithms {
 class Agc : public Algorithm
 {
 public:
-	Agc();
-	~Agc() = default;
+	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
 
 	void process(IPAContext &context, const uint32_t frame,
 		     IPAFrameContext &frameContext,
@@ -25,7 +26,7 @@ public:
 		     ControlList &metadata) override;
 
 private:
-	void updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV);
+	AgcMSV agc_;
 };
 
 } /* namespace ipa::softisp::algorithms */
