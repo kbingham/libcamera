@@ -224,14 +224,12 @@ int AgcMeanLuminance::parseConstraint(const ValueNode &modeDict, int32_t id)
 		}
 
 		AgcConstraint constraint = { bound, qLo, qHi, std::move(*yTarget) };
-
-		if (!constraintModes_.count(id))
-			constraintModes_[id] = {};
+		auto &constraints = constraintModes_[id];
 
 		if (idx)
-			constraintModes_[id].push_back(constraint);
+			constraints.push_back(std::move(constraint));
 		else
-			constraintModes_[id].insert(constraintModes_[id].begin(), constraint);
+			constraints.insert(constraints.begin(), std::move(constraint));
 	}
 
 	return 0;
@@ -244,8 +242,8 @@ int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 	const ValueNode &constraintModes = tuningData[controls::AeConstraintMode.name()];
 	if (constraintModes.isDictionary()) {
 		for (const auto &[modeName, modeDict] : constraintModes.asDict()) {
-			if (AeConstraintModeNameValueMap.find(modeName) ==
-			    AeConstraintModeNameValueMap.end()) {
+			auto it = AeConstraintModeNameValueMap.find(modeName);
+			if (it == AeConstraintModeNameValueMap.end()) {
 				LOG(AgcMeanLuminance, Warning)
 					<< "Skipping unknown constraint mode '" << modeName << "'";
 				continue;
@@ -257,13 +255,11 @@ int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 				return -EINVAL;
 			}
 
-			int ret = parseConstraint(modeDict,
-						  AeConstraintModeNameValueMap.at(modeName));
+			int ret = parseConstraint(modeDict, it->second);
 			if (ret)
 				return ret;
 
-			availableConstraintModes.push_back(
-				AeConstraintModeNameValueMap.at(modeName));
+			availableConstraintModes.push_back(it->second);
 		}
 	}
 
@@ -281,9 +277,7 @@ int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 			Pwl({ { { 0.0, 0.5 } } })
 		};
 
-		constraintModes_[controls::ConstraintNormal].insert(
-			constraintModes_[controls::ConstraintNormal].begin(),
-			constraint);
+		constraintModes_[controls::ConstraintNormal].push_back(std::move(constraint));
 		availableConstraintModes.push_back(controls::ConstraintNormal);
 	}
 
@@ -299,8 +293,8 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 	const ValueNode &exposureModes = tuningData[controls::AeExposureMode.name()];
 	if (exposureModes.isDictionary()) {
 		for (const auto &[modeName, modeValues] : exposureModes.asDict()) {
-			if (AeExposureModeNameValueMap.find(modeName) ==
-			    AeExposureModeNameValueMap.end()) {
+			auto it = AeExposureModeNameValueMap.find(modeName);
+			if (it == AeExposureModeNameValueMap.end()) {
 				LOG(AgcMeanLuminance, Warning)
 					<< "Skipping unknown exposure mode '" << modeName << "'";
 				continue;
@@ -340,8 +334,8 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 			std::shared_ptr<ExposureModeHelper> helper =
 				std::make_shared<ExposureModeHelper>(stages);
 
-			exposureModeHelpers_[AeExposureModeNameValueMap.at(modeName)] = helper;
-			availableExposureModes.push_back(AeExposureModeNameValueMap.at(modeName));
+			exposureModeHelpers_.try_emplace(it->second, std::move(helper));
+			availableExposureModes.push_back(it->second);
 		}
 	}
 
@@ -352,14 +346,13 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 	 * possible before touching gain.
 	 */
 	if (availableExposureModes.empty()) {
-		int32_t exposureModeId = controls::ExposureNormal;
 		std::vector<std::pair<utils::Duration, double>> stages = { };
 
 		std::shared_ptr<ExposureModeHelper> helper =
 			std::make_shared<ExposureModeHelper>(stages);
 
-		exposureModeHelpers_[exposureModeId] = helper;
-		availableExposureModes.push_back(exposureModeId);
+		exposureModeHelpers_.try_emplace(controls::ExposureNormal, std::move(helper));
+		availableExposureModes.push_back(controls::ExposureNormal);
 	}
 
 	controls_[&controls::AeExposureMode] = ControlInfo(availableExposureModes);
