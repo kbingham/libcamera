@@ -69,7 +69,7 @@ public:
 		return constraintModes_;
 	}
 
-	const std::map<int32_t, std::shared_ptr<ExposureModeHelper>> &exposureModeHelpers() const
+	const std::map<int32_t, ExposureModeHelper> &exposureModeHelpers() const
 	{
 		return exposureModeHelpers_;
 	}
@@ -111,7 +111,7 @@ private:
 
 	std::vector<AgcConstraint> additionalConstraints_;
 	std::map<int32_t, std::vector<AgcConstraint>> constraintModes_;
-	std::map<int32_t, std::shared_ptr<ExposureModeHelper>> exposureModeHelpers_;
+	std::map<int32_t, ExposureModeHelper> exposureModeHelpers_;
 	ControlInfoMap::Map controls_;
 };
 
