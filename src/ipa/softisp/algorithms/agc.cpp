@@ -14,6 +14,8 @@
 
 #include <libcamera/base/log.h>
 
+#include <libipa/histogram.h>
+
 #include "control_ids.h"
 
 namespace libcamera {
@@ -64,16 +66,16 @@ static constexpr float kExpMaxStep = 0.15;
 
 namespace {
 
-std::optional<float> calculateMSV(const SwIspStats::Histogram &histogram, uint8_t blackLevel)
+std::optional<float> calculateMSV(const Histogram &histogram, uint8_t blackLevel)
 {
 	/*
 	 * Calculate Mean Sample Value (MSV) according to formula from:
 	 * https://www.araa.asn.au/acra/acra2007/papers/paper84final.pdf
 	 */
 	const unsigned int blackLevelHistIdx =
-		blackLevel / (256 / SwIspStats::kYHistogramSize);
+		blackLevel * histogram.bins() / 256;
 	const unsigned int histogramSize =
-		SwIspStats::kYHistogramSize - blackLevelHistIdx;
+		histogram.bins() - blackLevelHistIdx;
 	const unsigned int yHistValsPerBin = histogramSize / kExposureBinsCount;
 	const unsigned int yHistValsPerBinMod =
 		histogramSize / (histogramSize % kExposureBinsCount + 1);
@@ -191,7 +193,7 @@ void Agc::process(IPAContext &context,
 		return;
 	}
 
-	auto exposureMSV = calculateMSV(stats->yHistogram, context.activeState.blc.level);
+	auto exposureMSV = calculateMSV({ stats->yHistogram }, context.activeState.blc.level);
 	if (!exposureMSV) {
 		LOG(IPASoftIspExposure, Debug)
 			<< "Not adjusting exposure due to insufficient histogram data";
