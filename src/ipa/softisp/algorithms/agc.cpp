@@ -66,19 +66,15 @@ static constexpr float kExpMaxStep = 0.15;
 
 namespace {
 
-std::optional<float> calculateMSV(const Histogram &histogram, uint8_t blackLevel)
+std::optional<float> calculateMSV(const Histogram &histogram)
 {
 	/*
 	 * Calculate Mean Sample Value (MSV) according to formula from:
 	 * https://www.araa.asn.au/acra/acra2007/papers/paper84final.pdf
 	 */
-	const unsigned int blackLevelHistIdx =
-		blackLevel * histogram.bins() / 256;
-	const unsigned int histogramSize =
-		histogram.bins() - blackLevelHistIdx;
-	const unsigned int yHistValsPerBin = histogramSize / kExposureBinsCount;
+	const unsigned int yHistValsPerBin = histogram.bins() / kExposureBinsCount;
 	const unsigned int yHistValsPerBinMod =
-		histogramSize / (histogramSize % kExposureBinsCount + 1);
+		histogram.bins() / (histogram.bins() % kExposureBinsCount + 1);
 	int exposureBins[kExposureBinsCount] = {};
 	unsigned int denom = 0;
 	unsigned int num = 0;
@@ -86,9 +82,9 @@ std::optional<float> calculateMSV(const Histogram &histogram, uint8_t blackLevel
 	if (yHistValsPerBin == 0)
 		return std::nullopt;
 
-	for (unsigned int i = 0; i < histogramSize; i++) {
+	for (unsigned int i = 0; i < histogram.bins(); i++) {
 		unsigned int idx = (i - (i / yHistValsPerBinMod)) / yHistValsPerBin;
-		exposureBins[idx] += histogram[blackLevelHistIdx + i];
+		exposureBins[idx] += histogram[i];
 	}
 
 	for (unsigned int i = 0; i < kExposureBinsCount; i++) {
@@ -193,7 +189,15 @@ void Agc::process(IPAContext &context,
 		return;
 	}
 
-	auto exposureMSV = calculateMSV({ stats->yHistogram }, context.activeState.blc.level);
+	/* \todo The histogram should come already adjusted. */
+	auto histogram = stats->yHistogram;
+	const unsigned int blackLevelHistIdx =
+		context.activeState.blc.level * histogram.size() / 256;
+
+	for (unsigned int i = 0; i < blackLevelHistIdx; i++)
+		histogram[blackLevelHistIdx] += histogram[i];
+
+	auto exposureMSV = calculateMSV({ { histogram.begin() + blackLevelHistIdx, histogram.end() } });
 	if (!exposureMSV) {
 		LOG(IPASoftIspExposure, Debug)
 			<< "Not adjusting exposure due to insufficient histogram data";
