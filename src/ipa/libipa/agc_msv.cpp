@@ -171,58 +171,64 @@ void AgcMSV::setLimits(const Limits &limits)
  */
 AgcMSV::Result AgcMSV::calculateNewEv(const Params &params)
 {
-	auto exposureMSV = calculateMSV(params.yHist);
-	if (!exposureMSV) {
+	AgcMSV::Result result = { params.exposure, params.gain };
+
+	if (auto exposureMSV = calculateMSV(params.yHist)) {
+		result = updateExposure(params.exposure, params.gain, *exposureMSV);
+	} else {
 		LOG(AgcMSV, Debug)
 			<< "Not adjusting exposure due to insufficient histogram data";
-		return { params.exposure, params.gain };
 	}
 
-	return updateExposure(params.exposure, params.gain, *exposureMSV);
+	result.exposure = std::clamp(result.exposure, limits_.exposure[0], limits_.exposure[1]);
+	result.analogueGain = std::clamp(result.analogueGain, limits_.gain[0], limits_.gain[1]);
+
+	LOG(AgcMSV, Debug)
+		<< "exposure:" << result.exposure
+		<< " analogue-gain:" << result.analogueGain;
+
+	return result;
 }
 
 AgcMSV::Result AgcMSV::updateExposure(uint32_t exposure, double again, float exposureMSV)
 {
 	float error = kExposureOptimal - exposureMSV;
-	if (std::abs(error) <= kExposureSatisfactory)
-		return { exposure, again };
-
-	/*
-	 * Compute a proportional correction factor. The sign of the error
-	 * determines the direction: positive error means too dark (increase),
-	 * negative means too bright (decrease).
-	 */
-	float step = std::clamp(error * kExpProportionalGain,
-				-kExpMaxStep, kExpMaxStep);
-	float factor = 1.0f + step;
-
-	if (factor > 1.0f) {
-		/* Scene too dark: increase exposure first, then gain. */
-		if (exposure < limits_.exposure[1]) {
-			uint32_t next = exposure * factor;
-			exposure = std::max(next, exposure + 1);
-		} else {
-			double next = again * factor;
-			again = std::max(next, again + limits_.gainMinStep);
-		}
-	} else {
-		/* Scene too bright: decrease gain first, then exposure. */
-		if (again > limits_.gain1) {
-			double next = again * factor;
-			again = std::min(next, again - limits_.gainMinStep);
-		} else {
-			uint32_t next = exposure * factor;
-			exposure = std::min(next, exposure - 1);
-		}
-	}
-
-	exposure = std::clamp(exposure, limits_.exposure[0], limits_.exposure[1]);
-	again = std::clamp(again, limits_.gain[0], limits_.gain[1]);
 
 	LOG(AgcMSV, Debug)
-		<< "exposureMSV:" << exposureMSV
-		<< " error:" << error << " factor:" << factor
-		<< " exposure:" << exposure << " analogue-gain:" << again;
+		<< "exposureMSV:" << exposureMSV << " error:" << error;
+
+	if (std::abs(error) > kExposureSatisfactory) {
+		/*
+		 * Compute a proportional correction factor. The sign of the error
+		 * determines the direction: positive error means too dark (increase),
+		 * negative means too bright (decrease).
+		 */
+		float step = std::clamp(error * kExpProportionalGain,
+					-kExpMaxStep, kExpMaxStep);
+		float factor = 1.0f + step;
+
+		LOG(AgcMSV, Debug) << "factor:" << factor;
+
+		if (factor > 1.0f) {
+			/* Scene too dark: increase exposure first, then gain. */
+			if (exposure < limits_.exposure[1]) {
+				uint32_t next = exposure * factor;
+				exposure = std::max(next, exposure + 1);
+			} else {
+				double next = again * factor;
+				again = std::max(next, again + limits_.gainMinStep);
+			}
+		} else {
+			/* Scene too bright: decrease gain first, then exposure. */
+			if (again > limits_.gain1) {
+				double next = again * factor;
+				again = std::min(next, again - limits_.gainMinStep);
+			} else {
+				uint32_t next = exposure * factor;
+				exposure = std::min(next, exposure - 1);
+			}
+		}
+	}
 
 	return { exposure, again };
 }
