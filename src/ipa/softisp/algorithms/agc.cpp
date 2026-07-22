@@ -130,19 +130,13 @@ void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, dou
 			exposure = std::max(next, exposure + 1);
 		} else {
 			double next = again * factor;
-			if (next - again < context.configuration.agc.againMinStep)
-				again += context.configuration.agc.againMinStep;
-			else
-				again = next;
+			again = std::max(next, again + context.configuration.agc.againMinStep);
 		}
 	} else {
 		/* Scene too bright: decrease gain first, then exposure. */
 		if (again > context.configuration.agc.again10) {
 			double next = again * factor;
-			if (again - next < context.configuration.agc.againMinStep)
-				again -= context.configuration.agc.againMinStep;
-			else
-				again = next;
+			again = std::min(next, again - context.configuration.agc.againMinStep);
 		} else {
 			uint32_t next = exposure * factor;
 			exposure = std::min(next, exposure - 1);
