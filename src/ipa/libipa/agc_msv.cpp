@@ -220,7 +220,7 @@ AgcMSV::Result AgcMSV::updateExposure(uint32_t exposure, double again, float exp
 			}
 		} else {
 			/* Scene too bright: decrease gain first, then exposure. */
-			if (again > limits_.gain1) {
+			if (again > std::max(limits_.gain1, limits_.gain[0])) {
 				double next = again * factor;
 				again = std::min(next, again - limits_.gainMinStep);
 			} else {
