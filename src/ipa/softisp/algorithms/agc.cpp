@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <stdint.h>
 
 #include <libcamera/base/log.h>
@@ -60,6 +61,44 @@ static constexpr float kExpProportionalGain = 0.04;
  * scene changes dramatically.
  */
 static constexpr float kExpMaxStep = 0.15;
+
+namespace {
+
+std::optional<float> calculateMSV(const SwIspStats::Histogram &histogram, uint8_t blackLevel)
+{
+	/*
+	 * Calculate Mean Sample Value (MSV) according to formula from:
+	 * https://www.araa.asn.au/acra/acra2007/papers/paper84final.pdf
+	 */
+	const unsigned int blackLevelHistIdx =
+		blackLevel / (256 / SwIspStats::kYHistogramSize);
+	const unsigned int histogramSize =
+		SwIspStats::kYHistogramSize - blackLevelHistIdx;
+	const unsigned int yHistValsPerBin = histogramSize / kExposureBinsCount;
+	const unsigned int yHistValsPerBinMod =
+		histogramSize / (histogramSize % kExposureBinsCount + 1);
+	int exposureBins[kExposureBinsCount] = {};
+	unsigned int denom = 0;
+	unsigned int num = 0;
+
+	if (yHistValsPerBin == 0)
+		return std::nullopt;
+
+	for (unsigned int i = 0; i < histogramSize; i++) {
+		unsigned int idx = (i - (i / yHistValsPerBinMod)) / yHistValsPerBin;
+		exposureBins[idx] += histogram[blackLevelHistIdx + i];
+	}
+
+	for (unsigned int i = 0; i < kExposureBinsCount; i++) {
+		LOG(IPASoftIspExposure, Debug) << i << ": " << exposureBins[i];
+		denom += exposureBins[i];
+		num += exposureBins[i] * (i + 1);
+	}
+
+	return (denom == 0 ? 0 : static_cast<float>(num) / denom);
+}
+
+} /* namespace */
 
 Agc::Agc()
 {
@@ -158,41 +197,14 @@ void Agc::process(IPAContext &context,
 		return;
 	}
 
-	/*
-	 * Calculate Mean Sample Value (MSV) according to formula from:
-	 * https://www.araa.asn.au/acra/acra2007/papers/paper84final.pdf
-	 */
-	const auto &histogram = stats->yHistogram;
-	const unsigned int blackLevelHistIdx =
-		context.activeState.blc.level / (256 / SwIspStats::kYHistogramSize);
-	const unsigned int histogramSize =
-		SwIspStats::kYHistogramSize - blackLevelHistIdx;
-	const unsigned int yHistValsPerBin = histogramSize / kExposureBinsCount;
-	const unsigned int yHistValsPerBinMod =
-		histogramSize / (histogramSize % kExposureBinsCount + 1);
-	int exposureBins[kExposureBinsCount] = {};
-	unsigned int denom = 0;
-	unsigned int num = 0;
-
-	if (yHistValsPerBin == 0) {
+	auto exposureMSV = calculateMSV(stats->yHistogram, context.activeState.blc.level);
+	if (!exposureMSV) {
 		LOG(IPASoftIspExposure, Debug)
 			<< "Not adjusting exposure due to insufficient histogram data";
 		return;
 	}
 
-	for (unsigned int i = 0; i < histogramSize; i++) {
-		unsigned int idx = (i - (i / yHistValsPerBinMod)) / yHistValsPerBin;
-		exposureBins[idx] += histogram[blackLevelHistIdx + i];
-	}
-
-	for (unsigned int i = 0; i < kExposureBinsCount; i++) {
-		LOG(IPASoftIspExposure, Debug) << i << ": " << exposureBins[i];
-		denom += exposureBins[i];
-		num += exposureBins[i] * (i + 1);
-	}
-
-	float exposureMSV = (denom == 0 ? 0 : static_cast<float>(num) / denom);
-	updateExposure(context, frameContext, exposureMSV);
+	updateExposure(context, frameContext, *exposureMSV);
 }
 
 REGISTER_IPA_ALGORITHM(Agc, "Agc")
