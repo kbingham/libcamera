@@ -410,7 +410,7 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	/* Configure the default exposure and gain. */
 	state = {};
 	state.automatic.gain = session.minAnalogueGain;
-	state.automatic.exposure = 10ms / session.lineDuration;
+	state.automatic.exposure = defExposure;
 	state.automatic.quantizationGain = 1;
 	state.automatic.yTarget = impl_.effectiveYTarget(0, 1);
 	state.manual.gain = state.automatic.gain;
