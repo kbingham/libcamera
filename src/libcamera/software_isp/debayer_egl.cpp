@@ -533,6 +533,9 @@ eGLImage *DebayerEGL::getCachedInputFrameBuffer(FrameBuffer *input, std::optiona
 		if (egl_.createInputDMABufTexture2D(*eglImageIn, input->planes()[0].fd.get()) == 0)
 			return eglImageIn;
 
+		if (eglImageInCache_.size() == 1)
+			LOG(Debayer, Info)
+				<< "Importing input DMABuf failed, falling back to upload";
 	} else if (!eglImageIn->dmabuf_import_failed_) {
 		egl_.activateBindTexture(*eglImageIn);
 		return eglImageIn;
