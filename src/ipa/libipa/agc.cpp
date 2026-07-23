@@ -364,8 +364,10 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	float defGain = config.sensor->gain(v4l2Gain.def().get<int32_t>());
 
 	LOG(Agc, Debug)
-		<< "Exposure: [" << minExposure << ", " << maxExposure
-		<< "], gain: [" << minGain << ", " << maxGain << "]";
+		<< "exposure: [" << minExposure << ',' << maxExposure << "], "
+		<< "gain: [" << minGain << ',' << maxGain << "], "
+		<< "line-duration: " << session.lineDuration << ", "
+		<< "sensor-output: " << session.sensor.outputSize;
 
 	/*
 	 * Compute the frame duration limits.
@@ -736,10 +738,10 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
 	state.automatic.yTarget = newEv.yTarget;
 
 	LOG(Agc, Debug)
-		<< "Divided up exposure time, analogue gain, quantization gain"
-		<< " and digital gain are " << newEv.exposureTime
-		<< ", " << state.automatic.gain << ", " << state.automatic.quantizationGain
-		<< " and " << newEv.digitalGain;
+		<< "exposure-time: " << newEv.exposureTime << ", "
+		<< "analogue-gain: " << state.automatic.gain << ", "
+		<< "quantization-gain: " << state.automatic.quantizationGain << ", "
+		<< "digital-gain: " << newEv.digitalGain;
 
 	/*
 	 * Expand the target frame duration so that we do not run faster than
