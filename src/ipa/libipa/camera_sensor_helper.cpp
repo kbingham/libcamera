@@ -737,6 +737,18 @@ public:
 };
 REGISTER_CAMERA_SENSOR_HELPER("ov08x40", CameraSensorHelperOv08x40)
 
+class CameraSensorHelperMira220 : public CameraSensorHelper
+{
+public:
+	CameraSensorHelperMira220()
+	{
+		blackLevel_ = 3600;
+		/* gain is fixed to 1x, this is just a place holder. */
+		gain_ = AnalogueGainLinear{ 0, 2048, -1, 2048 };
+	}
+};
+REGISTER_CAMERA_SENSOR_HELPER("mira220", CameraSensorHelperMira220)
+
 class CameraSensorHelperOv2685 : public CameraSensorHelper
 {
 public:
