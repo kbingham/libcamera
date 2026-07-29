@@ -134,8 +134,7 @@ int IPAMaliC55::init(const IPASettings &settings, const IPAConfigInfo &ipaConfig
 void IPAMaliC55::setControls(const IPAFrameContext &frameContext)
 {
 	ControlList ctrls(context_.sensorControls);
-	agc::prepareControls(ctrls, context_.camHelper.get(),
-			     frameContext.agc.exposure, frameContext.agc.gain);
+	agc::prepareControls(ctrls, context_.camHelper.get(), frameContext.agc);
 
 	setSensorControls.emit(ctrls);
 }

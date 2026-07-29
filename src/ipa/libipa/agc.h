@@ -107,13 +107,14 @@ extractControls(const ControlList &controls, const CameraSensorHelper *sensor)
 
 inline void
 prepareControls(ControlList &controls, const CameraSensorHelper *sensor,
-		uint32_t exposure, double gain)
+		const FrameContext &frameContext)
 {
-	controls.set(V4L2_CID_EXPOSURE, static_cast<int32_t>(exposure));
+	controls.set(V4L2_CID_EXPOSURE, static_cast<int32_t>(frameContext.exposure));
 	controls.set(V4L2_CID_ANALOGUE_GAIN,
 		     static_cast<int32_t>(sensor
-					  ? sensor->gainCode(gain)
-					  : static_cast<uint32_t>(gain)));
+					  ? sensor->gainCode(frameContext.gain)
+					  : static_cast<uint32_t>(frameContext.gain)));
+	controls.set(V4L2_CID_VBLANK, static_cast<int32_t>(frameContext.vblank));
 }
 
 } /* namespace agc */

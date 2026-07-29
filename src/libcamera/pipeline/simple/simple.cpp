@@ -572,6 +572,7 @@ SimpleCameraData::SimpleCameraData(SimplePipelineHandler *pipe,
 	std::unordered_map<uint32_t, DelayedControls::ControlParams> params = {
 		{ V4L2_CID_ANALOGUE_GAIN, { delays.gainDelay, false } },
 		{ V4L2_CID_EXPOSURE, { delays.exposureDelay, false } },
+		{ V4L2_CID_VBLANK, { delays.vblankDelay, true } },
 	};
 	delayedCtrls_ = std::make_unique<DelayedControls>(sensor_->device(), params);
 

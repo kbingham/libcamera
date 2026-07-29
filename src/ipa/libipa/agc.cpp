@@ -56,15 +56,14 @@ namespace agc {
 
 /**
  * \fn prepareControls(ControlList &controls, const CameraSensorHelper *sensor,
- *                     uint32_t exposure, double gain)
+ *                     const FrameContext &frameContext)
  * \param[out] controls The controls list to populate
  * \param[in] sensor The CameraSensorHelper
- * \param[in] exposure The exposure (in lines)
- * \param[in] gain The analogue gain
+ * \param[in] frameContext The agc frame context
  *
- * This function sets \a V4L2_CID_EXPOSURE and \a V4L2_CID_ANALOGUE_GAIN
- * in \a controls. The gain is mapped to the gain code if \a sensor is provided,
- * otherwise the gain value will be used directly.
+ * This function sets \a V4L2_CID_EXPOSURE, \a V4L2_CID_ANALOGUE_GAIN, and
+ * \a V4L2_CID_VBLANK in \a controls. The gain is mapped to the gain code
+ * if \a sensor is provided, otherwise the gain value will be used directly.
  */
 
 /**

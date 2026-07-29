@@ -254,8 +254,7 @@ void IPASoftIsp::processStats(const uint32_t frame,
 	metadataReady.emit(frame, metadata);
 
 	ControlList ctrls(context_.sensorControls);
-	agc::prepareControls(ctrls, context_.camHelper.get(),
-			     frameContext.agc.exposure, frameContext.agc.gain);
+	agc::prepareControls(ctrls, context_.camHelper.get(), frameContext.agc);
 	setSensorControls.emit(ctrls);
 }
 

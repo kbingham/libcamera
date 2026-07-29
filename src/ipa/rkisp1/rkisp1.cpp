@@ -367,9 +367,7 @@ void IPARkISP1::setControls(unsigned int frame)
 		<< ", gain " << frameContext.agc.gain << ", vblank " << vblank;
 
 	ControlList ctrls(context_.sensorControls);
-	agc::prepareControls(ctrls, context_.camHelper.get(),
-			     exposure, frameContext.agc.gain);
-	ctrls.set(V4L2_CID_VBLANK, static_cast<int32_t>(vblank));
+	agc::prepareControls(ctrls, context_.camHelper.get(), frameContext.agc);
 
 	setSensorControls.emit(frame, ctrls);
 }

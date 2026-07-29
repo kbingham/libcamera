@@ -551,8 +551,7 @@ void IPAIPU3::setControls(unsigned int frame)
 	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
 
 	ControlList ctrls(context_.sensorControls);
-	agc::prepareControls(ctrls, context_.camHelper.get(),
-			     frameContext.agc.exposure, frameContext.agc.gain);
+	agc::prepareControls(ctrls, context_.camHelper.get(), frameContext.agc);
 
 	ControlList lensCtrls(lensCtrls_);
 	lensCtrls.set(V4L2_CID_FOCUS_ABSOLUTE,
