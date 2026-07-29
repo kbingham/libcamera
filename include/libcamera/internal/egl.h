@@ -99,11 +99,11 @@ private:
 class eGL
 {
 public:
-	eGL();
+	eGL(EGLDisplay display);
 	~eGL();
 
 	int initEGLContext();
-	static bool isAvailable();
+	static EGLDisplay probeDisplay();
 
 	int createInputDMABufTexture2D(eGLImage &eglImage, int fd);
 	int createOutputDMABufTexture2D(eGLImage &eglImage, int fd);
@@ -137,7 +137,6 @@ private:
 	EGLContext context_ = EGL_NO_CONTEXT;
 	EGLSurface surface_ = EGL_NO_SURFACE;
 
-	static EGLDisplay probeDisplay();
 	int compileShader(int shaderType, GLuint &shaderId, Span<const unsigned char> shaderData,
 			  Span<const std::string> shaderEnv);
 

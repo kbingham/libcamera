@@ -40,7 +40,7 @@ class CameraManager;
 class DebayerEGL : public Debayer
 {
 public:
-	DebayerEGL(std::unique_ptr<SwStatsCpu> stats, const CameraManager &cm);
+	DebayerEGL(std::unique_ptr<SwStatsCpu> stats, const CameraManager &cm, EGLDisplay display);
 	~DebayerEGL();
 
 	int configure(const StreamConfiguration &inputCfg,

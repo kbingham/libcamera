@@ -120,8 +120,9 @@ SoftwareIsp::SoftwareIsp(PipelineHandler *pipe, const CameraSensor *sensor,
 	}
 
 	if (!softISPMode || softISPMode == "gpu") {
-		if (eGL::isAvailable()) {
-			debayer_ = std::make_unique<DebayerEGL>(std::move(stats), cm);
+		auto display = eGL::probeDisplay();
+		if (display != EGL_NO_DISPLAY) {
+			debayer_ = std::make_unique<DebayerEGL>(std::move(stats), cm, display);
 		} else {
 			LOG(SoftwareIsp, Info)
 				<< "EGL not available, falling back to CPU debayer";
