@@ -70,11 +70,11 @@ namespace agc {
  * \struct Session
  * \brief Session configuration for AgcAlgorithm
  *
+ * \var Session::minExposure
+ * \brief Minimum exposure (in lines) for the streaming session
+ *
  * \var Session::minExposureTime
  * \brief Minimum exposure time for the streaming session
- *
- * \var Session::maxExposureTime
- * \brief Maximum exposure time for the streaming session
  *
  * \var Session::minAnalogueGain
  * \brief Minimum analogue gain for the streaming session
@@ -99,6 +99,11 @@ namespace agc {
  *
  * \var Session::sensor.outputSize
  * \brief Configured output size of the sensor
+ *
+ * \var Session::sensor.exposureMargin
+ * \brief Exposure margin of the sensor
+ *
+ * \sa CameraSensorHelper::exposureMargin()
  *
  * \var Session::autoAllowed
  * \copybrief AgcAlgorithm::ConfigurationParams::autoAllowed
@@ -220,6 +225,20 @@ namespace agc {
  */
 
 } /* namespace agc */
+
+namespace {
+
+[[nodiscard]]
+uint32_t clampExposure(const agc::Session &session, const agc::FrameContext &frameContext,
+		       uint32_t exposure)
+{
+	const uint32_t maxFrame = frameContext.maxFrameDuration / session.lineDuration;
+	const uint32_t maxExposure = maxFrame - session.sensor.exposureMargin;
+
+	return std::clamp(exposure, session.minExposure, maxExposure);
+}
+
+} /* namespace */
 
 /**
  * \class AgcAlgorithm
@@ -362,7 +381,12 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	session.lineDuration = lineLength * 1.0s / config.sensorInfo.pixelRate;
 	session.sensor.outputSize = config.sensorInfo.outputSize;
 
-	const double lineDurationUs = session.lineDuration.get<std::micro>();
+	auto exposureMargin = sensor_ ? sensor_->exposureMargin() : std::nullopt;
+	session.sensor.exposureMargin = exposureMargin.value_or(4);
+	if (!exposureMargin)
+		LOG(Agc, Warning)
+			<< "Sensor exposure margin not available, using "
+			<< session.sensor.exposureMargin;
 
 	/*
 	 * Compute exposure time limits from the V4L2_CID_EXPOSURE control
@@ -371,7 +395,6 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 
 	const ControlInfo &v4l2Exposure = config.sensorControls.find(V4L2_CID_EXPOSURE)->second;
 	int32_t minExposure = v4l2Exposure.min().get<int32_t>();
-	int32_t maxExposure = v4l2Exposure.max().get<int32_t>();
 	int32_t defExposure = v4l2Exposure.def().get<int32_t>();
 
 	/* Compute the analogue gain limits. */
@@ -384,27 +407,45 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	float maxGain = extractGain(v4l2Gain.max());
 	float defGain = extractGain(v4l2Gain.def());
 
-	LOG(Agc, Debug)
-		<< "exposure: [" << minExposure << ',' << maxExposure << "], "
-		<< "gain: [" << minGain << ',' << maxGain << "], "
-		<< "line-duration: " << session.lineDuration << ", "
-		<< "sensor-output: " << session.sensor.outputSize;
-
-
 	/*
 	 * When the AGC computes the new exposure values for a frame, it needs
 	 * to know the limits for exposure time and analogue gain. As it depends
 	 * on the sensor, update it with the controls.
-	 *
-	 * \todo take VBLANK into account for maximum exposure time
 	 */
+	session.minExposure = minExposure;
 	session.minExposureTime = minExposure * session.lineDuration;
-	session.maxExposureTime = maxExposure * session.lineDuration;
 	session.minAnalogueGain = minGain;
 	session.maxAnalogueGain = maxGain;
 	session.defAnalogueGain = defGain;
 	session.minFrameDuration = config.sensorInfo.minFrameLength * session.lineDuration;
 	session.maxFrameDuration = config.sensorInfo.maxFrameLength * session.lineDuration;
+
+	/*
+	 * The assumption is that the minimum exposure time is independent of vblank,
+	 * only the maximum exposure time is affected by it.
+	 */
+	const uint32_t maxExposure = config.sensorInfo.maxFrameLength - session.sensor.exposureMargin;
+	const utils::Duration maxExposureTime = maxExposure * session.lineDuration;
+
+	LOG(Agc, Debug)
+		<< "exposure: [" << session.minExposure << ',' << maxExposure << "], "
+		<< "exposure-time: [" << session.minExposureTime << ',' << maxExposureTime << "], "
+		<< "gain: [" << session.minAnalogueGain << ',' << session.maxAnalogueGain << "], "
+		<< "line-length: " << lineLength << ", "
+		<< "line-duration: " << session.lineDuration << ", "
+		<< "frame-height: [" << config.sensorInfo.minFrameLength << ',' << config.sensorInfo.maxFrameLength << "], "
+		<< "sensor-output: " << session.sensor.outputSize << ", "
+		<< "sensor-exposure-margin: " << session.sensor.exposureMargin;
+
+	/*
+	 * This is a sanity check. If this fails, something is very likely off.
+	 * Equality could theoretically be allowed, but it is not so that
+	 * `(frameDuration / lineDuration) - exposureMargin` is no less
+	 * than the minimum exposure time even if the division is slightly
+	 * inaccurate.
+	 */
+	if (session.minExposure + session.sensor.exposureMargin >= config.sensorInfo.minFrameLength)
+		return -EINVAL;
 
 	/* Configure the default exposure and gain. */
 	state = {};
@@ -501,9 +542,10 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 		minGain, maxGain, defGain
 	};
 	config.ctrlMap[&controls::ExposureTime] = ControlInfo{
-		static_cast<int32_t>(minExposure * lineDurationUs),
-		static_cast<int32_t>(maxExposure * lineDurationUs),
-		static_cast<int32_t>(defExposure * lineDurationUs),
+		static_cast<int32_t>(session.minExposureTime.get<std::micro>()),
+		static_cast<int32_t>(maxExposureTime.get<std::micro>()),
+		static_cast<int32_t>(state.automatic.exposure *
+				     session.lineDuration.get<std::micro>()),
 	};
 	config.ctrlMap[&controls::FrameDurationLimits] = ControlInfo{
 		static_cast<int64_t>(session.minFrameDuration.get<std::micro>()),
@@ -626,7 +668,7 @@ void AgcAlgorithm::queueRequest(const agc::Session &session, agc::ActiveState &s
 	frameContext.autoGainEnabled = state.autoGainEnabled;
 
 	if (!frameContext.autoExposureEnabled)
-		frameContext.exposure = state.manual.exposure;
+		frameContext.exposure = clampExposure(session, frameContext, state.manual.exposure);
 	if (!frameContext.autoGainEnabled)
 		frameContext.gain = state.manual.gain;
 
@@ -739,21 +781,19 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
 	/*
 	 * Set the AGC limits using the fixed exposure time and/or gain in
 	 * manual mode, or the sensor limits in auto mode.
+	 *
+	 * \todo This uses the configuration from an already completed frame.
 	 */
-	utils::Duration minExposureTime;
-	utils::Duration maxExposureTime;
+	utils::Duration minExposureTime = session.minExposureTime;
+	utils::Duration maxExposureTime = frameContext.maxFrameDuration -
+					  session.sensor.exposureMargin * lineDuration;
 	double minAnalogueGain;
 	double maxAnalogueGain;
 
-	/* \todo This uses the configuration from an already completed frame. */
-
-	if (frameContext.autoExposureEnabled) {
-		minExposureTime = session.minExposureTime;
-		maxExposureTime = std::clamp(frameContext.maxFrameDuration,
-					     session.minExposureTime,
-					     session.maxExposureTime);
-	} else {
-		minExposureTime = lineDuration * frameContext.exposure;
+	if (!frameContext.autoExposureEnabled) {
+		minExposureTime = std::clamp<utils::Duration>(
+			frameContext.exposure * lineDuration,
+			minExposureTime, maxExposureTime);
 		maxExposureTime = minExposureTime;
 	}
 
@@ -823,6 +863,8 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
 		},
 	}, impl_);
 
+	state.automatic.exposure = clampExposure(session, frameContext, state.automatic.exposure);
+
 	const utils::Duration newExposureTime = state.automatic.exposure * lineDuration;
 
 	LOG(Agc, Debug)
@@ -855,7 +897,7 @@ void AgcAlgorithm::processFrameDuration(const agc::Session &session,
 	const auto frameLength = std::max<uint32_t>(
 		std::min(std::ceil(frameContext.minFrameDuration / lineDuration),
 			 frameContext.maxFrameDuration / lineDuration),
-		frameContext.exposure);
+		frameContext.exposure + session.sensor.exposureMargin);
 
 	frameContext.vblank = frameLength - session.sensor.outputSize.height;
 

@@ -36,8 +36,8 @@ class Histogram;
 namespace agc {
 
 struct Session {
+	uint32_t minExposure;
 	utils::Duration minExposureTime;
-	utils::Duration maxExposureTime;
 	double minAnalogueGain;
 	double maxAnalogueGain;
 	double defAnalogueGain;
@@ -47,6 +47,7 @@ struct Session {
 
 	struct {
 		Size outputSize;
+		uint32_t exposureMargin;
 	} sensor;
 
 	bool autoAllowed;
