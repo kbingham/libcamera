@@ -405,9 +405,6 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	session.maxFrameDuration = std::chrono::microseconds(frameDurations[1]);
 
 	impl_.configure(session.lineDuration, config.sensor);
-	impl_.setLimits(session.minExposureTime, session.maxExposureTime,
-			session.minAnalogueGain, session.maxAnalogueGain,
-			{});
 	impl_.resetFrameCount();
 
 	/* Configure the default exposure and gain. */
