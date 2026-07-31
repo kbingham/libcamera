@@ -389,8 +389,8 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 
 	std::array<int64_t, 3> frameDurations;
 	for (unsigned int i = 0; i < frameHeights.size(); ++i) {
-		uint64_t frameSize = lineLength * frameHeights[i];
-		frameDurations[i] = frameSize / (config.sensorInfo.pixelRate / 1000000U);
+		uint64_t frameSize = static_cast<uint64_t>(lineLength) * frameHeights[i];
+		frameDurations[i] = frameSize * 1000000U / config.sensorInfo.pixelRate;
 	}
 
 	/*
