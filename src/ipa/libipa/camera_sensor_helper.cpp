@@ -644,6 +644,19 @@ class CameraSensorHelperImx462 : public CameraSensorHelperImx290
 };
 REGISTER_CAMERA_SENSOR_HELPER("imx462", CameraSensorHelperImx462)
 
+class CameraSensorHelperImx471 : public CameraSensorHelper
+{
+public:
+	CameraSensorHelperImx471()
+	{
+		/* Measured: 64 DN at 10-bit; */
+		blackLevel_ = 4096;
+		/* gain = 1024/(1024 - code); code = [0, 800]; max gain = x4.57 */
+		gain_ = AnalogueGainLinear{ 0, 1024, -1, 1024 };
+	}
+};
+REGISTER_CAMERA_SENSOR_HELPER("imx471", CameraSensorHelperImx471)
+
 class CameraSensorHelperImx477 : public CameraSensorHelper
 {
 public:
