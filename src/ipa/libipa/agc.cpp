@@ -131,6 +131,9 @@ namespace agc {
  * \var ActiveState::automatic.quantizationGain
  * \brief Automatic quantization gain multiplier
  *
+ * \var ActiveState::automatic.digitalGain
+ * \brief Automatic digital gain multiplier
+ *
  * \var ActiveState::automatic.yTarget
  * \brief Automatically determined luminance target
  *
@@ -414,6 +417,7 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	state.automatic.gain = session.minAnalogueGain;
 	state.automatic.exposure = defExposure;
 	state.automatic.quantizationGain = 1;
+	state.automatic.digitalGain = 1;
 	state.automatic.yTarget = impl_.effectiveYTarget(0, 1);
 	state.manual.gain = state.automatic.gain;
 	state.manual.exposure = state.automatic.exposure;
@@ -735,13 +739,14 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
 	state.automatic.exposure = newEv.exposureTime / lineDuration;
 	state.automatic.gain = newEv.analogueGain;
 	state.automatic.quantizationGain = newEv.quantizationGain;
+	state.automatic.digitalGain = newEv.digitalGain;
 	state.automatic.yTarget = newEv.yTarget;
 
 	LOG(Agc, Debug)
 		<< "exposure-time: " << newEv.exposureTime << ", "
 		<< "analogue-gain: " << state.automatic.gain << ", "
 		<< "quantization-gain: " << state.automatic.quantizationGain << ", "
-		<< "digital-gain: " << newEv.digitalGain;
+		<< "digital-gain: " << state.automatic.digitalGain;
 
 	/*
 	 * Expand the target frame duration so that we do not run faster than
