@@ -342,10 +342,11 @@ int AgcAlgorithm::init(const ValueNode &tuningData, const ConfigurationParams &c
 int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 			    const ConfigurationParams &config)
 {
+	const uint32_t lineLength = config.sensorInfo.minLineLength;
+
 	session = {};
 	session.autoAllowed = config.autoAllowed;
-	session.lineDuration =
-		config.sensorInfo.minLineLength * 1.0s / config.sensorInfo.pixelRate;
+	session.lineDuration = lineLength * 1.0s / config.sensorInfo.pixelRate;
 	session.sensor.outputSize = config.sensorInfo.outputSize;
 
 	const double lineDurationUs = session.lineDuration.get<std::micro>();
@@ -378,9 +379,6 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	 * The frame length is computed assuming a fixed line length combined
 	 * with the vertical frame sizes.
 	 */
-	const ControlInfo &v4l2HBlank = config.sensorControls.find(V4L2_CID_HBLANK)->second;
-	uint32_t hblank = v4l2HBlank.def().get<int32_t>();
-	uint32_t lineLength = config.sensorInfo.outputSize.width + hblank;
 
 	const ControlInfo &v4l2VBlank = config.sensorControls.find(V4L2_CID_VBLANK)->second;
 	std::array<uint32_t, 3> frameHeights{
