@@ -680,6 +680,8 @@ void DebayerEGL::stop()
 
 	if (programId_)
 		glDeleteProgram(programId_);
+
+	egl_.resetEGLContext();
 }
 
 SizeRange DebayerEGL::sizes(PixelFormat inputFormat, const Size &inputSize)

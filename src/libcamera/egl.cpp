@@ -73,12 +73,13 @@ eGL::eGL(EGLDisplay display)
 /**
  * \brief Destroy the EGL helper
  *
- * Destroys the EGL context if it was successfully created.
+ * An instance must only be destroyed if there is no active EGL context.
+ *
+ * \sa resetEGLContext()
  */
 eGL::~eGL()
 {
-	if (context_ != EGL_NO_CONTEXT)
-		eglDestroyContext(display_, context_);
+	ASSERT(context_ == EGL_NO_CONTEXT);
 }
 
 /**
@@ -368,6 +369,8 @@ void eGL::createOutputTexture2D(eGLImage &eglImage)
  * - eglCreateImageKHR / eglDestroyImageKHR
  * - glEGLImageTargetTexture2DOES
  *
+ * Each successful invocation must be followed by a call to resetEGLContext().
+ *
  * \return 0 on success, or -ENODEV on failure
  */
 int eGL::initEGLContext()
@@ -442,6 +445,24 @@ int eGL::initEGLContext()
 fail:
 
 	return -ENODEV;
+}
+
+/**
+ * \brief Destroy the EGL context
+ *
+ * This function destroys the EGL context created by initEGLContext().
+ * If there is no valid EGL context, this function has no effect.
+ */
+void eGL::resetEGLContext()
+{
+	if (context_ != EGL_NO_CONTEXT) {
+		assertThread();
+		eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+		eglDestroyContext(display_, std::exchange(context_, EGL_NO_CONTEXT));
+	}
+
+	tid_ = -1;
+	vtable_ = {};
 }
 
 /**
