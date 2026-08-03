@@ -371,7 +371,10 @@ void eGL::createOutputTexture2D(eGLImage &eglImage)
  *
  * Each successful invocation must be followed by a call to resetEGLContext().
  *
- * \return 0 on success, or -ENODEV on failure
+ * If a valid EGL context is already present, initialization attempts
+ * will be rejected.
+ *
+ * \return 0 on success, or negative error code on failure
  */
 int eGL::initEGLContext()
 {
@@ -393,6 +396,9 @@ int eGL::initEGLContext()
 	VTable vtable = {};
 	EGLint numConfigs;
 	EGLConfig config;
+
+	if (context_ != EGL_NO_CONTEXT)
+		return -EEXIST;
 
 	if (!eglBindAPI(EGL_OPENGL_ES_API)) {
 		LOG(eGL, Error) << "API bind fail";
