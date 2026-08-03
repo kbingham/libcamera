@@ -133,7 +133,6 @@ private:
 
 	EGLDisplay display_ = EGL_NO_DISPLAY;
 	EGLContext context_ = EGL_NO_CONTEXT;
-	EGLSurface surface_ = EGL_NO_SURFACE;
 
 	int compileShader(int shaderType, GLuint &shaderId, Span<const unsigned char> shaderData,
 			  Span<const std::string> shaderEnv);

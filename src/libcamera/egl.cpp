@@ -58,11 +58,6 @@ LOG_DEFINE_CATEGORY(eGL)
  */
 
 /**
- *\var eGL::surface_
- *\brief EGL sufrace handle
- */
-
-/**
  * \brief Construct an EGL helper
  * \param[in] display The EGL display to use
  *
@@ -78,15 +73,12 @@ eGL::eGL(EGLDisplay display)
 /**
  * \brief Destroy the EGL helper
  *
- * Destroys the EGL context and surface if they were successfully created.
+ * Destroys the EGL context if it was successfully created.
  */
 eGL::~eGL()
 {
 	if (context_ != EGL_NO_CONTEXT)
 		eglDestroyContext(display_, context_);
-
-	if (surface_ != EGL_NO_SURFACE)
-		eglDestroySurface(display_, surface_);
 }
 
 /**
