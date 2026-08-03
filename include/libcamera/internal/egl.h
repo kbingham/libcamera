@@ -116,7 +116,6 @@ public:
 	void activateBindTexture(eGLImage &eglImage);
 
 	void pushEnv(std::vector<std::string> &shaderEnv, const char *str);
-	void makeCurrent();
 
 	int compileVertexShader(GLuint &shaderId, Span<const unsigned char> shaderData,
 				Span<const std::string> shaderEnv);
@@ -144,6 +143,8 @@ private:
 			  Span<const std::string> shaderEnv);
 
 	int createDMABufTexture2D(eGLImage &eglImage, int fd, bool output);
+
+	void makeCurrent();
 
 	struct VTable {
 		PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES;

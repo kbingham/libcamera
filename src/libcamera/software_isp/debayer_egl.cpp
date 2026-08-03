@@ -578,9 +578,6 @@ int DebayerEGL::debayerGPU(FrameBuffer *input, FrameBuffer *output, const Debaye
 	eGLImage *eglImageIn;
 	eGLImage *eglImageOut;
 
-	/* eGL context switch */
-	egl_.makeCurrent();
-
 	eglImageIn = getCachedInputFrameBuffer(input, inMapped, inDmaSyncer);
 	if (!eglImageIn)
 		return -ENOMEM;
@@ -608,6 +605,7 @@ int DebayerEGL::debayerGPU(FrameBuffer *input, FrameBuffer *output, const Debaye
 
 void DebayerEGL::process(uint32_t frame, FrameBuffer *input, FrameBuffer *output, const DebayerParams &params)
 {
+	egl_.assertThread();
 	bench_.startFrame();
 
 	/* Copy metadata from the input buffer */
