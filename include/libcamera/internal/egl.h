@@ -129,7 +129,7 @@ public:
 private:
 	LIBCAMERA_DISABLE_COPY_AND_MOVE(eGL)
 
-	pid_t tid_;
+	pid_t tid_ = -1;
 
 	EGLDisplay display_ = EGL_NO_DISPLAY;
 	EGLContext context_ = EGL_NO_CONTEXT;
@@ -139,8 +139,10 @@ private:
 
 	int createDMABufTexture2D(eGLImage &eglImage, int fd, bool output);
 
-	PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES;
-	PFNEGLCREATEIMAGEKHRPROC eglCreateImageKHR;
-	PFNEGLDESTROYIMAGEKHRPROC eglDestroyImageKHR;
+	struct VTable {
+		PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES;
+		PFNEGLCREATEIMAGEKHRPROC eglCreateImageKHR;
+		PFNEGLDESTROYIMAGEKHRPROC eglDestroyImageKHR;
+	} vtable_ = {};
 };
 } //namespace libcamera

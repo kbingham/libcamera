@@ -199,9 +199,9 @@ int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
 	};
 	// clang-format on
 
-	EGLImageKHR image = eglCreateImageKHR(display_, EGL_NO_CONTEXT,
-					      EGL_LINUX_DMA_BUF_EXT,
-					      NULL, image_attrs);
+	EGLImageKHR image = vtable_.eglCreateImageKHR(display_, EGL_NO_CONTEXT,
+						      EGL_LINUX_DMA_BUF_EXT,
+						      NULL, image_attrs);
 
 	if (image == EGL_NO_IMAGE_KHR) {
 		LOG(eGL, Debug) << "eglCreateImageKHR fail";
@@ -212,8 +212,8 @@ int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
 	activateBindTexture(eglImage);
 
 	// Generate texture with filter semantics
-	glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
-	eglDestroyImageKHR(display_, image);
+	vtable_.glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
+	vtable_.eglDestroyImageKHR(display_, image);
 
 	// Nearest filtering
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -379,6 +379,7 @@ int eGL::initEGLContext()
 		EGL_NONE
 	};
 
+	VTable vtable = {};
 	EGLint numConfigs;
 	EGLConfig config;
 
@@ -392,20 +393,20 @@ int eGL::initEGLContext()
 	LOG(eGL, Info) << "EGL: EGL_CLIENT_APIS: " << eglQueryString(display_, EGL_CLIENT_APIS);
 	LOG(eGL, Info) << "EGL: EGL_EXTENSIONS: " << eglQueryString(display_, EGL_EXTENSIONS);
 
-	eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
-	if (!eglCreateImageKHR) {
+	vtable.eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
+	if (!vtable.eglCreateImageKHR) {
 		LOG(eGL, Error) << "eglCreateImageKHR not found";
 		goto fail;
 	}
 
-	eglDestroyImageKHR = (PFNEGLDESTROYIMAGEKHRPROC)eglGetProcAddress("eglDestroyImageKHR");
-	if (!eglDestroyImageKHR) {
+	vtable.eglDestroyImageKHR = (PFNEGLDESTROYIMAGEKHRPROC)eglGetProcAddress("eglDestroyImageKHR");
+	if (!vtable.eglDestroyImageKHR) {
 		LOG(eGL, Error) << "eglDestroyImageKHR not found";
 		goto fail;
 	}
 
-	glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
-	if (!glEGLImageTargetTexture2DOES) {
+	vtable.glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
+	if (!vtable.glEGLImageTargetTexture2DOES) {
 		LOG(eGL, Error) << "glEGLImageTargetTexture2DOES not found";
 		goto fail;
 	}
@@ -422,6 +423,7 @@ int eGL::initEGLContext()
 	}
 
 	tid_ = Thread::currentId();
+	vtable_ = vtable;
 
 	makeCurrent();
 
