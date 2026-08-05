@@ -20,7 +20,7 @@ public:
 	CamHelperImx355();
 	uint32_t gainCode(double gain) const override;
 	double gain(uint32_t gainCode) const override;
-	unsigned int mistrustFramesModeSwitch() const override;
+	unsigned int mistrustMetadataModeSwitch() const override;
 	bool sensorEmbeddedDataPresent() const override;
 
 private:
@@ -46,7 +46,7 @@ double CamHelperImx355::gain(uint32_t gainCode) const
 	return 1024.0 / (1024 - gainCode);
 }
 
-unsigned int CamHelperImx355::mistrustFramesModeSwitch() const
+unsigned int CamHelperImx355::mistrustMetadataModeSwitch() const
 {
 	/*
 	 * For reasons unknown, we do occasionally get a bogus metadata frame
