@@ -102,6 +102,17 @@ void Interpolator<lsc::Components<uint16_t>>::
 	for (auto const &[k, v] : a)
 		interpolateVector(v, b.at(k), dest[k], lambda);
 }
+
+template<>
+void Interpolator<lsc::Components<uint8_t>>::
+	interpolate(const lsc::Components<uint8_t> &a,
+		    const lsc::Components<uint8_t> &b,
+		    lsc::Components<uint8_t> &dest,
+		    double lambda)
+{
+	for (auto const &[k, v] : a)
+		interpolateVector(v, b.at(k), dest[k], lambda);
+}
 #endif
 
 /**

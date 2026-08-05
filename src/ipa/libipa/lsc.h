@@ -48,6 +48,13 @@ void Interpolator<lsc::Components<uint16_t>>::
 		    const lsc::Components<uint16_t> &b,
 		    lsc::Components<uint16_t> &dest,
 		    double lambda);
+
+template<>
+void Interpolator<lsc::Components<uint8_t>>::
+	interpolate(const lsc::Components<uint8_t> &a,
+		    const lsc::Components<uint8_t> &b,
+		    lsc::Components<uint8_t> &dest,
+		    double lambda);
 #endif /* __DOXYGEN__ */
 
 class LscAlgorithmBase
