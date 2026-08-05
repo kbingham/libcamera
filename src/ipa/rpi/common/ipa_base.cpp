@@ -355,26 +355,17 @@ void IpaBase::start(const ControlList &controls, StartResult *result)
 
 		/*
 		 * Query the AGC/AWB for how many frames they may take to
-		 * converge sufficiently. Where these numbers are non-zero
-		 * we must allow for the frames with bad metadata
-		 * (mistrustCount_) that they won't see. But if zero (i.e.
-		 * no convergence necessary), no frames need to be dropped.
+		 * converge sufficiently.
 		 */
 		RPiController::AgcAlgorithm *agc = dynamic_cast<RPiController::AgcAlgorithm *>(
 			controller_.getAlgorithm("agc"));
-		if (agc) {
+		if (agc)
 			agcConvergenceFrames = agc->getConvergenceFrames();
-			if (agcConvergenceFrames)
-				agcConvergenceFrames += mistrustCount_;
-		}
 
 		RPiController::AwbAlgorithm *awb = dynamic_cast<RPiController::AwbAlgorithm *>(
 			controller_.getAlgorithm("awb"));
-		if (awb) {
+		if (awb)
 			awbConvergenceFrames = awb->getConvergenceFrames();
-			if (awbConvergenceFrames)
-				awbConvergenceFrames += mistrustCount_;
-		}
 	} else {
 		invalidCount_ = helper_->hideFramesModeSwitch();
 		mistrustCount_ = helper_->mistrustMetadataModeSwitch();
@@ -470,8 +461,11 @@ void IpaBase::prepareIsp(const PrepareParams &params)
 	/*
 	 * This may overwrite the DeviceStatus using values from the sensor
 	 * metadata, and may also do additional custom processing.
+	 *
+	 * Only call CamHelper::prepare() when we know the metadata can be trusted.
 	 */
-	helper_->prepare(embeddedBuffer, rpiMetadata);
+	if (frameCount_ >= mistrustCount_)
+		helper_->prepare(embeddedBuffer, rpiMetadata);
 
 	bool delayedRequestControls = false;
 	delayedMetadata.get<bool>("ipa.request_controls", delayedRequestControls);
@@ -527,7 +521,7 @@ void IpaBase::processStats(const ProcessParams &params)
 	unsigned int ipaContext = params.ipaContext % rpiMetadata_.size();
 	RPiController::Metadata &rpiMetadata = rpiMetadata_[ipaContext];
 
-	if (processPending_ && frameCount_ >= mistrustCount_) {
+	if (processPending_) {
 		auto it = buffers_.find(params.buffers.stats);
 		if (it == buffers_.end()) {
 			LOG(IPARPI, Error) << "Could not find stats buffer!";
