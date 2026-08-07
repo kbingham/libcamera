@@ -144,7 +144,8 @@ private:
 	Size pixelArraySize_;
 	Rectangle activeArea_;
 	BayerFormat::Order cfaPattern_;
-	bool supportFlips_;
+	bool supportHFlips_;
+	bool supportVFlips_;
 	bool flipsAlterBayerOrder_;
 	Orientation mountingOrientation_;
 
@@ -162,8 +163,9 @@ private:
  */
 
 CameraSensorRaw::CameraSensorRaw(const MediaEntity *entity)
-	: entity_(entity), staticProps_(nullptr), supportFlips_(false),
-	  flipsAlterBayerOrder_(false), properties_(properties::properties)
+	: entity_(entity), staticProps_(nullptr), supportHFlips_(false),
+	  supportVFlips_(false), flipsAlterBayerOrder_(false),
+	  properties_(properties::properties)
 {
 }
 
@@ -479,25 +481,30 @@ std::optional<int> CameraSensorRaw::init()
 		return { ret };
 	}
 
-	/*
-	 * Verify if sensor supports horizontal/vertical flips
-	 *
-	 * \todo Handle horizontal and vertical flips independently.
-	 */
-	const struct v4l2_query_ext_ctrl *hflipInfo = subdev_->controlInfo(V4L2_CID_HFLIP);
-	const struct v4l2_query_ext_ctrl *vflipInfo = subdev_->controlInfo(V4L2_CID_VFLIP);
-	if (hflipInfo && !(hflipInfo->flags & V4L2_CTRL_FLAG_READ_ONLY) &&
-	    vflipInfo && !(vflipInfo->flags & V4L2_CTRL_FLAG_READ_ONLY)) {
-		supportFlips_ = true;
+	/* Verify if sensor supports horizontal/vertical flips. */
+	auto queryFlip = [&](uint32_t id, const char *name) -> std::pair<bool, bool> {
+		const struct v4l2_query_ext_ctrl *flipInfo = subdev_->controlInfo(id);
+		if (!flipInfo || flipInfo->flags & V4L2_CTRL_FLAG_READ_ONLY) {
+			LOG(CameraSensor, Debug)
+				<< "Camera sensor does not support " << name << " flip";
+			return { false, false };
+		}
 
-		if (hflipInfo->flags & V4L2_CTRL_FLAG_MODIFY_LAYOUT ||
-		    vflipInfo->flags & V4L2_CTRL_FLAG_MODIFY_LAYOUT)
-			flipsAlterBayerOrder_ = true;
+		return { true, flipInfo->flags & V4L2_CTRL_FLAG_MODIFY_LAYOUT };
+	};
+
+	auto hflip = queryFlip(V4L2_CID_HFLIP, "horizontal");
+	auto vflip = queryFlip(V4L2_CID_VFLIP, "vertical");
+
+	if (hflip.first && vflip.first && (hflip.second != vflip.second)) {
+		LOG(CameraSensor, Error)
+			<< "Flips with differing alter bayer order properties"
+			<< " are unsupported. Disabling flipping.";
+	} else {
+		supportHFlips_ = hflip.first;
+		supportVFlips_ = vflip.first;
+		flipsAlterBayerOrder_ = hflip.second || vflip.second;
 	}
-
-	if (!supportFlips_)
-		LOG(CameraSensor, Debug)
-			<< "Camera sensor does not support horizontal/vertical flip";
 
 	/*
 	 * 5. Discover ancillary devices.
@@ -819,14 +826,16 @@ CameraSensorRaw::getFormat(Span<const unsigned int> mbusCodes,
 int CameraSensorRaw::setFormat(V4L2SubdeviceFormat *format, Transform transform)
 {
 	/* Configure flips if the sensor supports that. */
-	if (supportFlips_) {
-		ControlList flipCtrls(subdev_->controls());
-
+	ControlList flipCtrls(subdev_->controls());
+	if (supportHFlips_)
 		flipCtrls.set(V4L2_CID_HFLIP,
 			      static_cast<int32_t>(!!(transform & Transform::HFlip)));
+
+	if (supportVFlips_)
 		flipCtrls.set(V4L2_CID_VFLIP,
 			      static_cast<int32_t>(!!(transform & Transform::VFlip)));
 
+	if (!flipCtrls.empty()) {
 		int ret = subdev_->setControls(&flipCtrls);
 		if (ret)
 			return ret;
@@ -1054,23 +1063,25 @@ int CameraSensorRaw::sensorInfo(IPACameraSensorInfo *info) const
 Transform CameraSensorRaw::computeTransform(Orientation *orientation) const
 {
 	/*
-	 * If we cannot do any flips we cannot change the native camera mounting
-	 * orientation.
-	 */
-	if (!supportFlips_) {
-		*orientation = mountingOrientation_;
-		return Transform::Identity;
-	}
-
-	/*
-	 * Now compute the required transform to obtain 'orientation' starting
-	 * from the mounting rotation.
+	 * Compute the required transform to obtain 'orientation' starting from
+	 * the mounting rotation.
 	 *
 	 * As a note:
 	 * 	orientation / mountingOrientation_ = transform
 	 * 	mountingOrientation_ * transform = orientation
 	 */
 	Transform transform = *orientation / mountingOrientation_;
+
+	/* If we cannot do the required flips, fall back to identity. */
+	if (!supportHFlips_ && !!(transform & Transform::HFlip)) {
+		*orientation = mountingOrientation_;
+		return Transform::Identity;
+	}
+
+	if (!supportVFlips_ && !!(transform & Transform::VFlip)) {
+		*orientation = mountingOrientation_;
+		return Transform::Identity;
+	}
 
 	/*
 	 * If transform contains any Transpose we cannot do it, so adjust
