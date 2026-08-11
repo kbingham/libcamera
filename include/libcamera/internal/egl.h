@@ -14,6 +14,7 @@
 
 #include <libcamera/base/log.h>
 #include <libcamera/base/span.h>
+#include <libcamera/base/thread.h>
 #include <libcamera/base/utils.h>
 
 /*
@@ -125,6 +126,11 @@ public:
 	void dumpShaderSource(GLuint shaderId);
 	void syncOutput();
 	void flushOutput();
+
+	void assertThread() const
+	{
+		ASSERT(tid_ == Thread::currentId());
+	}
 
 private:
 	LIBCAMERA_DISABLE_COPY_AND_MOVE(eGL)

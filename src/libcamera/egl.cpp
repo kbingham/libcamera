@@ -89,7 +89,7 @@ eGL::~eGL()
  */
 void eGL::syncOutput()
 {
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	glFinish();
 }
@@ -102,10 +102,18 @@ void eGL::syncOutput()
  */
 void eGL::flushOutput()
 {
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	glFlush();
 }
+
+/**
+ * \fn eGL::assertThread()
+ * \brief Assert that the execution is in the right thread
+ *
+ * Asserts that the execution is in the thread for which the created EGL
+ * context has been made current.
+ */
 
 /**
  * \brief Attach a texture to a frame-buffer-object
@@ -167,7 +175,7 @@ int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
 	EGLint drm_format;
 	int ret = 0;
 
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	switch (eglImage.format_) {
 	case GL_RED:
@@ -242,7 +250,7 @@ int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
  */
 int eGL::createInputDMABufTexture2D(eGLImage &eglImage, int fd)
 {
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	return createDMABufTexture2D(eglImage, fd, false);
 }
@@ -261,7 +269,7 @@ int eGL::createInputDMABufTexture2D(eGLImage &eglImage, int fd)
  */
 int eGL::createOutputDMABufTexture2D(eGLImage &eglImage, int fd)
 {
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	return createDMABufTexture2D(eglImage, fd, true);
 }
@@ -278,7 +286,7 @@ int eGL::createOutputDMABufTexture2D(eGLImage &eglImage, int fd)
  */
 void eGL::createTexture2D(eGLImage &eglImage, void *data)
 {
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	activateBindTexture(eglImage);
 
@@ -331,7 +339,7 @@ EGLDisplay eGL::probeDisplay()
  */
 void eGL::updateTexture2D(eGLImage &eglImage, void *data)
 {
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	activateBindTexture(eglImage);
 
@@ -445,7 +453,7 @@ fail:
  */
 void eGL::makeCurrent()
 {
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	if (eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_) != EGL_TRUE) {
 		LOG(eGL, Error) << "eglMakeCurrent fail";
@@ -523,7 +531,7 @@ int eGL::compileShader(int shaderType, GLuint &shaderId,
 	GLint success;
 	size_t i;
 
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	auto count = 1 + shaderEnv.size();
 	auto shaderSourceData = std::make_unique<const GLchar *[]>(count);
@@ -570,7 +578,7 @@ void eGL::dumpShaderSource(GLuint shaderId)
 {
 	GLint shaderLength = 0;
 
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	glGetShaderiv(shaderId, GL_SHADER_SOURCE_LENGTH, &shaderLength);
 
@@ -603,7 +611,7 @@ int eGL::linkProgram(GLuint &programId, GLuint vertexshaderId, GLuint fragmentsh
 	GLenum err;
 	int ret = -ENODEV;
 
-	ASSERT(tid_ == Thread::currentId());
+	assertThread();
 
 	programId = glCreateProgram();
 	if (!programId) {
