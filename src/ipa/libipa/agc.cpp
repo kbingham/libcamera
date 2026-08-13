@@ -428,6 +428,16 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	state.minFrameDuration = session.minFrameDuration;
 	state.maxFrameDuration = session.maxFrameDuration;
 
+	/*
+	 * The IPA control maps keep their states, so the removal is necessary.
+	 *
+	 * \todo Remove it once IPA modules have been changed to always use a new
+	 * ControlInfoMap::Map during configuration.
+	 */
+	config.ctrlMap.erase(&controls::ExposureValue);
+	for (const auto &[id, _] : impl_.controls())
+		config.ctrlMap.erase(id);
+
 	/* \todo Move this to the `Camera` class. */
 	config.ctrlMap[&controls::AeEnable] = ControlInfo{
 		false, session.autoAllowed, session.autoAllowed
@@ -444,16 +454,31 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 		frameDurations[0], frameDurations[1],
 		Span<const int64_t, 2>{ { frameDurations[2], frameDurations[2] } },
 	};
-	config.ctrlMap[&controls::ExposureTimeMode] = ControlInfo{
-		{{ controls::ExposureTimeModeAuto, controls::ExposureTimeModeManual }},
-		controls::ExposureTimeModeAuto,
+
+	const auto add = [&](const ControlId &cid, const auto &automatic, const auto &manual) {
+		std::array<ControlValue, 2> values;
+		size_t count = 0;
+
+		if (session.autoAllowed)
+			values[count++] = ControlValue(automatic);
+
+		values[count++] = ControlValue(manual);
+
+		config.ctrlMap[&cid] = ControlInfo{
+			{ values.data(), count },
+			ControlValue(session.autoAllowed ? automatic : manual),
+		};
 	};
-	config.ctrlMap[&controls::AnalogueGainMode] = ControlInfo{
-		{{ controls::AnalogueGainModeAuto, controls::AnalogueGainModeManual }},
-		controls::AnalogueGainModeAuto,
-	};
-	config.ctrlMap[&controls::ExposureValue] = ControlInfo(-8.0f, 8.0f, 0.0f);
-	config.ctrlMap.merge(impl_.controls());
+
+	add(controls::ExposureTimeMode,
+	    controls::ExposureTimeModeAuto, controls::ExposureTimeModeManual);
+	add(controls::AnalogueGainMode,
+	    controls::AnalogueGainModeAuto, controls::AnalogueGainModeManual);
+
+	if (session.autoAllowed) {
+		config.ctrlMap[&controls::ExposureValue] = ControlInfo(-8.0f, 8.0f, 0.0f);
+		config.ctrlMap.merge(impl_.controls());
+	}
 
 	return 0;
 }
