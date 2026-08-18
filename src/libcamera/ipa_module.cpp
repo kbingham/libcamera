@@ -24,8 +24,6 @@
 #include <libcamera/base/span.h>
 #include <libcamera/base/utils.h>
 
-#include "libcamera/internal/pipeline_handler.h"
-
 /**
  * \file ipa_module.h
  * \brief Image Processing Algorithm module
@@ -462,22 +460,22 @@ IPAInterface *IPAModule::createInterface()
 }
 
 /**
- * \brief Verify if the IPA module matches a given pipeline handler
- * \param[in] pipe Pipeline handler to match with
+ * \brief Verify if the IPA module matches a given name
+ * \param[in] name The IPA module name
  * \param[in] minVersion Minimum acceptable version of IPA module
  * \param[in] maxVersion Maximum acceptable version of IPA module
  *
- * This function checks if this IPA module matches the \a pipe pipeline handler,
+ * This function checks if this IPA module matches the requested \a name
  * and the input version range.
  *
- * \return True if the pipeline handler matches the IPA module, or false otherwise
+ * \return True if the IPA module matches, or false otherwise
  */
-bool IPAModule::match(PipelineHandler *pipe,
-		      uint32_t minVersion, uint32_t maxVersion) const
+bool IPAModule::match(const char *name, uint32_t minVersion,
+		      uint32_t maxVersion) const
 {
 	return info_.pipelineVersion >= minVersion &&
 	       info_.pipelineVersion <= maxVersion &&
-	       !strcmp(info_.pipelineName, pipe->name());
+	       !strcmp(info_.name, name);
 }
 
 std::string IPAModule::logPrefix() const
