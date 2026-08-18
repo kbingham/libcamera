@@ -633,7 +633,6 @@ const struct IPAModuleInfo ipaModuleInfo = {
 	IPA_MODULE_API_VERSION,
 	1,
 	"rpi/vc4",
-	"rpi/vc4",
 };
 
 IPAInterface *ipaCreate()

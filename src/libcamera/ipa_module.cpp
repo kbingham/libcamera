@@ -213,18 +213,15 @@ Span<const uint8_t> elfLoadSymbol(Span<const uint8_t> elf, const char *symbol)
  * \var IPAModuleInfo::pipelineVersion
  * \brief The pipeline handler version that the IPA module is for
  *
- * \var IPAModuleInfo::pipelineName
- * \brief The name of the pipeline handler that the IPA module is for
- *
- * This name is used to match a pipeline handler with the module.
- *
  * \var IPAModuleInfo::name
  * \brief The name of the IPA module
  *
- * The name may be used to build file system paths to IPA-specific resources.
- * It shall only contain printable characters, and may not contain '*', '?' or
- * '\'. For IPA modules included in libcamera, it shall match the directory of
- * the IPA module in the source tree.
+ * This name is used to match the IPA module.
+ *
+ * The name may also be used to build file system paths to IPA-specific
+ * resources. It shall only contain printable characters, and may not contain
+ * '*', '?' or '\'. For IPA modules included in libcamera, it shall match the
+ * directory of the IPA module in the source tree.
  *
  * \todo Allow user to choose to isolate open source IPAs
  */
