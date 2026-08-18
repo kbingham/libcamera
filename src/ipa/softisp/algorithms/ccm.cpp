@@ -12,7 +12,7 @@
 
 namespace libcamera {
 
-namespace ipa::soft::algorithms {
+namespace ipa::softisp::algorithms {
 
 LOG_DEFINE_CATEGORY(IPASoftIspCcm)
 
@@ -79,6 +79,6 @@ void Ccm::process([[maybe_unused]] IPAContext &context,
 
 REGISTER_IPA_ALGORITHM(Ccm, "Ccm")
 
-} /* namespace ipa::soft::algorithms */
+} /* namespace ipa::softisp::algorithms */
 
 } /* namespace libcamera */

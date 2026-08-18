@@ -24,7 +24,7 @@
 
 namespace libcamera {
 
-namespace ipa::soft {
+namespace ipa::softisp {
 
 struct IPASessionConfiguration {
 	struct {
@@ -91,6 +91,6 @@ struct IPAContext {
 	bool ccmEnabled = false;
 };
 
-} /* namespace ipa::soft */
+} /* namespace ipa::softisp */
 
 } /* namespace libcamera */

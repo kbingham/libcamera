@@ -18,7 +18,7 @@ namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPASoftIspAwb)
 
-namespace ipa::soft::algorithms {
+namespace ipa::softisp::algorithms {
 
 /*
  * \todo Replace it with a proper Lux algorithm
@@ -159,6 +159,6 @@ void Awb::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 
 REGISTER_IPA_ALGORITHM(Awb, "Awb")
 
-} /* namespace ipa::soft::algorithms */
+} /* namespace ipa::softisp::algorithms */
 
 } /* namespace libcamera */

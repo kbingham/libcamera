@@ -11,7 +11,7 @@
 
 namespace libcamera {
 
-namespace ipa::soft::algorithms {
+namespace ipa::softisp::algorithms {
 
 class Agc : public Algorithm
 {
@@ -28,6 +28,6 @@ private:
 	void updateExposure(IPAContext &context, IPAFrameContext &frameContext, double exposureMSV);
 };
 
-} /* namespace ipa::soft::algorithms */
+} /* namespace ipa::softisp::algorithms */
 
 } /* namespace libcamera */

@@ -20,11 +20,11 @@
 
 namespace libcamera {
 
-namespace ipa::soft {
+namespace ipa::softisp {
 
 using Module = ipa::Module<IPAContext, IPAFrameContext, IPAConfigInfo,
 			   DebayerParams, SwIspStats>;
 
-} /* namespace ipa::soft */
+} /* namespace ipa::softisp */
 
 } /* namespace libcamera */

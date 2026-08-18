@@ -19,7 +19,7 @@ namespace libcamera {
 
 LOG_DEFINE_CATEGORY(IPASoftIspExposure)
 
-namespace ipa::soft::algorithms {
+namespace ipa::softisp::algorithms {
 
 /*
  * The number of bins to use for the optimal exposure calculations.
@@ -194,6 +194,6 @@ void Agc::process(IPAContext &context,
 
 REGISTER_IPA_ALGORITHM(Agc, "Agc")
 
-} /* namespace ipa::soft::algorithms */
+} /* namespace ipa::softisp::algorithms */
 
 } /* namespace libcamera */

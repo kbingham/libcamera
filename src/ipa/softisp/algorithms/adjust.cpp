@@ -17,7 +17,7 @@
 
 namespace libcamera {
 
-namespace ipa::soft::algorithms {
+namespace ipa::softisp::algorithms {
 
 constexpr float kDefaultContrast = 1.0f;
 constexpr float kDefaultSaturation = 1.0f;
@@ -129,6 +129,6 @@ void Adjust::process([[maybe_unused]] IPAContext &context,
 
 REGISTER_IPA_ALGORITHM(Adjust, "Adjust")
 
-} /* namespace ipa::soft::algorithms */
+} /* namespace ipa::softisp::algorithms */
 
 } /* namespace libcamera */

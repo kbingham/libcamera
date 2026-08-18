@@ -65,7 +65,7 @@ public:
 
 	int configure(const StreamConfiguration &inputCfg,
 		      const std::vector<std::reference_wrapper<const StreamConfiguration>> &outputCfgs,
-		      const ipa::soft::IPAConfigInfo &configInfo);
+		      const ipa::softisp::IPAConfigInfo &configInfo);
 
 	int exportBuffers(const Stream *stream, unsigned int count,
 			  std::vector<std::unique_ptr<FrameBuffer>> *buffers);
@@ -101,7 +101,7 @@ private:
 	DmaBufAllocator dmaHeap_;
 	bool ccmEnabled_;
 
-	std::unique_ptr<ipa::soft::IPAProxySoftIsp> ipa_;
+	std::unique_ptr<ipa::softisp::IPAProxySoftIsp> ipa_;
 	std::deque<FrameBuffer *> queuedInputBuffers_;
 	std::deque<FrameBuffer *> queuedOutputBuffers_;
 };

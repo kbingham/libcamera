@@ -14,7 +14,7 @@
 
 namespace libcamera {
 
-namespace ipa::soft::algorithms {
+namespace ipa::softisp::algorithms {
 
 class BlackLevel : public Algorithm
 {
@@ -37,6 +37,6 @@ private:
 	std::optional<uint8_t> definedLevel_;
 };
 
-} /* namespace ipa::soft::algorithms */
+} /* namespace ipa::softisp::algorithms */
 
 } /* namespace libcamera */

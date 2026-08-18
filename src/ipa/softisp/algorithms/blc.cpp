@@ -15,7 +15,7 @@
 
 namespace libcamera {
 
-namespace ipa::soft::algorithms {
+namespace ipa::softisp::algorithms {
 
 LOG_DEFINE_CATEGORY(IPASoftIspBL)
 
@@ -119,6 +119,6 @@ void BlackLevel::process(IPAContext &context,
 
 REGISTER_IPA_ALGORITHM(BlackLevel, "BlackLevel")
 
-} /* namespace ipa::soft::algorithms */
+} /* namespace ipa::softisp::algorithms */
 
 } /* namespace libcamera */

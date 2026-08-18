@@ -36,12 +36,12 @@ LOG_DEFINE_CATEGORY(IPASoftIsp)
 
 using namespace std::literals::chrono_literals;
 
-namespace ipa::soft {
+namespace ipa::softisp {
 
 /* Maximum number of frame contexts to be held */
 static constexpr uint32_t kMaxFrameContexts = 16;
 
-class IPASoftIsp : public ipa::soft::IPASoftIspInterface, public Module
+class IPASoftIsp : public ipa::softisp::IPASoftIspInterface, public Module
 {
 public:
 	IPASoftIsp()
@@ -333,7 +333,7 @@ std::string IPASoftIsp::logPrefix() const
 	return "IPASoftIsp";
 }
 
-} /* namespace ipa::soft */
+} /* namespace ipa::softisp */
 
 /*
  * External IPA module interface
@@ -347,7 +347,7 @@ const struct IPAModuleInfo ipaModuleInfo = {
 
 IPAInterface *ipaCreate()
 {
-	return new ipa::soft::IPASoftIsp();
+	return new ipa::softisp::IPASoftIsp();
 }
 
 } /* extern "C" */

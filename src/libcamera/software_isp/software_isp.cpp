@@ -136,7 +136,7 @@ SoftwareIsp::SoftwareIsp(PipelineHandler *pipe, const CameraSensor *sensor,
 	debayer_->inputBufferReady.connect(this, &SoftwareIsp::inputReady);
 	debayer_->outputBufferReady.connect(this, &SoftwareIsp::outputReady);
 
-	ipa_ = pipe->createIPA<ipa::soft::IPAProxySoftIsp>(0, 0);
+	ipa_ = pipe->createIPA<ipa::softisp::IPAProxySoftIsp>(0, 0);
 	if (!ipa_) {
 		LOG(SoftwareIsp, Error)
 			<< "Creating IPA for software ISP failed";
@@ -285,7 +285,7 @@ uint32_t SoftwareIsp::preferredInputStride(const PixelFormat &inputFormat, const
  */
 int SoftwareIsp::configure(const StreamConfiguration &inputCfg,
 			   const std::vector<std::reference_wrapper<const StreamConfiguration>> &outputCfgs,
-			   const ipa::soft::IPAConfigInfo &configInfo)
+			   const ipa::softisp::IPAConfigInfo &configInfo)
 {
 	ASSERT(ipa_ && debayer_);
 

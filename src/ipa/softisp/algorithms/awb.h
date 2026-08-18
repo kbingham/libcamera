@@ -20,7 +20,7 @@
 
 namespace libcamera {
 
-namespace ipa::soft::algorithms {
+namespace ipa::softisp::algorithms {
 
 class SoftIspAwbStats;
 
@@ -59,6 +59,6 @@ private:
 	AwbAlgorithm<UQ<2, 8>> awbAlgo_;
 };
 
-} /* namespace ipa::soft::algorithms */
+} /* namespace ipa::softisp::algorithms */
 
 } /* namespace libcamera */
