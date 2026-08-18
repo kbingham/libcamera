@@ -22,7 +22,7 @@ namespace libcamera {
 
 namespace ipa::soft::algorithms {
 
-class SimpleAwbStats;
+class SoftIspAwbStats;
 
 class Awb : public Algorithm
 {
@@ -48,8 +48,8 @@ public:
 		     ControlList &metadata) override;
 
 private:
-	SimpleAwbStats calculateRgbMeans(IPAContext &context,
-					 const SwIspStats *stats) const;
+	SoftIspAwbStats calculateRgbMeans(IPAContext &context,
+					  const SwIspStats *stats) const;
 
 	/*
 	 * There actually is no Q register format for SoftISP, but allow the

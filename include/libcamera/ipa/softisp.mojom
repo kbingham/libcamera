@@ -12,7 +12,7 @@ struct IPAConfigInfo {
 	libcamera.ControlInfoMap sensorControls;
 };
 
-interface IPASoftInterface {
+interface IPASoftIspInterface {
 	init(libcamera.IPASettings settings,
 	     libcamera.SharedFD fdStats,
 	     libcamera.SharedFD fdParams,
@@ -31,7 +31,7 @@ interface IPASoftInterface {
 			     libcamera.ControlList sensorControls);
 };
 
-interface IPASoftEventInterface {
+interface IPASoftIspEventInterface {
 	setSensorControls(libcamera.ControlList sensorControls);
 	setIspParams();
 	metadataReady(uint32 frame, libcamera.ControlList metadata);

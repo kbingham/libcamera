@@ -101,7 +101,7 @@ private:
 	DmaBufAllocator dmaHeap_;
 	bool ccmEnabled_;
 
-	std::unique_ptr<ipa::soft::IPAProxySoft> ipa_;
+	std::unique_ptr<ipa::soft::IPAProxySoftIsp> ipa_;
 	std::deque<FrameBuffer *> queuedInputBuffers_;
 	std::deque<FrameBuffer *> queuedOutputBuffers_;
 };

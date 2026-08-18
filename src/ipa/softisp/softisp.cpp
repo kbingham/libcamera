@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2023, Linaro Ltd
  *
- * Simple Software Image Processing Algorithm module
+ * Software ISP Image Processing Algorithm module
  */
 
 #include <chrono>
@@ -32,7 +32,7 @@
 #include "module.h"
 
 namespace libcamera {
-LOG_DEFINE_CATEGORY(IPASoft)
+LOG_DEFINE_CATEGORY(IPASoftIsp)
 
 using namespace std::literals::chrono_literals;
 
@@ -41,15 +41,15 @@ namespace ipa::soft {
 /* Maximum number of frame contexts to be held */
 static constexpr uint32_t kMaxFrameContexts = 16;
 
-class IPASoftSimple : public ipa::soft::IPASoftInterface, public Module
+class IPASoftIsp : public ipa::soft::IPASoftIspInterface, public Module
 {
 public:
-	IPASoftSimple()
+	IPASoftIsp()
 		: context_(kMaxFrameContexts)
 	{
 	}
 
-	~IPASoftSimple();
+	~IPASoftIsp();
 
 	int init(const IPASettings &settings,
 		 const SharedFD &fdStats,
@@ -83,7 +83,7 @@ private:
 	struct IPAContext context_;
 };
 
-IPASoftSimple::~IPASoftSimple()
+IPASoftIsp::~IPASoftIsp()
 {
 	if (stats_)
 		munmap(stats_, sizeof(SwIspStats));
@@ -91,17 +91,17 @@ IPASoftSimple::~IPASoftSimple()
 		munmap(params_, sizeof(DebayerParams));
 }
 
-int IPASoftSimple::init(const IPASettings &settings,
-			const SharedFD &fdStats,
-			const SharedFD &fdParams,
-			const IPACameraSensorInfo &sensorInfo,
-			const ControlInfoMap &sensorControls,
-			ControlInfoMap *ipaControls,
-			bool *ccmEnabled)
+int IPASoftIsp::init(const IPASettings &settings,
+		     const SharedFD &fdStats,
+		     const SharedFD &fdParams,
+		     const IPACameraSensorInfo &sensorInfo,
+		     const ControlInfoMap &sensorControls,
+		     ControlInfoMap *ipaControls,
+		     bool *ccmEnabled)
 {
 	camHelper_ = CameraSensorHelperFactoryBase::create(settings.sensorModel);
 	if (!camHelper_) {
-		LOG(IPASoft, Warning)
+		LOG(IPASoftIsp, Warning)
 			<< "Failed to create camera sensor helper for "
 			<< settings.sensorModel;
 	}
@@ -112,7 +112,7 @@ int IPASoftSimple::init(const IPASettings &settings,
 	File file(settings.configurationFile);
 	if (!file.open(File::OpenModeFlag::ReadOnly)) {
 		int ret = file.error();
-		LOG(IPASoft, Error)
+		LOG(IPASoftIsp, Error)
 			<< "Failed to open configuration file "
 			<< settings.configurationFile << ": " << strerror(-ret);
 		return ret;
@@ -124,10 +124,10 @@ int IPASoftSimple::init(const IPASettings &settings,
 
 	/* \todo Use the IPA configuration file for real. */
 	unsigned int version = (*data)["version"].get<uint32_t>(0);
-	LOG(IPASoft, Debug) << "Tuning file version " << version;
+	LOG(IPASoftIsp, Debug) << "Tuning file version " << version;
 
 	if (!data->contains("algorithms")) {
-		LOG(IPASoft, Error) << "Tuning file doesn't contain algorithms";
+		LOG(IPASoftIsp, Error) << "Tuning file doesn't contain algorithms";
 		return -EINVAL;
 	}
 
@@ -141,12 +141,12 @@ int IPASoftSimple::init(const IPASettings &settings,
 	stats_ = nullptr;
 
 	if (!fdStats.isValid()) {
-		LOG(IPASoft, Error) << "Invalid Statistics handle";
+		LOG(IPASoftIsp, Error) << "Invalid Statistics handle";
 		return -ENODEV;
 	}
 
 	if (!fdParams.isValid()) {
-		LOG(IPASoft, Error) << "Invalid Parameters handle";
+		LOG(IPASoftIsp, Error) << "Invalid Parameters handle";
 		return -ENODEV;
 	}
 
@@ -154,7 +154,7 @@ int IPASoftSimple::init(const IPASettings &settings,
 		void *mem = mmap(nullptr, sizeof(DebayerParams), PROT_WRITE,
 				 MAP_SHARED, fdParams.get(), 0);
 		if (mem == MAP_FAILED) {
-			LOG(IPASoft, Error) << "Unable to map Parameters";
+			LOG(IPASoftIsp, Error) << "Unable to map Parameters";
 			return -errno;
 		}
 
@@ -170,7 +170,7 @@ int IPASoftSimple::init(const IPASettings &settings,
 		void *mem = mmap(nullptr, sizeof(SwIspStats), PROT_READ,
 				 MAP_SHARED, fdStats.get(), 0);
 		if (mem == MAP_FAILED) {
-			LOG(IPASoft, Error) << "Unable to map Statistics";
+			LOG(IPASoftIsp, Error) << "Unable to map Statistics";
 			return -errno;
 		}
 
@@ -187,19 +187,19 @@ int IPASoftSimple::init(const IPASettings &settings,
 	 * for V4L2_CID_EXPOSURE depend on the configured sensor resolution.
 	 */
 	if (sensorControls.find(V4L2_CID_EXPOSURE) == sensorControls.end()) {
-		LOG(IPASoft, Error) << "Don't have exposure control";
+		LOG(IPASoftIsp, Error) << "Don't have exposure control";
 		return -EINVAL;
 	}
 
 	if (sensorControls.find(V4L2_CID_ANALOGUE_GAIN) == sensorControls.end()) {
-		LOG(IPASoft, Error) << "Don't have gain control";
+		LOG(IPASoftIsp, Error) << "Don't have gain control";
 		return -EINVAL;
 	}
 
 	return 0;
 }
 
-int IPASoftSimple::configure(const IPAConfigInfo &configInfo)
+int IPASoftIsp::configure(const IPAConfigInfo &configInfo)
 {
 	sensorInfoMap_ = configInfo.sensorControls;
 
@@ -216,7 +216,7 @@ int IPASoftSimple::configure(const IPAConfigInfo &configInfo)
 	context_.configuration.agc.exposureMin = exposureInfo.min().get<int32_t>();
 	context_.configuration.agc.exposureMax = exposureInfo.max().get<int32_t>();
 	if (!context_.configuration.agc.exposureMin) {
-		LOG(IPASoft, Warning) << "Minimum exposure is zero, that can't be linear";
+		LOG(IPASoftIsp, Warning) << "Minimum exposure is zero, that can't be linear";
 		context_.configuration.agc.exposureMin = 1;
 	}
 
@@ -255,7 +255,7 @@ int IPASoftSimple::configure(const IPAConfigInfo &configInfo)
 			return ret;
 	}
 
-	LOG(IPASoft, Info)
+	LOG(IPASoftIsp, Info)
 		<< "Exposure " << context_.configuration.agc.exposureMin << "-"
 		<< context_.configuration.agc.exposureMax
 		<< ", gain " << context_.configuration.agc.againMin << "-"
@@ -265,17 +265,17 @@ int IPASoftSimple::configure(const IPAConfigInfo &configInfo)
 	return 0;
 }
 
-int IPASoftSimple::start()
+int IPASoftIsp::start()
 {
 	return 0;
 }
 
-void IPASoftSimple::stop()
+void IPASoftIsp::stop()
 {
 	context_.frameContexts.clear();
 }
 
-void IPASoftSimple::queueRequest(const uint32_t frame, const ControlList &controls)
+void IPASoftIsp::queueRequest(const uint32_t frame, const ControlList &controls)
 {
 	IPAFrameContext &frameContext = context_.frameContexts.alloc(frame);
 
@@ -283,7 +283,7 @@ void IPASoftSimple::queueRequest(const uint32_t frame, const ControlList &contro
 		algo->queueRequest(context_, frame, frameContext, controls);
 }
 
-void IPASoftSimple::computeParams(const uint32_t frame)
+void IPASoftIsp::computeParams(const uint32_t frame)
 {
 	context_.activeState.combinedMatrix = Matrix<float, 3, 3>::identity();
 
@@ -295,9 +295,9 @@ void IPASoftSimple::computeParams(const uint32_t frame)
 	setIspParams.emit();
 }
 
-void IPASoftSimple::processStats(const uint32_t frame,
-				 [[maybe_unused]] const uint32_t bufferId,
-				 const ControlList &sensorControls)
+void IPASoftIsp::processStats(const uint32_t frame,
+			      [[maybe_unused]] const uint32_t bufferId,
+			      const ControlList &sensorControls)
 {
 	IPAFrameContext &frameContext = context_.frameContexts.get(frame);
 
@@ -314,7 +314,7 @@ void IPASoftSimple::processStats(const uint32_t frame,
 	/* Sanity check */
 	if (!sensorControls.contains(V4L2_CID_EXPOSURE) ||
 	    !sensorControls.contains(V4L2_CID_ANALOGUE_GAIN)) {
-		LOG(IPASoft, Error) << "Control(s) missing";
+		LOG(IPASoftIsp, Error) << "Control(s) missing";
 		return;
 	}
 
@@ -328,9 +328,9 @@ void IPASoftSimple::processStats(const uint32_t frame,
 	setSensorControls.emit(ctrls);
 }
 
-std::string IPASoftSimple::logPrefix() const
+std::string IPASoftIsp::logPrefix() const
 {
-	return "IPASoft";
+	return "IPASoftIsp";
 }
 
 } /* namespace ipa::soft */
@@ -347,7 +347,7 @@ const struct IPAModuleInfo ipaModuleInfo = {
 
 IPAInterface *ipaCreate()
 {
-	return new ipa::soft::IPASoftSimple();
+	return new ipa::soft::IPASoftIsp();
 }
 
 } /* extern "C" */

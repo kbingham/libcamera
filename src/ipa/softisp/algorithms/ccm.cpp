@@ -14,7 +14,7 @@ namespace libcamera {
 
 namespace ipa::soft::algorithms {
 
-LOG_DEFINE_CATEGORY(IPASoftCcm)
+LOG_DEFINE_CATEGORY(IPASoftIspCcm)
 
 /**
  * \copydoc libcamera::ipa::Algorithm::init

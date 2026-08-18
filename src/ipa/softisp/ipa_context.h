@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2024-2026 Red Hat, Inc.
  *
- * Simple pipeline IPA Context
+ * Software ISP IPA Context
  */
 
 #pragma once

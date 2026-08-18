@@ -17,7 +17,7 @@
 
 namespace libcamera {
 
-LOG_DEFINE_CATEGORY(IPASoftExposure)
+LOG_DEFINE_CATEGORY(IPASoftIspExposure)
 
 namespace ipa::soft::algorithms {
 
@@ -118,7 +118,7 @@ void Agc::updateExposure(IPAContext &context, IPAFrameContext &frameContext, dou
 	context.activeState.agc.exposure = exposure;
 	context.activeState.agc.again = again;
 
-	LOG(IPASoftExposure, Debug)
+	LOG(IPASoftIspExposure, Debug)
 		<< "exposureMSV " << exposureMSV
 		<< " error " << error << " factor " << factor
 		<< " exp " << exposure << " again " << again;
@@ -172,7 +172,7 @@ void Agc::process(IPAContext &context,
 	unsigned int num = 0;
 
 	if (yHistValsPerBin == 0) {
-		LOG(IPASoftExposure, Debug)
+		LOG(IPASoftIspExposure, Debug)
 			<< "Not adjusting exposure due to insufficient histogram data";
 		return;
 	}
@@ -183,7 +183,7 @@ void Agc::process(IPAContext &context,
 	}
 
 	for (unsigned int i = 0; i < kExposureBinsCount; i++) {
-		LOG(IPASoftExposure, Debug) << i << ": " << exposureBins[i];
+		LOG(IPASoftIspExposure, Debug) << i << ": " << exposureBins[i];
 		denom += exposureBins[i];
 		num += exposureBins[i] * (i + 1);
 	}

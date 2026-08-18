@@ -17,7 +17,7 @@ namespace libcamera {
 
 namespace ipa::soft::algorithms {
 
-LOG_DEFINE_CATEGORY(IPASoftBL)
+LOG_DEFINE_CATEGORY(IPASoftIspBL)
 
 BlackLevel::BlackLevel()
 {
@@ -90,7 +90,7 @@ void BlackLevel::process(IPAContext &context,
 	const unsigned int total =
 		std::accumulate(begin(histogram), end(histogram), 0);
 	if (total == 0) {
-		LOG(IPASoftBL, Debug) << "Not guessing black level, histogram is empty";
+		LOG(IPASoftIspBL, Debug) << "Not guessing black level, histogram is empty";
 		return;
 	}
 
@@ -107,7 +107,7 @@ void BlackLevel::process(IPAContext &context,
 			context.activeState.blc.level = i * histogramRatio;
 			context.activeState.blc.lastExposure = frameContext.sensor.exposure;
 			context.activeState.blc.lastGain = frameContext.sensor.gain;
-			LOG(IPASoftBL, Debug)
+			LOG(IPASoftIspBL, Debug)
 				<< "Auto-set black level: "
 				<< i << "/" << SwIspStats::kYHistogramSize
 				<< " (" << 100 * (seen - histogram[i]) / total << "% below, "
