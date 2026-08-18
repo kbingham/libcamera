@@ -33,6 +33,6 @@ interface IPASoftIspInterface {
 
 interface IPASoftIspEventInterface {
 	setSensorControls(libcamera.ControlList sensorControls);
-	setIspParams();
+	paramsComputed(uint32 frame);
 	metadataReady(uint32 frame, libcamera.ControlList metadata);
 };

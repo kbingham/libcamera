@@ -171,7 +171,7 @@ SoftwareIsp::SoftwareIsp(PipelineHandler *pipe, const CameraSensor *sensor,
 		return;
 	}
 
-	ipa_->setIspParams.connect(this, &SoftwareIsp::saveIspParams);
+	ipa_->paramsComputed.connect(this, &SoftwareIsp::saveIspParams);
 	ipa_->metadataReady.connect(this,
 				    [this](uint32_t frame, const ControlList &metadata) {
 					    metadataReady.emit(frame, metadata);
@@ -432,7 +432,7 @@ void SoftwareIsp::process(uint32_t frame, FrameBuffer *input, FrameBuffer *outpu
 			       ConnectionTypeQueued, frame, input, output, debayerParams_);
 }
 
-void SoftwareIsp::saveIspParams()
+void SoftwareIsp::saveIspParams([[maybe_unused]] uint32_t frame)
 {
 	debayerParams_ = *sharedParams_;
 }

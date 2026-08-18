@@ -89,7 +89,7 @@ public:
 	Signal<const ControlList &> setSensorControls;
 
 private:
-	void saveIspParams();
+	void saveIspParams(uint32_t frame);
 	void setSensorCtrls(const ControlList &sensorControls);
 	void statsReady(uint32_t frame, uint32_t bufferId);
 	void inputReady(FrameBuffer *input);
