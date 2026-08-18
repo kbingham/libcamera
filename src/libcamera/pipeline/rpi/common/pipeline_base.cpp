@@ -1165,7 +1165,13 @@ int CameraData::loadIPA(ipa::RPi::InitResult *result)
 {
 	int ret;
 
-	ipa_ = pipe()->createIPA<ipa::RPi::IPAProxyRPi>(1, 1);
+	/*
+	 * Explicitly pass pipe()->name() to select the IPA to create.
+	 * The default behavior of creating the IPA by the IPA proxy type name
+	 * does not work because the same IPAProxyRPi type is used for both
+	 * the rpi/vc4 and rpi/pisp pipeline handlers.
+	 */
+	ipa_ = pipe()->createIPA<ipa::RPi::IPAProxyRPi>(pipe()->name(), 1, 1);
 
 	if (!ipa_)
 		return -ENOENT;
