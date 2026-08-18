@@ -76,7 +76,7 @@ public:
 	std::unique_ptr<T> createIPA(uint32_t minVersion, uint32_t maxVersion)
 	{
 		IPAManager *ipaManager = manager_->_d()->ipaManager();
-		return ipaManager->createIPA<T>(name_, minVersion, maxVersion);
+		return ipaManager->createIPA<T>(T::name(), minVersion, maxVersion);
 	}
 
 	template<typename T>

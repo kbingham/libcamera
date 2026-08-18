@@ -20,7 +20,7 @@
 
 #include <libcamera/ipa/ipa_interface.h>
 #include <libcamera/ipa/ipa_module_info.h>
-#include <libcamera/ipa/soft_ipa_interface.h>
+#include <libcamera/ipa/softisp_ipa_interface.h>
 
 #include "libcamera/internal/software_isp/debayer_params.h"
 #include "libcamera/internal/software_isp/swisp_stats.h"
@@ -342,7 +342,7 @@ extern "C" {
 const struct IPAModuleInfo ipaModuleInfo = {
 	IPA_MODULE_API_VERSION,
 	0,
-	"simple",
+	"softisp",
 };
 
 IPAInterface *ipaCreate()

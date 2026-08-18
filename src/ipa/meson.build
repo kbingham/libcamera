@@ -30,7 +30,7 @@ supported_ipas = {
     'rkisp1':     'rkisp1',
     'rpi/pisp':   'rpi/pisp',
     'rpi/vc4':    'rpi/vc4',
-    'simple':     'simple',
+    'simple':     'softisp',
     'vimc':       'vimc'
 }
 

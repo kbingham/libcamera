@@ -25,8 +25,8 @@
 #include <libcamera/geometry.h>
 #include <libcamera/pixel_format.h>
 
-#include <libcamera/ipa/soft_ipa_interface.h>
-#include <libcamera/ipa/soft_ipa_proxy.h>
+#include <libcamera/ipa/softisp_ipa_interface.h>
+#include <libcamera/ipa/softisp_ipa_proxy.h>
 
 #include "libcamera/internal/camera_sensor.h"
 #include "libcamera/internal/dma_buf_allocator.h"

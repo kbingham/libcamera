@@ -14,7 +14,7 @@
 
 #include "libipa/awb.h"
 #include "libipa/fixedpoint.h"
-#include "simple/ipa_context.h"
+#include "softisp/ipa_context.h"
 
 #include "algorithm.h"
 
