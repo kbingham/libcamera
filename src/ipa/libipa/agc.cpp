@@ -643,7 +643,7 @@ void AgcAlgorithm::queueRequest(const agc::Session &session, agc::ActiveState &s
 
 		state.maxFrameDuration = std::clamp<utils::Duration>(
 			std::chrono::microseconds((*frameDurationLimits).back()),
-			session.minFrameDuration, session.maxFrameDuration);
+			state.minFrameDuration, session.maxFrameDuration);
 	}
 	frameContext.minFrameDuration = state.minFrameDuration;
 	frameContext.maxFrameDuration = state.maxFrameDuration;
