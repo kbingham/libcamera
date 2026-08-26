@@ -592,6 +592,20 @@ void AgcAlgorithm::queueRequest(const agc::Session &session, agc::ActiveState &s
 		}
 	}
 
+	const auto &frameDurationLimits = controls.get(controls::FrameDurationLimits);
+	if (frameDurationLimits) {
+		/* Limit the control value to the limits in ControlInfo */
+		state.minFrameDuration = std::clamp<utils::Duration>(
+			std::chrono::microseconds((*frameDurationLimits).front()),
+			session.minFrameDuration, session.maxFrameDuration);
+
+		state.maxFrameDuration = std::clamp<utils::Duration>(
+			std::chrono::microseconds((*frameDurationLimits).back()),
+			state.minFrameDuration, session.maxFrameDuration);
+	}
+	frameContext.minFrameDuration = state.minFrameDuration;
+	frameContext.maxFrameDuration = state.maxFrameDuration;
+
 	const auto &exposure = controls.get(controls::ExposureTime);
 	if (exposure && !state.autoExposureEnabled) {
 		state.manual.exposure = *exposure * 1.0us / session.lineDuration;
@@ -633,20 +647,6 @@ void AgcAlgorithm::queueRequest(const agc::Session &session, agc::ActiveState &s
 	if (exposureValue)
 		state.exposureValue = *exposureValue;
 	frameContext.exposureValue = state.exposureValue;
-
-	const auto &frameDurationLimits = controls.get(controls::FrameDurationLimits);
-	if (frameDurationLimits) {
-		/* Limit the control value to the limits in ControlInfo */
-		state.minFrameDuration = std::clamp<utils::Duration>(
-			std::chrono::microseconds((*frameDurationLimits).front()),
-			session.minFrameDuration, session.maxFrameDuration);
-
-		state.maxFrameDuration = std::clamp<utils::Duration>(
-			std::chrono::microseconds((*frameDurationLimits).back()),
-			state.minFrameDuration, session.maxFrameDuration);
-	}
-	frameContext.minFrameDuration = state.minFrameDuration;
-	frameContext.maxFrameDuration = state.maxFrameDuration;
 }
 
 /**
