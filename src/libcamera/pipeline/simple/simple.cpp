@@ -250,7 +250,7 @@ struct SimplePipelineInfo {
 	 *
 	 * The Software ISP can't be used together with the converters.
 	 */
-	bool swIspEnabled;
+	bool swIspAllowed;
 };
 
 namespace {
@@ -459,7 +459,7 @@ private:
 	std::map<const MediaEntity *, EntityData> entities_;
 
 	std::shared_ptr<MediaDevice> converter_;
-	bool swIspEnabled_;
+	bool swIspEnabled_ = false;
 };
 
 /* -----------------------------------------------------------------------------
@@ -1881,40 +1881,55 @@ bool SimplePipelineHandler::matchDevice(std::shared_ptr<MediaDevice> media,
 					const SimplePipelineInfo &info,
 					DeviceEnumerator *enumerator)
 {
-	unsigned int numStreams = 1;
-
+	struct {
+		std::shared_ptr<MediaDevice> dev;
+		unsigned int streams;
+	} converter = {};
 	for (const auto &[name, streams] : info.converters) {
 		DeviceMatch converterMatch(name);
-		converter_ = acquireMediaDevice(enumerator, converterMatch);
-		if (converter_) {
-			numStreams = streams;
+		converter.dev = acquireMediaDevice(enumerator, converterMatch);
+		if (converter.dev) {
+			converter.streams = streams;
 			break;
 		}
 	}
 
-	swIspEnabled_ = info.swIspEnabled;
+	std::optional<bool> swIspEnabled;
 	const GlobalConfiguration &configuration = cameraManager()->_d()->configuration();
 	for (const ValueNode &entry :
 	     configuration.configuration()["pipelines"]["simple"]["supported_devices"]
 		     .asList()) {
 		auto name = entry["driver"].get<std::string>();
-		if (name == info.driver) {
-			swIspEnabled_ = entry["software_isp"].get<bool>().value_or(swIspEnabled_);
+		if (name != info.driver)
+			continue;
+
+		swIspEnabled = entry["software_isp"].get<bool>();
+		if (swIspEnabled) {
 			LOG(SimplePipeline, Debug)
 				<< "Configuration file overrides software ISP for "
-				<< info.driver << " to " << swIspEnabled_;
+				<< info.driver << " to " << *swIspEnabled;
 			break;
 		}
 	}
 
-	if (swIspEnabled_) {
+	const bool useSwIsp =
+		(swIspEnabled && *swIspEnabled) || /* forced by configuration */
+		(info.swIspAllowed && /* allowed by static configuration */
+		 !converter.dev && /* and there is no converter */
+		 !(swIspEnabled && !*swIspEnabled)); /* and not disabled by configuration */
+
+	unsigned int numStreams = 1; /* Only 1 "raw" stream by default. */
+	if (useSwIsp) {
 		/*
 		 * When the software ISP is enabled, the simple pipeline handler
 		 * exposes the raw stream, giving a total of two streams. This
 		 * is mutually exclusive with the presence of a converter.
 		 */
-		ASSERT(!converter_);
 		numStreams = 2;
+		swIspEnabled_ = true;
+	} else if (converter.dev) {
+		converter_ = std::move(converter.dev);
+		numStreams = converter.streams;
 	}
 
 	/* Locate the sensors. */
