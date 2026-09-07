@@ -393,9 +393,14 @@ int SoftwareIsp::start()
  *
  * All pending buffers are returned back as canceled before this function
  * returns.
+ *
+ * This function will not take any action when the ISP is not already running.
  */
 void SoftwareIsp::stop()
 {
+	if (!ispWorkerThread_.isRunning())
+		return;
+
 	debayer_->invokeMethod(&Debayer::stop,
 			       ConnectionTypeBlocking);
 
