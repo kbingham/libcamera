@@ -52,6 +52,7 @@ public:
 	std::pair<uint32_t, uint32_t> getBlanking(Duration &exposure, Duration minFrameDuration,
 						  Duration maxFrameDuration) const override;
 	bool sensorEmbeddedDataPresent() const override;
+	unsigned int mistrustMetadataStartup() const override;
 
 private:
 	/*
@@ -160,6 +161,11 @@ std::pair<uint32_t, uint32_t> CamHelperImx477::getBlanking(Duration &exposure,
 bool CamHelperImx477::sensorEmbeddedDataPresent() const
 {
 	return true;
+}
+
+unsigned int CamHelperImx477::mistrustMetadataStartup() const
+{
+	return 0;
 }
 
 void CamHelperImx477::populateMetadata(const MdParser::RegisterMap &registers,
