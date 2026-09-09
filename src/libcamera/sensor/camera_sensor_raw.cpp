@@ -1170,6 +1170,6 @@ std::string CameraSensorRaw::logPrefix() const
 	return "'" + entity_->name() + "'";
 }
 
-REGISTER_CAMERA_SENSOR(CameraSensorRaw, 0)
+REGISTER_CAMERA_SENSOR(CameraSensorRaw, -200)
 
 } /* namespace libcamera */
