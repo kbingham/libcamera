@@ -76,6 +76,8 @@ public:
 
 	constexpr std::span<const T, Rows * Cols> data() const { return data_; }
 
+	constexpr std::span<T, Rows * Cols> data() { return data_; }
+
 	constexpr std::span<const T, Cols> operator[](size_t i) const
 	{
 		return std::span<const T, Cols>{ &data_.data()[i * Cols], Cols };
@@ -113,6 +115,23 @@ public:
 		if (ok)
 			*ok = res;
 		return inverse;
+	}
+
+	template<typename U = T>
+	[[nodiscard]]
+	constexpr Matrix<U, Cols, Rows> transpose() const
+	{
+		static_assert(std::is_convertible_v<T, U>);
+
+		Matrix<U, Cols, Rows> transposed;
+		std::span<U, Rows * Cols> data = transposed.data();
+
+		for (unsigned int r = 0; r < Rows; ++r) {
+			for (unsigned int c = 0; c < Cols; ++c)
+				data[c * Rows + r] = data_[r * Cols + c];
+		}
+
+		return transposed;
 	}
 
 private:

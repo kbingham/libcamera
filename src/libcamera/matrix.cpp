@@ -69,7 +69,7 @@ LOG_DEFINE_CATEGORY(Matrix)
  */
 
 /**
- * \fn Matrix::data()
+ * \fn Matrix::data() const
  * \brief Access the matrix data as a linear array
  *
  * Access the contents of the matrix as a one-dimensional linear array of
@@ -77,6 +77,11 @@ LOG_DEFINE_CATEGORY(Matrix)
  * the number of rows and columns of the matrix (Rows x Cols).
  *
  * \return A span referencing the matrix data as a linear array
+ */
+
+/**
+ * \fn Matrix::data()
+ * \copydoc Matrix::data() const
  */
 
 /**
@@ -105,6 +110,19 @@ LOG_DEFINE_CATEGORY(Matrix)
  * an identity matrix.
  *
  * \return The inverse of the matrix
+ */
+
+/**
+ * \fn Matrix::transpose() const
+ * \brief Compute the transpose of the matrix
+ * \tparam U Type of the numerical values in the tranposed matrix
+ *
+ * This function computes the transpose of the matrix. The optional template
+ * parameter \a U specifies the type of the numerical values in the result. It
+ * defaults to \a T, and can be specified manually to convert to a different
+ * data type while transposing.
+ *
+ * \return The transpose of the matrix
  */
 
 /**
