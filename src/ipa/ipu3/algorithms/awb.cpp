@@ -195,8 +195,6 @@ Awb::Awb()
 	zones_.reserve(kAwbStatsSizeX * kAwbStatsSizeY);
 }
 
-Awb::~Awb() = default;
-
 /**
  * \copydoc libcamera::ipa::Algorithm::configure
  */

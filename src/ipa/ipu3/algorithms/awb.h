@@ -38,7 +38,6 @@ class Awb : public Algorithm
 {
 public:
 	Awb();
-	~Awb();
 
 	int configure(IPAContext &context, const IPAConfigInfo &configInfo) override;
 	void prepare(IPAContext &context, const uint32_t frame,
