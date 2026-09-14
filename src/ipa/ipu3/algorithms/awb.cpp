@@ -112,13 +112,6 @@ static const struct ipu3_uapi_bnr_static_config imguCssBnrDefaults = {
 	.opt_center_sqr = { 419904, 133956 },
 };
 
-/* Default color correction matrix defined as an identity matrix */
-static const struct ipu3_uapi_ccm_mat_config imguCssCcmDefault = {
-	8191, 0, 0, 0,
-	0, 8191, 0, 0,
-	0, 0, 8191, 0
-};
-
 /**
  * \class Awb
  * \brief A Grey world white balance correction algorithm
@@ -293,12 +286,9 @@ void Awb::prepare(IPAContext &context,
 
 	LOG(IPU3Awb, Debug) << "Color temperature estimated: " << asyncResults_.temperatureK;
 
-	/* The CCM matrix may change when color temperature will be used */
-	params->acc_param.ccm = imguCssCcmDefault;
 
 	params->use.acc_awb = 1;
 	params->use.acc_bnr = 1;
-	params->use.acc_ccm = 1;
 }
 
 /* Generate an RGB vector with the average values for each zone */
