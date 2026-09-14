@@ -20,6 +20,7 @@
 #include <libipa/agc.h>
 #include <libipa/awb.h>
 #include <libipa/camera_sensor_helper.h>
+#include <libipa/ccm.h>
 #include <libipa/fc_queue.h>
 
 namespace libcamera {
@@ -49,6 +50,7 @@ struct IPAActiveState {
 
 	agc::ActiveState agc;
 	ipa::awb::ActiveState awb;
+	ipa::ccm::ActiveState ccm;
 
 	struct {
 		double gamma;
@@ -64,6 +66,7 @@ struct IPAFrameContext : public FrameContext {
 
 	agc::FrameContext agc;
 	ipa::awb::FrameContext awb;
+	ipa::ccm::FrameContext ccm;
 };
 
 struct IPAContext {
