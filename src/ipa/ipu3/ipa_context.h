@@ -23,6 +23,7 @@
 #include <libipa/ccm.h>
 #include <libipa/fc_queue.h>
 #include <libipa/gamma.h>
+#include <libipa/lsc.h>
 
 namespace libcamera {
 
@@ -53,6 +54,7 @@ struct IPAActiveState {
 	ipa::awb::ActiveState awb;
 	ipa::ccm::ActiveState ccm;
 	ipa::gamma::ActiveState gamma;
+	ipa::lsc::ActiveState lsc;
 };
 
 struct IPAFrameContext : public FrameContext {
@@ -65,6 +67,7 @@ struct IPAFrameContext : public FrameContext {
 	ipa::awb::FrameContext awb;
 	ipa::ccm::FrameContext ccm;
 	ipa::gamma::FrameContext gamma;
+	ipa::lsc::FrameContext lsc;
 };
 
 struct IPAContext {

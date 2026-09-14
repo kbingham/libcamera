@@ -127,6 +127,11 @@ namespace libcamera::ipa::ipu3 {
  */
 
 /**
+ * \var IPAActiveState::lsc
+ * \brief Active lens shading correction parameters for the IPA
+ */
+
+/**
  * \struct IPAFrameContext
  * \brief IPU3-specific FrameContext
  *
@@ -156,6 +161,11 @@ namespace libcamera::ipa::ipu3 {
 /**
  * \var IPAFrameContext::gamma
  * \brief Per-frame gamma correction parameters for the IPA
+ */
+
+/**
+ * \var IPAFrameContext::lsc
+ * \brief Per-frame lens shading correction parameters for the IPA
  */
 
 } /* namespace libcamera::ipa::ipu3 */
