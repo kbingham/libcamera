@@ -30,6 +30,7 @@
 #include "libipa/ccm.h"
 #include "libipa/fc_queue.h"
 #include "libipa/fixedpoint.h"
+#include "libipa/gamma.h"
 #include "libipa/lsc.h"
 
 namespace libcamera {
@@ -102,9 +103,7 @@ struct IPAActiveState {
 		uint8_t sharpness;
 	} filter;
 
-	struct {
-		double gamma;
-	} goc;
+	ipa::gamma::ActiveState gamma;
 
 	struct {
 		double lux;
@@ -154,10 +153,7 @@ struct IPAFrameContext : public FrameContext {
 		bool update;
 	} filter;
 
-	struct {
-		double gamma;
-		bool update;
-	} goc;
+	ipa::gamma::FrameContext gamma;
 
 	struct {
 		uint32_t exposure;
