@@ -18,6 +18,7 @@
 #include <libcamera/ipa/core_ipa_interface.h>
 
 #include <libipa/agc.h>
+#include <libipa/awb.h>
 #include <libipa/camera_sensor_helper.h>
 #include <libipa/fc_queue.h>
 
@@ -47,16 +48,7 @@ struct IPAActiveState {
 	} af;
 
 	agc::ActiveState agc;
-
-	struct {
-		struct {
-			double red;
-			double green;
-			double blue;
-		} gains;
-
-		double temperatureK;
-	} awb;
+	ipa::awb::ActiveState awb;
 
 	struct {
 		double gamma;
@@ -71,6 +63,7 @@ struct IPAFrameContext : public FrameContext {
 	} sensor;
 
 	agc::FrameContext agc;
+	ipa::awb::FrameContext awb;
 };
 
 struct IPAContext {

@@ -113,22 +113,7 @@ namespace libcamera::ipa::ipu3 {
 
 /**
  * \var IPAActiveState::awb
- * \brief Context for the Automatic White Balance algorithm
- *
- * \var IPAActiveState::awb.gains
- * \brief White balance gains
- *
- * \var IPAActiveState::awb.gains.red
- * \brief White balance gain for R channel
- *
- * \var IPAActiveState::awb.gains.green
- * \brief White balance gain for G channel
- *
- * \var IPAActiveState::awb.gains.blue
- * \brief White balance gain for B channel
- *
- * \var IPAActiveState::awb.temperatureK
- * \brief Estimated color temperature
+ * \brief Active auto-white balance parameters for the IPA
  */
 
 /**
@@ -160,6 +145,11 @@ namespace libcamera::ipa::ipu3 {
  *
  * \var IPAFrameContext::agc
  * \brief Per-frame state for the AGC algorithm
+ */
+
+/**
+ * \var IPAFrameContext::awb
+ * \brief Per-frame auto-white balance parameters for the IPA
  */
 
 } /* namespace libcamera::ipa::ipu3 */

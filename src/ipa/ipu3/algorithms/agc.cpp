@@ -218,17 +218,15 @@ void Agc::process(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 		  ControlList &metadata)
 {
 	Histogram hist = parseStatistics(stats, context.configuration.grid.bdsGrid);
+	ipa::awb::Context awbContext;
+
+	if (context.activeState.awb.autoEnabled)
+		awbContext = context.activeState.awb.automatic;
+	else
+		awbContext = context.activeState.awb.manual;
 
 	agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {{
-		.traits = AgcTraits{
-			rgbTriples_,
-			{{
-				context.activeState.awb.gains.red,
-				context.activeState.awb.gains.blue,
-				context.activeState.awb.gains.green,
-			}},
-			bdsGrid_,
-		},
+		.traits = AgcTraits{rgbTriples_, awbContext.gains, bdsGrid_},
 		.yHist = hist,
 		.exposure = frameContext.sensor.exposure,
 		.gain = frameContext.sensor.gain,
