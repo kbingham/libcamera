@@ -17,7 +17,6 @@ public:
 	CamHelperMira220();
 	uint32_t gainCode(double gain) const override;
 	double gain(uint32_t gainCode) const override;
-	unsigned int hideFramesModeSwitch() const override;
 
 private:
 	/*
