@@ -17,15 +17,17 @@
 #include "cam_helper.h"
 #include "md_parser.h"
 
+namespace libcamera {
+LOG_DECLARE_CATEGORY(IPARPI)
+}
+
+namespace {
+
 using namespace RPiController;
 using namespace libcamera;
 using libcamera::utils::Duration;
 
 using namespace std::literals::chrono_literals;
-
-namespace libcamera {
-LOG_DECLARE_CATEGORY(IPARPI)
-}
 
 /*
  * We care about two gain registers and a pair of exposure registers. Their
@@ -367,12 +369,14 @@ void CamHelperImx708::putAGCStatistics(StatisticsPtr stats)
 	}
 }
 
-static CamHelper *create()
+CamHelper *create()
 {
 	return new CamHelperImx708();
 }
 
-static RegisterCamHelper reg("imx708", &create);
-static RegisterCamHelper regWide("imx708_wide", &create);
-static RegisterCamHelper regNoIr("imx708_noir", &create);
-static RegisterCamHelper regWideNoIr("imx708_wide_noir", &create);
+RegisterCamHelper reg("imx708", &create);
+RegisterCamHelper regWide("imx708_wide", &create);
+RegisterCamHelper regNoIr("imx708_noir", &create);
+RegisterCamHelper regWideNoIr("imx708_wide_noir", &create);
+
+} /* namespace */

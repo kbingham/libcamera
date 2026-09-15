@@ -17,13 +17,15 @@
 #include "cam_helper.h"
 #include "md_parser.h"
 
-using namespace RPiController;
-using namespace libcamera;
-using libcamera::utils::Duration;
-
 namespace libcamera {
 LOG_DECLARE_CATEGORY(IPARPI)
 }
+
+namespace {
+
+using namespace RPiController;
+using namespace libcamera;
+using libcamera::utils::Duration;
 
 /*
  * We care about two gain registers and a pair of exposure registers. Their
@@ -184,9 +186,11 @@ void CamHelperImx477::populateMetadata(const MdParser::RegisterMap &registers,
 	metadata.set("device.status", deviceStatus);
 }
 
-static CamHelper *create()
+CamHelper *create()
 {
 	return new CamHelperImx477();
 }
 
-static RegisterCamHelper reg("imx477", &create);
+RegisterCamHelper reg("imx477", &create);
+
+} /* namespace */

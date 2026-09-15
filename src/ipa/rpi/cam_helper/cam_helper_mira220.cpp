@@ -9,6 +9,8 @@
 
 #include "cam_helper.h"
 
+namespace {
+
 using namespace RPiController;
 
 class CamHelperMira220 : public CamHelper
@@ -50,9 +52,11 @@ double CamHelperMira220::gain(uint32_t gainCode) const
 	return static_cast<double>(2048.0 / (2048 - gainCode));
 }
 
-static CamHelper *create()
+CamHelper *create()
 {
 	return new CamHelperMira220();
 }
 
-static RegisterCamHelper reg("mira220", &create);
+RegisterCamHelper reg("mira220", &create);
+
+} /* namespace */
