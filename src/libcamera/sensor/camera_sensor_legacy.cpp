@@ -131,7 +131,8 @@ private:
 	std::vector<controls::draft::TestPatternModeEnum> testPatternModes_;
 	controls::draft::TestPatternModeEnum testPatternMode_;
 
-	Size pixelArraySize_;
+	Rectangle pixelArrayArea_;
+	Rectangle readableArea_;
 	Rectangle activeArea_;
 	const BayerFormat *bayerFormat_;
 	bool supportHFlips_;
@@ -396,33 +397,40 @@ int CameraSensorLegacy::validateSensorDriver()
 	 * \todo Make support for selection targets mandatory as soon as all
 	 * test platforms have been updated.
 	 */
-	Rectangle rect;
-	int ret = subdev_->getSelection(pad_, V4L2_SEL_TGT_CROP_BOUNDS, &rect);
+	int ret = subdev_->getSelection(pad_, V4L2_SEL_TGT_NATIVE_SIZE, &pixelArrayArea_);
 	if (ret) {
 		/*
 		 * Default the pixel array size to the largest size supported
 		 * by the sensor. The sizes_ vector is sorted in ascending
 		 * order, the largest size is thus the last element.
 		 */
-		pixelArraySize_ = sizes_.back();
+		pixelArrayArea_ = Rectangle(sizes_.back());
 
 		LOG(CameraSensor, Warning)
-			<< "The PixelArraySize property has been defaulted to "
-			<< pixelArraySize_;
+			<< "The PixelArrayArea property has been defaulted to "
+			<< pixelArrayArea_;
 		err = -EINVAL;
-	} else {
-		pixelArraySize_ = rect.size();
+	}
+
+	ret = subdev_->getSelection(pad_, V4L2_SEL_TGT_CROP_BOUNDS, &readableArea_);
+	if (ret) {
+		readableArea_ = pixelArrayArea_;
+		LOG(CameraSensor, Warning)
+			<< "The PixelArrayReadableArea property has been defaulted to "
+			<< readableArea_;
+		err = -EINVAL;
 	}
 
 	ret = subdev_->getSelection(pad_, V4L2_SEL_TGT_CROP_DEFAULT, &activeArea_);
 	if (ret) {
-		activeArea_ = Rectangle(pixelArraySize_);
+		activeArea_ = readableArea_;
 		LOG(CameraSensor, Warning)
 			<< "The PixelArrayActiveAreas property has been defaulted to "
 			<< activeArea_;
 		err = -EINVAL;
 	}
 
+	Rectangle rect;
 	ret = subdev_->getSelection(pad_, V4L2_SEL_TGT_CROP, &rect);
 	if (ret) {
 		LOG(CameraSensor, Warning)
@@ -476,8 +484,9 @@ int CameraSensorLegacy::validateSensorDriver()
 void CameraSensorLegacy::initVimcDefaultProperties()
 {
 	/* Use the largest supported size. */
-	pixelArraySize_ = sizes_.back();
-	activeArea_ = Rectangle(pixelArraySize_);
+	pixelArrayArea_ = Rectangle(sizes_.back());
+	readableArea_ = pixelArrayArea_;
+	activeArea_ = pixelArrayArea_;
 }
 
 void CameraSensorLegacy::initStaticProperties()
@@ -627,7 +636,8 @@ int CameraSensorLegacy::initProperties()
 		mountingOrientation_ = Orientation::Rotate0;
 	}
 
-	properties_.set(properties::PixelArraySize, pixelArraySize_);
+	properties_.set(properties::PixelArrayArea, pixelArrayArea_);
+	properties_.set(properties::PixelArrayReadableArea, readableArea_);
 	properties_.set(properties::PixelArrayActiveAreas, { activeArea_ });
 
 	/* Color filter array pattern, register only for RAW sensors. */

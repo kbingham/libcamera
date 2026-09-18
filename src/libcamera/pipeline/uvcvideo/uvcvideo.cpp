@@ -597,7 +597,7 @@ int UVCCameraData::init(std::shared_ptr<MediaDevice> media)
 
 	properties_.set(properties::Location, location);
 
-	properties_.set(properties::PixelArraySize, resolution);
+	properties_.set(properties::PixelArrayArea, Rectangle(resolution));
 	properties_.set(properties::PixelArrayActiveAreas, { Rectangle(resolution) });
 
 	/* Initialise the supported controls. */

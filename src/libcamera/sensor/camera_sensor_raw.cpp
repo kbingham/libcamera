@@ -141,7 +141,8 @@ private:
 	std::vector<controls::draft::TestPatternModeEnum> testPatternModes_;
 	controls::draft::TestPatternModeEnum testPatternMode_;
 
-	Size pixelArraySize_;
+	Rectangle pixelArrayArea_;
+	Rectangle readableArea_;
 	Rectangle activeArea_;
 	BayerFormat::Order cfaPattern_;
 	bool supportHFlips_;
@@ -431,7 +432,17 @@ std::optional<int> CameraSensorRaw::init()
 		return { ret };
 	}
 
-	pixelArraySize_ = rect.size();
+	/*
+	 * \todo Implement querying the physical sensor size based on pad 1,
+	 * stream 0. See
+	 * https://lore.kernel.org/linux-media/20260409201501.975242-23-sakari.ailus@linux.intel.com/
+	 */
+	LOG(CameraSensor, Warning) << "PixelArrayArea might be incorrect";
+	pixelArrayArea_ = Rectangle(0, 0,
+				    rect.x + rect.width,
+				    rect.y + rect.height);
+
+	readableArea_ = rect;
 
 	ret = subdev_->getSelection(streams_.image.sink, V4L2_SEL_TGT_CROP_DEFAULT,
 				    &activeArea_);
@@ -634,7 +645,8 @@ int CameraSensorRaw::initProperties()
 		mountingOrientation_ = Orientation::Rotate0;
 	}
 
-	properties_.set(properties::PixelArraySize, pixelArraySize_);
+	properties_.set(properties::PixelArrayArea, pixelArrayArea_);
+	properties_.set(properties::PixelArrayReadableArea, readableArea_);
 	properties_.set(properties::PixelArrayActiveAreas, { activeArea_ });
 
 	/* Color filter array pattern. */

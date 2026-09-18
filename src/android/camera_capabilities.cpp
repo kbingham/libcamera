@@ -1066,9 +1066,9 @@ int CameraCapabilities::initializeStaticMetadata()
 	/* Sensor static metadata. */
 	std::array<int32_t, 2> pixelArraySize;
 	{
-		const Size &size = properties.get(properties::PixelArraySize).value_or(utils::defopt);
-		pixelArraySize[0] = size.width;
-		pixelArraySize[1] = size.height;
+		const Rectangle &area = properties.get(properties::PixelArrayArea).value_or(utils::defopt);
+		pixelArraySize[0] = area.width;
+		pixelArraySize[1] = area.height;
 		staticMetadata_->addEntry(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
 					  pixelArraySize);
 	}
