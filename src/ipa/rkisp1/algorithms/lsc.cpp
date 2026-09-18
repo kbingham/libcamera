@@ -124,12 +124,11 @@ int LensShadingCorrection::init([[maybe_unused]] IPAContext &context,
 	xPos_ = sizesListToPositions(xSize_);
 	yPos_ = sizesListToPositions(ySize_);
 
-	return lscAlgo_.init(tuningData,  context.ctrlMap, {
-				.keys = { "r", "gr", "gb", "b" },
-				.numHSamples = RKISP1_CIF_ISP_LSC_SAMPLES_MAX,
-				.numVSamples = RKISP1_CIF_ISP_LSC_SAMPLES_MAX,
-				.sensorSize = context.sensorInfo.activeAreaSize
-			     });
+	return lscAlgo_.init(tuningData, context.ctrlMap,
+			     { .keys = { "r", "gr", "gb", "b" },
+			       .numHSamples = RKISP1_CIF_ISP_LSC_SAMPLES_MAX,
+			       .numVSamples = RKISP1_CIF_ISP_LSC_SAMPLES_MAX,
+			       .sensorSize = context.sensorInfo.activeArea.size() });
 }
 
 /**

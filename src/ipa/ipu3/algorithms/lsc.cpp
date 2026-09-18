@@ -60,8 +60,8 @@ int Lsc::init(IPAContext &context, const ValueNode &tuningData)
 	 * image, 2592 / 73 = 35.5...which means we need to set blockWidthLog2
 	 * to 6 (I.E. 64) and have just 40.5 (or rather 41) cells horizontally.
 	 */
-	sensorWidth_ = context.sensorInfo.activeAreaSize.width;
-	sensorHeight_ = context.sensorInfo.activeAreaSize.height;
+	sensorWidth_ = context.sensorInfo.activeArea.width;
+	sensorHeight_ = context.sensorInfo.activeArea.height;
 
 	unsigned int cellWidth = (sensorWidth_ + kMaxNumHCells - 1) / kMaxNumHCells;
 	unsigned int cellHeight = (sensorHeight_ + kMaxNumVCells - 1) / kMaxNumVCells;
@@ -89,7 +89,7 @@ int Lsc::init(IPAContext &context, const ValueNode &tuningData)
 			     { .keys = { "r", "gr", "gb", "b" },
 			       .numHSamples = numHCells_,
 			       .numVSamples = numVCells_,
-			       .sensorSize = context.sensorInfo.activeAreaSize });
+			       .sensorSize = context.sensorInfo.activeArea.size() });
 }
 
 std::vector<double> Lsc::calculatePositions(unsigned int dimension)

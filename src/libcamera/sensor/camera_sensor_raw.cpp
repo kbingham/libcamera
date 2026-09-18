@@ -1009,26 +1009,15 @@ int CameraSensorRaw::sensorInfo(IPACameraSensorInfo *info) const
 	info->model = model();
 
 	/*
-	 * The active area size is a static property, while the crop
-	 * rectangle needs to be re-read as it depends on the sensor
-	 * configuration.
+	 * The active area is a static property, while the crop rectangle needs
+	 * to be re-read as it depends on the sensor configuration.
 	 */
-	info->activeAreaSize = { activeArea_.width, activeArea_.height };
+	info->activeArea = activeArea_;
 
 	int ret = subdev_->getSelection(streams_.image.sink, V4L2_SEL_TGT_CROP,
 					&info->analogCrop);
 	if (ret)
 		return ret;
-
-	/*
-	 * IPACameraSensorInfo::analogCrop::x and IPACameraSensorInfo::analogCrop::y
-	 * are defined relatively to the active pixel area, while V4L2's
-	 * TGT_CROP target is defined in respect to the full pixel array.
-	 *
-	 * Compensate it by subtracting the active area offset.
-	 */
-	info->analogCrop.x -= activeArea_.x;
-	info->analogCrop.y -= activeArea_.y;
 
 	/* The bit depth and image size depend on the currently applied format. */
 	V4L2SubdeviceFormat format{};

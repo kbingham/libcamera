@@ -561,10 +561,22 @@ void IpaBase::setMode(const IPACameraSensorInfo &sensorInfo)
 	mode_.bitdepth = sensorInfo.bitsPerPixel;
 	mode_.width = sensorInfo.outputSize.width;
 	mode_.height = sensorInfo.outputSize.height;
-	mode_.sensorWidth = sensorInfo.activeAreaSize.width;
-	mode_.sensorHeight = sensorInfo.activeAreaSize.height;
-	mode_.cropX = sensorInfo.analogCrop.x;
-	mode_.cropY = sensorInfo.analogCrop.y;
+	mode_.sensorWidth = sensorInfo.activeArea.width;
+	mode_.sensorHeight = sensorInfo.activeArea.height;
+	/*
+	 * CameraMode::cropX/Y are defined relative to the active pixel area,
+	 * whereas IPACameraSensorInfo::analogCrop is relative to the physical
+	 * pixel array. Rebase the crop origin onto the active area.
+	 */
+	mode_.cropX = sensorInfo.analogCrop.x - std::min(sensorInfo.activeArea.x,
+							 sensorInfo.analogCrop.x);
+	mode_.cropY = sensorInfo.analogCrop.y - std::min(sensorInfo.activeArea.y,
+							 sensorInfo.analogCrop.y);
+	if (sensorInfo.analogCrop.x < sensorInfo.activeArea.x ||
+	    sensorInfo.analogCrop.y < sensorInfo.activeArea.y) {
+		LOG(IPARPI, Warning) << "Analog crop lies outside the active area."
+				     << " This can result in image artifacts.";
+	}
 	mode_.pixelRate = sensorInfo.pixelRate;
 
 	/*
