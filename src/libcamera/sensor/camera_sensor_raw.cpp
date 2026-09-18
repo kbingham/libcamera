@@ -1007,6 +1007,7 @@ int CameraSensorRaw::setEmbeddedDataEnabled(bool enable)
 int CameraSensorRaw::sensorInfo(IPACameraSensorInfo *info) const
 {
 	info->model = model();
+	info->pixelArrayArea = pixelArrayArea_;
 
 	/*
 	 * The active area is a static property, while the crop rectangle needs

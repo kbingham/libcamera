@@ -153,6 +153,13 @@ module libcamera;
  */
 
 /**
+ * \var IPACameraSensorInfo::pixelArrayArea
+ * \brief The area of the physical pixel array of the sensor in pixels
+ *
+ * The top left corner of this rectangle is always at (0,0).
+ */
+
+/**
  * \var IPACameraSensorInfo::activeArea
  * \brief The active pixel area of the sensor, relative to the physical pixel
  * array
@@ -250,6 +257,7 @@ struct IPACameraSensorInfo {
 	uint32 bitsPerPixel;
 	uint32 cfaPattern;
 
+	Rectangle pixelArrayArea;
 	Rectangle activeArea;
 	Rectangle analogCrop;
 	Size outputSize;
