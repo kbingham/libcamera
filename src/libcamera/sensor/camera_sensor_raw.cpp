@@ -606,13 +606,13 @@ int CameraSensorRaw::initProperties()
 				<< v4l2Orientation << ", setting to External";
 			[[fallthrough]];
 		case V4L2_CAMERA_ORIENTATION_EXTERNAL:
-			propertyValue = properties::CameraLocationExternal;
+			propertyValue = properties::LocationExternal;
 			break;
 		case V4L2_CAMERA_ORIENTATION_FRONT:
-			propertyValue = properties::CameraLocationFront;
+			propertyValue = properties::LocationFront;
 			break;
 		case V4L2_CAMERA_ORIENTATION_BACK:
-			propertyValue = properties::CameraLocationBack;
+			propertyValue = properties::LocationBack;
 			break;
 		}
 		properties_.set(properties::Location, propertyValue);
@@ -653,20 +653,20 @@ int CameraSensorRaw::initProperties()
 
 	switch (cfaPattern_) {
 	case BayerFormat::BGGR:
-		cfa = properties::draft::BGGR;
+		cfa = properties::draft::ColorFilterArrangementBGGR;
 		break;
 	case BayerFormat::GBRG:
-		cfa = properties::draft::GBRG;
+		cfa = properties::draft::ColorFilterArrangementGBRG;
 		break;
 	case BayerFormat::GRBG:
-		cfa = properties::draft::GRBG;
+		cfa = properties::draft::ColorFilterArrangementGRBG;
 		break;
 	case BayerFormat::RGGB:
-		cfa = properties::draft::RGGB;
+		cfa = properties::draft::ColorFilterArrangementRGGB;
 		break;
 	case BayerFormat::MONO:
 	default:
-		cfa = properties::draft::MONO;
+		cfa = properties::draft::ColorFilterArrangementMONO;
 		break;
 	}
 
@@ -1028,7 +1028,7 @@ int CameraSensorRaw::sensorInfo(IPACameraSensorInfo *info) const
 	info->outputSize = format.size;
 
 	std::optional<int32_t> cfa = properties_.get(properties::draft::ColorFilterArrangement);
-	info->cfaPattern = cfa ? *cfa : properties::draft::RGB;
+	info->cfaPattern = cfa ? *cfa : properties::draft::ColorFilterArrangementRGB;
 
 	/*
 	 * Retrieve the pixel rate, line length and minimum/maximum frame

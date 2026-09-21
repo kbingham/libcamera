@@ -273,7 +273,7 @@ int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 			Pwl({ { { 0.0, 0.5 } } })
 		};
 
-		constraintModes_[controls::ConstraintNormal].push_back(std::move(constraint));
+		constraintModes_[controls::AeConstraintModeNormal].push_back(std::move(constraint));
 	}
 
 	return 0;
@@ -333,7 +333,7 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 	 * possible before touching gain.
 	 */
 	if (exposureModeHelpers_.empty())
-		exposureModeHelpers_.try_emplace(controls::ExposureNormal,
+		exposureModeHelpers_.try_emplace(controls::AeExposureModeNormal,
 						 std::span<std::pair<utils::Duration, double>>{});
 
 	return 0;
@@ -375,12 +375,12 @@ void AgcMeanLuminance::configure(utils::Duration lineDuration,
  * algorithms:
  *   - Agc:
  *       AeConstraintMode:
- *         ConstraintNormal:
+ *         Normal:
  *           lower:
  *             qLo: 0.98
  *             qHi: 1.0
  *             yTarget: 0.5
- *         ConstraintHighlight:
+ *         Highlight:
  *           lower:
  *             qLo: 0.98
  *             qHi: 1.0
@@ -402,10 +402,10 @@ void AgcMeanLuminance::configure(utils::Duration lineDuration,
  * algorithms:
  *   - Agc:
  *       AeExposureMode:
- *         ExposureNormal:
+ *         Normal:
  *           exposureTime: [ 100, 10000, 30000, 60000, 120000 ]
  *           gain: [ 2.0, 4.0, 6.0, 8.0, 10.0 ]
- *         ExposureShort:
+ *         Short:
  *           exposureTime: [ 100, 10000, 30000, 60000, 120000 ]
  *           gain: [ 2.0, 4.0, 6.0, 8.0, 10.0 ]
  *

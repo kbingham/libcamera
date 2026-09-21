@@ -234,7 +234,7 @@ int AwbAlgorithmBase::init(const ValueNode &tuningData)
 			    kDefaultColourTemperature);
 	controls_[&controls::AwbEnable] = ControlInfo(false, true);
 
-	return parseModeConfigs(tuningData, controls::AwbAuto);
+	return parseModeConfigs(tuningData, controls::AwbModeAuto);
 }
 
 /**
@@ -416,10 +416,10 @@ void AwbAlgorithmBase::process(awb::ActiveState &state,
  * algorithms:
  *   - Awb:
  *     AwbMode:
- *       AwbAuto:
+ *       Auto:
  *         lo: 2500
  *         hi: 8000
- *       AwbIncandescent:
+ *       Incandescent:
  *         lo: 2500
  *         hi: 3000
  *       ...
@@ -504,7 +504,7 @@ int AwbAlgorithmBase::parseModeConfigs(const ValueNode &tuningData,
 	}
 
 	controls_[&controls::AwbMode] = ControlInfo(availableModes, def);
-	currentMode_ = &modes_[controls::AwbAuto];
+	currentMode_ = &modes_[controls::AwbModeAuto];
 
 	return 0;
 }

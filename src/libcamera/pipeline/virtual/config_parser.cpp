@@ -233,8 +233,8 @@ int ConfigParser::parseFrameGenerator(const ValueNode &cameraConfigData, Virtual
 
 int ConfigParser::parseLocation(const ValueNode &cameraConfigData, VirtualCameraData *data)
 {
-	/* Default value is properties::CameraLocationFront */
-	int32_t location = properties::CameraLocationFront;
+	/* Default value is properties::LocationFront */
+	int32_t location = properties::LocationFront;
 
 	if (auto l = cameraConfigData["location"].get<std::string>()) {
 		auto it = properties::LocationNameValueMap.find(*l);
