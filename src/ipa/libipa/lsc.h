@@ -118,7 +118,7 @@ public:
 		return 0;
 	}
 
-	const Components interpolateComponents(unsigned int ct)
+	const Components &interpolateComponents(unsigned int ct)
 	{
 		return sets_.getInterpolated(ct);
 	}
