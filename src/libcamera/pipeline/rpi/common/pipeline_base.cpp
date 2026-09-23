@@ -8,6 +8,7 @@
 #include "pipeline_base.h"
 
 #include <chrono>
+#include <optional>
 
 #include <linux/media-bus-format.h>
 #include <linux/videodev2.h>
@@ -43,12 +44,12 @@ namespace {
 
 constexpr unsigned int defaultRawBitDepth = 12;
 
-PixelFormat mbusCodeToPixelFormat(unsigned int code,
-				  BayerFormat::Packing packingReq)
+std::optional<PixelFormat>
+mbusCodeToPixelFormat(unsigned int code, BayerFormat::Packing packingReq)
 {
 	BayerFormat bayer = BayerFormat::fromMbusCode(code);
-
-	ASSERT(bayer.isValid());
+	if (!bayer.isValid())
+		return std::nullopt;
 
 	bayer.packing = packingReq;
 	PixelFormat pix = bayer.toPixelFormat();
@@ -62,6 +63,9 @@ PixelFormat mbusCodeToPixelFormat(unsigned int code,
 		bayer.packing = BayerFormat::Packing::None;
 		pix = bayer.toPixelFormat();
 	}
+
+	if (!pix.isValid())
+		return std::nullopt;
 
 	return pix;
 }
@@ -378,10 +382,12 @@ V4L2DeviceFormat PipelineHandlerBase::toV4L2DeviceFormat(const V4L2VideoDevice *
 							 BayerFormat::Packing packingReq)
 {
 	unsigned int code = format.code;
-	const PixelFormat pix = mbusCodeToPixelFormat(code, packingReq);
 	V4L2DeviceFormat deviceFormat;
 
-	deviceFormat.fourcc = dev->toV4L2PixelFormat(pix);
+	const std::optional<PixelFormat> pix = mbusCodeToPixelFormat(code, packingReq);
+	ASSERT(pix.has_value());
+
+	deviceFormat.fourcc = dev->toV4L2PixelFormat(*pix);
 	deviceFormat.size = format.size;
 	deviceFormat.colorSpace = format.colorSpace;
 	return deviceFormat;
@@ -395,7 +401,7 @@ PipelineHandlerBase::generateConfiguration(Camera *camera, std::span<const Strea
 		std::make_unique<RPiCameraConfiguration>(data);
 	V4L2SubdeviceFormat sensorFormat;
 	unsigned int bufferCount;
-	PixelFormat pixelFormat;
+	std::optional<PixelFormat> pixelFormat;
 	V4L2VideoDevice::Formats fmts;
 	Size size;
 	std::optional<ColorSpace> colorSpace;
@@ -411,7 +417,7 @@ PipelineHandlerBase::generateConfiguration(Camera *camera, std::span<const Strea
 			sensorFormat = data->findBestFormat(size, defaultRawBitDepth);
 			pixelFormat = mbusCodeToPixelFormat(sensorFormat.code,
 							    BayerFormat::Packing::CSI2);
-			ASSERT(pixelFormat.isValid());
+			ASSERT(pixelFormat.has_value());
 			colorSpace = ColorSpace::Raw;
 			bufferCount = 2;
 			break;
@@ -468,10 +474,10 @@ PipelineHandlerBase::generateConfiguration(Camera *camera, std::span<const Strea
 		if (role == StreamRole::Raw) {
 			/* Translate the MBUS codes to a PixelFormat. */
 			for (const auto &format : data->sensorFormats_) {
-				PixelFormat pf = mbusCodeToPixelFormat(format.first,
-								       BayerFormat::Packing::CSI2);
-				if (pf.isValid())
-					deviceFormats.emplace(std::piecewise_construct, std::forward_as_tuple(pf),
+				std::optional<PixelFormat> pf = mbusCodeToPixelFormat(format.first,
+										      BayerFormat::Packing::CSI2);
+				if (pf.has_value())
+					deviceFormats.emplace(std::piecewise_construct, std::forward_as_tuple(*pf),
 							      std::forward_as_tuple(format.second.begin(), format.second.end()));
 			}
 		} else {
@@ -498,7 +504,7 @@ PipelineHandlerBase::generateConfiguration(Camera *camera, std::span<const Strea
 		StreamFormats formats(deviceFormats);
 		StreamConfiguration cfg(formats);
 		cfg.size = size;
-		cfg.pixelFormat = pixelFormat;
+		cfg.pixelFormat = *pixelFormat;
 		cfg.colorSpace = colorSpace;
 		cfg.bufferCount = bufferCount;
 		config->addConfiguration(cfg);
@@ -958,9 +964,13 @@ V4L2SubdeviceFormat CameraData::findBestFormat(const Size &req, unsigned int bit
 
 	/* Calculate the closest/best mode from the user requested size. */
 	for (const auto &[mbusCode, sizes] : sensorFormats_) {
-		const PixelFormat format = mbusCodeToPixelFormat(mbusCode,
-								 BayerFormat::Packing::None);
-		const PixelFormatInfo &info = PixelFormatInfo::info(format);
+		const std::optional<PixelFormat> format =
+			mbusCodeToPixelFormat(mbusCode, BayerFormat::Packing::None);
+
+		if (!format.has_value())
+			continue;
+
+		const PixelFormatInfo &info = PixelFormatInfo::info(*format);
 
 		for (const Size &size : sizes) {
 			double reqAr = static_cast<double>(req.width) / req.height;
@@ -981,7 +991,7 @@ V4L2SubdeviceFormat CameraData::findBestFormat(const Size &req, unsigned int bit
 			}
 
 			LOG(RPI, Debug) << "Format: " << size
-					<< " fmt " << format
+					<< " fmt " << *format
 					<< " Score: " << score
 					<< " (best " << bestScore << ")";
 		}
