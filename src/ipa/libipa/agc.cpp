@@ -870,6 +870,9 @@ void AgcAlgorithm::fillMetadata(const agc::Session &session,
 	metadata.set(controls::ExposureTime,
 		     utils::Duration(session.lineDuration * frameContext.exposure).get<std::micro>());
 	metadata.set(controls::FrameDuration, frameContext.frameDuration.get<std::micro>());
+	metadata.set(controls::FrameDurationLimits,
+		     { static_cast<int64_t>(frameContext.minFrameDuration.get<std::micro>()),
+		       static_cast<int64_t>(frameContext.maxFrameDuration.get<std::micro>()) });
 	metadata.set(controls::ExposureTimeMode, frameContext.autoExposureEnabled
 						 ? controls::ExposureTimeModeAuto
 						 : controls::ExposureTimeModeManual);
