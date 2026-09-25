@@ -1183,6 +1183,13 @@ CameraConfiguration::Status SimpleCameraConfiguration::validate()
 		return Invalid;
 	}
 
+	unsigned int processedCount = config_.size() - rawCount;
+	if (data_->pipe()->swIspEnabled() && processedCount > 1) {
+		LOG(SimplePipeline, Error)
+			<< "Software ISP does not support multiple processed streams";
+		return Invalid;
+	}
+
 	/*
 	 * Find the best configuration for the pipeline using a heuristic.
 	 * First select the pixel format based on the raw streams followed by
@@ -1427,6 +1434,11 @@ SimplePipelineHandler::generateConfiguration(Camera *camera, std::span<const Str
 			}
 			rawRequested = true;
 		} else {
+			if (swIspEnabled_ && processedRequested) {
+				LOG(SimplePipeline, Error)
+					<< "Software ISP can't capture multiple processed streams";
+				return nullptr;
+			}
 			processedRequested = true;
 		}
 
