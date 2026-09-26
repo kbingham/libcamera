@@ -91,7 +91,7 @@ int DebayerEGL::getInputConfig(PixelFormat inputFormat, DebayerInputConfig &conf
 		return 0;
 	}
 
-	LOG(Debayer, Info)
+	LOG(Debayer, Debug)
 		<< "Unsupported input format " << inputFormat;
 
 	return -EINVAL;
@@ -275,8 +275,11 @@ int DebayerEGL::configure(const StreamConfiguration &inputCfg,
 			  const std::vector<std::reference_wrapper<const StreamConfiguration>> &outputCfgs,
 			  [[maybe_unused]] bool ccmEnabled)
 {
-	if (getInputConfig(inputCfg.pixelFormat, inputConfig_) != 0)
+	if (getInputConfig(inputCfg.pixelFormat, inputConfig_) != 0) {
+		LOG(Debayer, Error)
+			<< "Unsupported input format " << inputCfg.pixelFormat;
 		return -EINVAL;
+	}
 
 	if (stats_->configure(inputCfg) != 0)
 		return -EINVAL;
