@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <array>
 #include <iostream>
 
 #include <libcamera/controls.h>
