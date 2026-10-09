@@ -364,15 +364,15 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 				return -EINVAL;
 			}
 
-			std::vector<std::pair<utils::Duration, double>> stages;
-			for (unsigned int i = 0; i < exposureTimes.size(); i++) {
+			std::vector<ExposureModeHelper::Stage> stages;
+			for (size_t i = 0; i < exposureTimes.size(); i++) {
 				stages.push_back({
-					std::chrono::microseconds(exposureTimes[i]),
-					gains[i]
+					.exposureTime = std::chrono::microseconds(exposureTimes[i]),
+					.gain = gains[i],
 				});
 			}
 
-			exposureModeHelpers_.try_emplace(*modeValue, stages);
+			exposureModeHelpers_.try_emplace(*modeValue, std::move(stages));
 		}
 	}
 
@@ -384,7 +384,7 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 	 */
 	if (exposureModeHelpers_.empty())
 		exposureModeHelpers_.try_emplace(controls::AeExposureModeNormal,
-						 std::span<std::pair<utils::Duration, double>>{});
+						 std::vector<ExposureModeHelper::Stage>{});
 
 	return 0;
 }

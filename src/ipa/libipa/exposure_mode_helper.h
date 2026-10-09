@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include <span>
-#include <utility>
 #include <vector>
 
 #include <libcamera/base/utils.h>
@@ -22,7 +20,12 @@ namespace ipa {
 class ExposureModeHelper
 {
 public:
-	ExposureModeHelper(std::span<std::pair<utils::Duration, double>> stages);
+	struct Stage {
+		utils::Duration exposureTime;
+		double gain;
+	};
+
+	ExposureModeHelper(std::vector<Stage> &&stages);
 
 	void configure(utils::Duration lineLength, const CameraSensorHelper *sensorHelper);
 	void setLimits(utils::Duration minExposureTime, utils::Duration maxExposureTime,
@@ -47,8 +50,7 @@ private:
 					  double *quantizationGain = nullptr) const;
 	double clampGain(double gain, double *quantizationGain = nullptr) const;
 
-	std::vector<utils::Duration> exposureTimes_;
-	std::vector<double> gains_;
+	std::vector<Stage> stages_;
 
 	utils::Duration lineDuration_;
 	utils::Duration minExposureTime_;

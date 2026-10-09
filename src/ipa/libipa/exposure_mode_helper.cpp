@@ -60,23 +60,30 @@ namespace ipa {
  */
 
 /**
+  * \class ExposureModeHelper::Stage
+  * \brief Details of an exposure stage
+  *
+  * This type contains the parameters of a single exposure stage as used by the
+  * algorithm.
+  *
+  * \var ExposureModeHelper::Stage::exposureTime
+  * \brief The maximum exposure time of the stage
+  *
+  * \var ExposureModeHelper::Stage::gain
+  * \brief The maximum analogue gain of the stage
+  */
+
+/**
  * \brief Construct an ExposureModeHelper instance
  * \param[in] stages The vector of paired exposure time and gain limits
- *
- * The input stages are exposure time and _total_ gain pairs; the gain
- * encompasses both analogue and digital gain.
  *
  * The vector of stages may be empty. In that case, the helper will simply use
  * the runtime limits set through setLimits() instead.
  */
-ExposureModeHelper::ExposureModeHelper(std::span<std::pair<utils::Duration, double>> stages)
-	: lineDuration_(1us), minExposureTime_(0us), maxExposureTime_(0us),
-	  minGain_(0), maxGain_(0), sensorHelper_(nullptr)
+ExposureModeHelper::ExposureModeHelper(std::vector<Stage> &&stages)
+	: stages_(std::move(stages)), lineDuration_(1us), minExposureTime_(0us),
+	  maxExposureTime_(0us), minGain_(0), maxGain_(0), sensorHelper_(nullptr)
 {
-	for (const auto &[s, g] : stages) {
-		exposureTimes_.push_back(s);
-		gains_.push_back(g);
-	}
 }
 
 /**
@@ -236,10 +243,10 @@ ExposureModeHelper::splitExposure(utils::Duration exposure) const
 	double stageGain = clampGain(1.0);
 	double lastStageGain = stageGain;
 
-	for (unsigned int stage = 0; stage < gains_.size(); stage++) {
-		utils::Duration stageExposureTime = clampExposureTime(exposureTimes_[stage],
+	for (const auto &stage : stages_) {
+		utils::Duration stageExposureTime = clampExposureTime(stage.exposureTime,
 								      &quantGain);
-		stageGain = clampGain(gains_[stage]);
+		stageGain = clampGain(stage.gain);
 
 		/*
 		 * We perform the clamping on both exposure time and gain in
