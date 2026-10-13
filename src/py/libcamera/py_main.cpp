@@ -324,6 +324,7 @@ PYBIND11_MODULE(_libcamera, m)
 			return self.size();
 		})
 		.def("validate", &CameraConfiguration::validate)
+		.def("add_configuration", &CameraConfiguration::addConfiguration)
 		.def("at", py::overload_cast<unsigned int>(&CameraConfiguration::at),
 		     py::return_value_policy::reference_internal)
 		.def_property_readonly("size", &CameraConfiguration::size)
@@ -337,6 +338,7 @@ PYBIND11_MODULE(_libcamera, m)
 		.value("Invalid", CameraConfiguration::Invalid);
 
 	pyStreamConfiguration
+		.def(py::init<>())
 		.def("__str__", &StreamConfiguration::toString)
 		.def_property_readonly("stream", &StreamConfiguration::stream,
 				       py::return_value_policy::reference_internal)
