@@ -21,7 +21,9 @@
  * Workaround for build issues on Mesa <= 22.2, see
  * https://github.com/KhronosGroup/EGL-Registry/pull/130
  */
+#ifndef EGL_NO_X11
 #define EGL_NO_X11
+#endif
 
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
