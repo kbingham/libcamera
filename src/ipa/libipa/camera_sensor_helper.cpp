@@ -703,6 +703,23 @@ public:
 REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx477, "imx477")
 
 /*
+ * Reusing CameraSensorHelperImx585 for multiple sensors, for convenience.
+ * They may need to be split apart if any differences are found later.
+ */
+class CameraSensorHelperImx585 : public CameraSensorHelper
+{
+public:
+	CameraSensorHelperImx585()
+	{
+		/* From datasheet: 0x32 at 10bits. */
+		blackLevel_ = 3200;
+		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
+		exposureMargin_ = 8;
+	}
+};
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx585, "imx585", "imx676")
+
+/*
  * Reusing CameraSensorHelperImx678 for multiple sensors, for convenience.
  * They may need to be split apart if any differences are found later.
  */
