@@ -429,47 +429,6 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 	config.ctrlMap.erase(&controls::AeConstraintMode);
 	config.ctrlMap.erase(&controls::AeExposureMode);
 
-	/* \todo Move this to the `Camera` class. */
-	config.ctrlMap[&controls::AeEnable] = ControlInfo{
-		false, session.autoAllowed, session.autoAllowed
-	};
-	config.ctrlMap[&controls::AnalogueGain] = ControlInfo{
-		minGain, maxGain, defGain
-	};
-	config.ctrlMap[&controls::ExposureTime] = ControlInfo{
-		static_cast<int32_t>(minExposure * lineDurationUs),
-		static_cast<int32_t>(maxExposure * lineDurationUs),
-		static_cast<int32_t>(defExposure * lineDurationUs),
-	};
-	config.ctrlMap[&controls::FrameDurationLimits] = ControlInfo{
-		static_cast<int64_t>(session.minFrameDuration.get<std::micro>()),
-		static_cast<int64_t>(session.maxFrameDuration.get<std::micro>()),
-		std::span<const int64_t, 2>{ {
-			static_cast<int64_t>(state.minFrameDuration.get<std::micro>()),
-			static_cast<int64_t>(state.maxFrameDuration.get<std::micro>()),
-		} },
-	};
-
-	const auto add = [&](const ControlId &cid, const auto &automatic, const auto &manual) {
-		std::array<ControlValue, 2> values;
-		size_t count = 0;
-
-		if (session.autoAllowed)
-			values[count++] = ControlValue(automatic);
-
-		values[count++] = ControlValue(manual);
-
-		config.ctrlMap[&cid] = ControlInfo{
-			{ values.data(), count },
-			ControlValue(session.autoAllowed ? automatic : manual),
-		};
-	};
-
-	add(controls::ExposureTimeMode,
-	    controls::ExposureTimeModeAuto, controls::ExposureTimeModeManual);
-	add(controls::AnalogueGainMode,
-	    controls::AnalogueGainModeAuto, controls::AnalogueGainModeManual);
-
 	std::visit(utils::overloaded{
 		[&](AgcMSV &) {
 			/* No constraint/exposure mode support. */
@@ -515,6 +474,47 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 			config.ctrlMap[&controls::AeExposureMode] = ControlInfo(options);
 		},
 	}, impl_);
+
+	/* \todo Move this to the `Camera` class. */
+	config.ctrlMap[&controls::AeEnable] = ControlInfo{
+		false, session.autoAllowed, session.autoAllowed
+	};
+	config.ctrlMap[&controls::AnalogueGain] = ControlInfo{
+		minGain, maxGain, defGain
+	};
+	config.ctrlMap[&controls::ExposureTime] = ControlInfo{
+		static_cast<int32_t>(minExposure * lineDurationUs),
+		static_cast<int32_t>(maxExposure * lineDurationUs),
+		static_cast<int32_t>(defExposure * lineDurationUs),
+	};
+	config.ctrlMap[&controls::FrameDurationLimits] = ControlInfo{
+		static_cast<int64_t>(session.minFrameDuration.get<std::micro>()),
+		static_cast<int64_t>(session.maxFrameDuration.get<std::micro>()),
+		std::span<const int64_t, 2>{ {
+			static_cast<int64_t>(state.minFrameDuration.get<std::micro>()),
+			static_cast<int64_t>(state.maxFrameDuration.get<std::micro>()),
+		} },
+	};
+
+	const auto add = [&](const ControlId &cid, const auto &automatic, const auto &manual) {
+		std::array<ControlValue, 2> values;
+		size_t count = 0;
+
+		if (session.autoAllowed)
+			values[count++] = ControlValue(automatic);
+
+		values[count++] = ControlValue(manual);
+
+		config.ctrlMap[&cid] = ControlInfo{
+			{ values.data(), count },
+			ControlValue(session.autoAllowed ? automatic : manual),
+		};
+	};
+
+	add(controls::ExposureTimeMode,
+	    controls::ExposureTimeModeAuto, controls::ExposureTimeModeManual);
+	add(controls::AnalogueGainMode,
+	    controls::AnalogueGainModeAuto, controls::AnalogueGainModeManual);
 
 	return 0;
 }
