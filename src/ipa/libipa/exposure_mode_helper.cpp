@@ -294,31 +294,6 @@ ExposureModeHelper::splitExposure(utils::Duration exposure) const
 		 exposure / (exposureTime * gain * quantGain) };
 }
 
-/**
- * \fn ExposureModeHelper::minExposureTime()
- * \brief Retrieve the configured minimum exposure time limit set through
- * setLimits()
- * \return The minExposureTime_ value
- */
-
-/**
- * \fn ExposureModeHelper::maxExposureTime()
- * \brief Retrieve the configured maximum exposure time set through setLimits()
- * \return The maxExposureTime_ value
- */
-
-/**
- * \fn ExposureModeHelper::minGain()
- * \brief Retrieve the configured minimum gain set through setLimits()
- * \return The minGain_ value
- */
-
-/**
- * \fn ExposureModeHelper::maxGain()
- * \brief Retrieve the configured maximum gain set through setLimits()
- * \return The maxGain_ value
- */
-
 } /* namespace ipa */
 
 } /* namespace libcamera */
