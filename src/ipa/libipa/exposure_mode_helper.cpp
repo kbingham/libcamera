@@ -84,6 +84,7 @@ ExposureModeHelper::ExposureModeHelper(std::vector<Stage> &&stages)
 	: stages_(std::move(stages)), lineDuration_(1us), minExposureTime_(0us),
 	  maxExposureTime_(0us), minGain_(0), maxGain_(0), sensorHelper_(nullptr)
 {
+	ASSERT(!stages_.empty());
 }
 
 /**
@@ -203,8 +204,8 @@ double ExposureModeHelper::clampGain(double gain, double *quantizationGain) cons
  * value.
  *
  * If no combination of exposure time and gain limits is found that meets the
- * required exposure, the helper falls-back to simply maximising the exposure
- * time first, followed by analogue gain, followed by digital gain.
+ * required exposure, then the exposure and gain of the last stage will be used,
+ * and the digital gain will be increased as necessary.
  *
  * During the calculations the gain missed due to quantization is recorded and
  * returned as quantization gain. The quantization gain is not included in the
@@ -219,6 +220,7 @@ ExposureModeHelper::splitExposure(utils::Duration exposure) const
 {
 	ASSERT(maxExposureTime_);
 	ASSERT(maxGain_);
+	ASSERT(!stages_.empty());
 
 	utils::Duration exposureTime;
 	double gain;
@@ -240,13 +242,13 @@ ExposureModeHelper::splitExposure(utils::Duration exposure) const
 			 exposure / (exposureTime * gain * quantGain) };
 	}
 
-	double stageGain = clampGain(1.0);
-	double lastStageGain = stageGain;
+	utils::Duration stageExposureTime = {};
+	double lastStageGain = clampGain(1.0);
+	double stageGain = {};
 
 	for (const auto &stage : stages_) {
-		utils::Duration stageExposureTime = clampExposureTime(stage.exposureTime,
-								      &quantGain);
-		stageGain = clampGain(stage.gain);
+		stageExposureTime = clampExposureTime(stage.exposureTime, &quantGain);
+		stageGain = clampGain(stage.gain, &quantGain2);
 
 		/*
 		 * We perform the clamping on both exposure time and gain in
@@ -280,14 +282,11 @@ ExposureModeHelper::splitExposure(utils::Duration exposure) const
 	}
 
 	/*
-	 * From here on all we can do is max out the exposure time, followed by
-	 * the analogue gain. If we still haven't achieved the target we send
-	 * the rest of the exposure time to digital gain. If we were given no
-	 * stages to use then the default stageGain of 1.0 is used so that
-	 * exposure time is maxed before gain is touched at all.
+	 * If no stages could satisfy the desired exposure, then use the last
+	 * stage's exposure time and gain, which is the maximum allowed.
 	 */
-	exposureTime = clampExposureTime(exposure / stageGain, &quantGain);
-	gain = clampGain(exposure / exposureTime, &quantGain2);
+	exposureTime = stageExposureTime;
+	gain = stageGain;
 	quantGain *= quantGain2;
 
 	return { exposureTime, gain, quantGain,

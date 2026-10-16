@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <optional>
 
 #include <libcamera/base/log.h>
@@ -494,8 +495,14 @@ AgcMeanLuminance::AgcMeanLuminance(Configuration &&config)
 	 * possible before touching gain.
 	 */
 	if (exposureModeHelpers_.empty())
-		exposureModeHelpers_.try_emplace(controls::AeExposureModeNormal,
-						 std::vector<ExposureModeHelper::Stage>{});
+		exposureModeHelpers_.try_emplace(
+			controls::AeExposureModeNormal,
+			std::vector<ExposureModeHelper::Stage>{
+				{
+					.exposureTime = utils::Duration::max(),
+					.gain = std::numeric_limits<double>::max(),
+				},
+			});
 }
 
 AgcMeanLuminance::~AgcMeanLuminance() = default;
