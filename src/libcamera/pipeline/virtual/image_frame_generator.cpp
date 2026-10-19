@@ -12,9 +12,11 @@
 #include <libcamera/base/file.h>
 #include <libcamera/base/log.h>
 
+#include <libcamera/formats.h>
 #include <libcamera/framebuffer.h>
 
 #include "libcamera/internal/dma_buf_allocator.h"
+#include "libcamera/internal/formats.h"
 #include "libcamera/internal/mapped_framebuffer.h"
 
 #include "libyuv/convert.h"
@@ -141,6 +143,7 @@ int ImageFrameGenerator::generateFrame(const Size &size, const FrameBuffer *buff
 					    MappedFrameBuffer::MapFlag::Write);
 
 	const auto &planes = mappedFrameBuffer.planes();
+	const PixelFormatInfo &info = PixelFormatInfo::info(formats::NV12);
 
 	/* Loop only around the number of images available */
 	frameIndex_ %= imageFrameDatas_.size();
@@ -148,8 +151,8 @@ int ImageFrameGenerator::generateFrame(const Size &size, const FrameBuffer *buff
 	/* Write the scaledY and scaledUV to the mapped frame buffer */
 	libyuv::NV12Copy(scaledFrameDatas_[frameIndex_].Y.get(), size.width,
 			 scaledFrameDatas_[frameIndex_].UV.get(), size.width,
-			 planes[0].data(), size.width,
-			 planes[1].data(), size.width,
+			 planes[0].data(), info.stride(size.width, 0),
+			 planes[1].data(), info.stride(size.width, 1),
 			 size.width, size.height);
 
 	/* Proceed to the next image every 4 frames */

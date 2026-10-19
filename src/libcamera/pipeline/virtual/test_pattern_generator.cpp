@@ -11,7 +11,9 @@
 
 #include <libcamera/base/log.h>
 
+#include <libcamera/formats.h>
 #include "libcamera/internal/dma_buf_allocator.h"
+#include "libcamera/internal/formats.h"
 #include "libcamera/internal/mapped_framebuffer.h"
 
 #include <libyuv/convert_from_argb.h>
@@ -58,13 +60,16 @@ int TestPatternGenerator::generateFrame(const Size &size,
 					    MappedFrameBuffer::MapFlag::Write);
 
 	const auto &planes = mappedFrameBuffer.planes();
+	const PixelFormatInfo &info = PixelFormatInfo::info(formats::NV12);
 
 	rotateLeft1Column<kARGBSize>(size, template_.get());
 
 	/* Convert the template_ to the frame buffer */
 	int ret = libyuv::ARGBToNV12(template_.get(), size.width * kARGBSize,
-				     planes[0].data(), size.width,
-				     planes[1].data(), size.width,
+				     planes[0].data(),
+				     info.stride(size.width, 0),
+				     planes[1].data(),
+				     info.stride(size.width, 1),
 				     size.width, size.height);
 	if (ret != 0)
 		LOG(Virtual, Error) << "ARGBToNV12() failed with " << ret;
