@@ -100,7 +100,7 @@ void ColorBarsGenerator::configure(const Size &size)
 			*buf++ = kColorBar[index][2]; /* B */
 			*buf++ = kColorBar[index][1]; /* G */
 			*buf++ = kColorBar[index][0]; /* R */
-			*buf++ = 0x00; /* A */
+			*buf++ = 0xff; /* A */
 		}
 	}
 }
@@ -127,7 +127,7 @@ void DiagonalLinesGenerator::configure(const Size &size)
 			*buf++ = kColorBar[index][2]; /* B */
 			*buf++ = kColorBar[index][1]; /* G */
 			*buf++ = kColorBar[index][0]; /* R */
-			*buf++ = 0x00; /* A */
+			*buf++ = 0xff; /* A */
 		}
 	}
 }
