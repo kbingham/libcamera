@@ -215,7 +215,7 @@ void V4L2CameraProxy::setFmtFromConfig(const StreamConfiguration &streamConfig)
 		LOG(V4L2Compat, Warning)
 			<< "Camera does not support FrameDurationLimits";
 
-		v4l2TimePerFrame_.numerator = 333333;
+		v4l2TimePerFrame_.numerator = 33333;
 		v4l2TimePerFrame_.denominator = 1000000;
 	}
 }
