@@ -649,7 +649,8 @@ int V4L2CameraProxy::vidioc_qbuf(V4L2CameraFile *file, struct v4l2_buffer *arg)
 	if (ret < 0)
 		return ret;
 
-	buffers_[arg->index].flags |= V4L2_BUF_FLAG_QUEUED;
+	buffers_[arg->index].flags |= V4L2_BUF_FLAG_QUEUED |
+				      V4L2_BUF_FLAG_PREPARED;
 
 	arg->flags = buffers_[arg->index].flags;
 
@@ -776,7 +777,8 @@ int V4L2CameraProxy::vidioc_streamoff(V4L2CameraFile *file, int *arg)
 	int ret = vcam_->streamOff();
 
 	for (struct v4l2_buffer &buf : buffers_)
-		buf.flags &= ~(V4L2_BUF_FLAG_QUEUED | V4L2_BUF_FLAG_DONE);
+		buf.flags &= ~(V4L2_BUF_FLAG_QUEUED | V4L2_BUF_FLAG_DONE |
+			       V4L2_BUF_FLAG_PREPARED);
 
 	return ret;
 }
@@ -923,6 +925,9 @@ int V4L2CameraProxy::ioctl(V4L2CameraFile *file, unsigned long longRequest, void
 		break;
 	case VIDIOC_QUERYBUF:
 		ret = vidioc_querybuf(file, static_cast<struct v4l2_buffer *>(arg));
+		break;
+	case VIDIOC_PREPARE_BUF:
+		ret = vidioc_prepare_buf(file, static_cast<struct v4l2_buffer *>(arg));
 		break;
 	case VIDIOC_QBUF:
 		ret = vidioc_qbuf(file, static_cast<struct v4l2_buffer *>(arg));
