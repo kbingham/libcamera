@@ -50,6 +50,7 @@ CamHelper *create()
 	return new CamHelperStarvis2();
 }
 
+RegisterCamHelper reg662("imx662", &create);
 RegisterCamHelper reg675("imx675", &create);
 RegisterCamHelper reg678("imx678", &create);
 RegisterCamHelper reg832("imx832", &create);
