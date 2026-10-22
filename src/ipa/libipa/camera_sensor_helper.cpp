@@ -257,15 +257,15 @@ double CameraSensorHelper::quantizeGain(double _gain, double *quantizationGain) 
 
 /**
  * \brief Construct a camera sensor helper factory base
- * \param[in] name Name of the camera sensor helper class
+ * \param[in] names Names of the camera sensors to match with the helper
  *
  * Creating an instance of the factory base registers it with the global list of
  * factories, accessible through the factories() function.
  *
- * The factory \a name is used to look up factories and shall be unique.
+ * The factory \a names are used to look up factories and shall be unique.
  */
-CameraSensorHelperFactoryBase::CameraSensorHelperFactoryBase(const std::string name)
-	: name_(name)
+CameraSensorHelperFactoryBase::CameraSensorHelperFactoryBase(std::initializer_list<const char *> names)
+	: names_(names.begin(), names.end())
 {
 	registerType(this);
 }
@@ -285,7 +285,8 @@ std::unique_ptr<CameraSensorHelper> CameraSensorHelperFactoryBase::create(const 
 		CameraSensorHelperFactoryBase::factories();
 
 	for (const CameraSensorHelperFactoryBase *factory : factories) {
-		if (name != factory->name_)
+		const auto &names = factory->names_;
+		if (std::find(names.begin(), names.end(), name) == names.end())
 			continue;
 
 		return factory->createInstance();
@@ -338,9 +339,9 @@ std::vector<CameraSensorHelperFactoryBase *> &CameraSensorHelperFactoryBase::fac
  */
 
 /**
- * \fn CameraSensorHelperFactory::CameraSensorHelperFactory(const char *name)
+ * \fn CameraSensorHelperFactory::CameraSensorHelperFactory(std::initializer_list<const char *> names)
  * \brief Construct a camera sensor helper factory
- * \param[in] name Name of the camera sensor helper class
+ * \param[in] names Names of the camera sensors to match with the helper
  *
  * Creating an instance of the factory registers it with the global list of
  * factories, accessible through the CameraSensorHelperFactoryBase::factories()
@@ -361,8 +362,9 @@ std::vector<CameraSensorHelperFactoryBase *> &CameraSensorHelperFactoryBase::fac
 /**
  * \def REGISTER_CAMERA_SENSOR_HELPER
  * \brief Register a camera sensor helper with the camera sensor helper factory
- * \param[in] name Sensor model name used to register the class
  * \param[in] helper Class name of CameraSensorHelper derived class to register
+ * \param[in] name Sensor model name used to register the class
+ * \param[in] ... More sensor model names that can be matched to this helper
  *
  * Register a CameraSensorHelper subclass with the factory and make it available
  * to try and match sensors.
@@ -485,7 +487,7 @@ public:
 		return m * (1 << coarse) / (1.0 - (fine / d1) / d2);
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ar0144", CameraSensorHelperAr0144)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperAr0144, "ar0144")
 
 class CameraSensorHelperAr0521 : public CameraSensorHelper
 {
@@ -515,7 +517,7 @@ public:
 private:
 	static constexpr double kStep_ = 16;
 };
-REGISTER_CAMERA_SENSOR_HELPER("ar0521", CameraSensorHelperAr0521)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperAr0521, "ar0521")
 
 class CameraSensorHelperGc05a2 : public CameraSensorHelper
 {
@@ -528,7 +530,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("gc05a2", CameraSensorHelperGc05a2)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperGc05a2, "gc05a2")
 
 class CameraSensorHelperGc08a3 : public CameraSensorHelper
 {
@@ -541,7 +543,7 @@ public:
 		exposureMargin_ = 16;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("gc08a3", CameraSensorHelperGc08a3)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperGc08a3, "gc08a3")
 
 class CameraSensorHelperHm1246 : public CameraSensorHelper
 {
@@ -552,7 +554,7 @@ public:
 		exposureMargin_ = 2;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("hm1246", CameraSensorHelperHm1246)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperHm1246, "hm1246")
 
 class CameraSensorHelperImx214 : public CameraSensorHelper
 {
@@ -565,7 +567,7 @@ public:
 		exposureMargin_ = 10;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx214", CameraSensorHelperImx214)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx214, "imx214")
 
 class CameraSensorHelperImx219 : public CameraSensorHelper
 {
@@ -578,7 +580,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx219", CameraSensorHelperImx219)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx219, "imx219")
 
 class CameraSensorHelperImx258 : public CameraSensorHelper
 {
@@ -591,7 +593,7 @@ public:
 		exposureMargin_ = 10;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx258", CameraSensorHelperImx258)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx258, "imx258")
 
 class CameraSensorHelperImx283 : public CameraSensorHelper
 {
@@ -604,8 +606,12 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx283", CameraSensorHelperImx283)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx283, "imx283")
 
+/*
+ * Reusing CameraSensorHelperImx290 for multiple sensors, for convenience.
+ * They may need to be split apart if any differences are found later.
+ */
 class CameraSensorHelperImx290 : public CameraSensorHelper
 {
 public:
@@ -617,7 +623,7 @@ public:
 		exposureMargin_ = 2;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx290", CameraSensorHelperImx290)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx290, "imx290", "imx327", "imx462")
 
 class CameraSensorHelperImx296 : public CameraSensorHelper
 {
@@ -632,12 +638,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx296", CameraSensorHelperImx296)
-
-class CameraSensorHelperImx327 : public CameraSensorHelperImx290
-{
-};
-REGISTER_CAMERA_SENSOR_HELPER("imx327", CameraSensorHelperImx327)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx296, "imx296")
 
 class CameraSensorHelperImx335 : public CameraSensorHelper
 {
@@ -650,7 +651,7 @@ public:
 		exposureMargin_ = 10;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx335", CameraSensorHelperImx335)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx335, "imx335")
 
 class CameraSensorHelperImx355 : public CameraSensorHelper
 {
@@ -663,7 +664,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx355", CameraSensorHelperImx355)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx355, "imx355")
 
 class CameraSensorHelperImx415 : public CameraSensorHelper
 {
@@ -674,12 +675,7 @@ public:
 		exposureMargin_ = 8;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx415", CameraSensorHelperImx415)
-
-class CameraSensorHelperImx462 : public CameraSensorHelperImx290
-{
-};
-REGISTER_CAMERA_SENSOR_HELPER("imx462", CameraSensorHelperImx462)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx415, "imx415")
 
 class CameraSensorHelperImx471 : public CameraSensorHelper
 {
@@ -693,7 +689,7 @@ public:
 		exposureMargin_ = 18;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx471", CameraSensorHelperImx471)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx471, "imx471")
 
 class CameraSensorHelperImx477 : public CameraSensorHelper
 {
@@ -704,7 +700,7 @@ public:
 		exposureMargin_ = 22;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx477", CameraSensorHelperImx477)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx477, "imx477")
 
 class CameraSensorHelperImx662 : public CameraSensorHelper
 {
@@ -717,7 +713,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx662", CameraSensorHelperImx662)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx662, "imx662")
 
 class CameraSensorHelperImx678 : public CameraSensorHelper
 {
@@ -730,7 +726,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx678", CameraSensorHelperImx678)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx678, "imx678")
 
 class CameraSensorHelperImx708 : public CameraSensorHelper
 {
@@ -742,7 +738,7 @@ public:
 		exposureMargin_ = 48;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("imx708", CameraSensorHelperImx708)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx708, "imx708")
 
 class CameraSensorHelperOv01a10 : public CameraSensorHelper
 {
@@ -755,7 +751,7 @@ public:
 		exposureMargin_ = 8;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov01a10", CameraSensorHelperOv01a10)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv01a10, "ov01a10")
 
 class CameraSensorHelperOv08d10 : public CameraSensorHelper
 {
@@ -768,7 +764,7 @@ public:
 		exposureMargin_ = 6;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov08d10", CameraSensorHelperOv08d10)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv08d10, "ov08d10")
 
 class CameraSensorHelperOv08x40 : public CameraSensorHelper
 {
@@ -780,7 +776,7 @@ public:
 		exposureMargin_ = 8;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov08x40", CameraSensorHelperOv08x40)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv08x40, "ov08x40")
 
 class CameraSensorHelperMira220 : public CameraSensorHelper
 {
@@ -793,7 +789,7 @@ public:
 		exposureMargin_ = 6;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("mira220", CameraSensorHelperMira220)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperMira220, "mira220")
 
 class CameraSensorHelperOv2685 : public CameraSensorHelper
 {
@@ -808,7 +804,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov2685", CameraSensorHelperOv2685)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv2685, "ov2685")
 
 class CameraSensorHelperOv2740 : public CameraSensorHelper
 {
@@ -821,7 +817,7 @@ public:
 		exposureMargin_ = 8;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov2740", CameraSensorHelperOv2740)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv2740, "ov2740")
 
 class CameraSensorHelperOv4689 : public CameraSensorHelper
 {
@@ -834,7 +830,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov4689", CameraSensorHelperOv4689)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv4689, "ov4689")
 
 class CameraSensorHelperOv5640 : public CameraSensorHelper
 {
@@ -854,7 +850,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov5640", CameraSensorHelperOv5640)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv5640, "ov5640")
 
 class CameraSensorHelperOv5647 : public CameraSensorHelper
 {
@@ -865,7 +861,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov5647", CameraSensorHelperOv5647)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv5647, "ov5647")
 
 class CameraSensorHelperOv5670 : public CameraSensorHelper
 {
@@ -876,7 +872,7 @@ public:
 		exposureMargin_ = 8;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov5670", CameraSensorHelperOv5670)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv5670, "ov5670")
 
 class CameraSensorHelperOv5675 : public CameraSensorHelper
 {
@@ -889,7 +885,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov5675", CameraSensorHelperOv5675)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv5675, "ov5675")
 
 class CameraSensorHelperOv5693 : public CameraSensorHelper
 {
@@ -901,7 +897,7 @@ public:
 		exposureMargin_ = 8;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov5693", CameraSensorHelperOv5693)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv5693, "ov5693")
 
 class CameraSensorHelperOv64a40 : public CameraSensorHelper
 {
@@ -912,7 +908,7 @@ public:
 		exposureMargin_ = 32;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov64a40", CameraSensorHelperOv64a40)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv64a40, "ov64a40")
 
 class CameraSensorHelperOv8858 : public CameraSensorHelper
 {
@@ -929,7 +925,7 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov8858", CameraSensorHelperOv8858)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv8858, "ov8858")
 
 class CameraSensorHelperOv8865 : public CameraSensorHelper
 {
@@ -940,7 +936,7 @@ public:
 		exposureMargin_ = 8;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov8865", CameraSensorHelperOv8865)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv8865, "ov8865")
 
 class CameraSensorHelperOv13858 : public CameraSensorHelper
 {
@@ -951,7 +947,7 @@ public:
 		exposureMargin_ = 8;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("ov13858", CameraSensorHelperOv13858)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperOv13858, "ov13858")
 
 class CameraSensorHelperVd55g1 : public CameraSensorHelper
 {
@@ -964,7 +960,7 @@ public:
 		exposureMargin_ = 64;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("vd55g1", CameraSensorHelperVd55g1)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperVd55g1, "vd55g1")
 
 class CameraSensorHelperVd56g3 : public CameraSensorHelper
 {
@@ -977,7 +973,7 @@ public:
 		exposureMargin_ = 75;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER("vd56g3", CameraSensorHelperVd56g3)
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperVd56g3, "vd56g3")
 
 } /* namespace */
 

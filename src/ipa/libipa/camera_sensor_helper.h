@@ -56,7 +56,7 @@ private:
 class CameraSensorHelperFactoryBase
 {
 public:
-	CameraSensorHelperFactoryBase(const std::string name);
+	CameraSensorHelperFactoryBase(std::initializer_list<const char *> names);
 	virtual ~CameraSensorHelperFactoryBase() = default;
 
 	static std::unique_ptr<CameraSensorHelper> create(const std::string &name);
@@ -70,15 +70,15 @@ private:
 
 	virtual std::unique_ptr<CameraSensorHelper> createInstance() const = 0;
 
-	std::string name_;
+	std::vector<std::string> names_;
 };
 
 template<typename _Helper>
 class CameraSensorHelperFactory final : public CameraSensorHelperFactoryBase
 {
 public:
-	CameraSensorHelperFactory(const char *name)
-		: CameraSensorHelperFactoryBase(name)
+	CameraSensorHelperFactory(std::initializer_list<const char *> names)
+		: CameraSensorHelperFactoryBase(names)
 	{
 	}
 
@@ -89,8 +89,8 @@ private:
 	}
 };
 
-#define REGISTER_CAMERA_SENSOR_HELPER(name, helper) \
-static CameraSensorHelperFactory<helper> global_##helper##Factory(name);
+#define REGISTER_CAMERA_SENSOR_HELPER(helper, name, ...) \
+	static CameraSensorHelperFactory<helper> global_##helper##Factory({ name, __VA_ARGS__ });
 
 } /* namespace ipa */
 
