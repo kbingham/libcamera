@@ -44,6 +44,34 @@ namespace libcamera {
  */
 
 /**
+ * \var DebayerParams::kLscGridSize
+ * \brief Number of lens shading grid areas in one direction
+ */
+
+/**
+ * \var DebayerParams::kLscValuesPerCell
+ * \brief Number of pixel values per each of the lens shading grid areas
+ */
+
+/**
+ * \typedef DebayerParams::LscLookupTable
+ * \brief Lookup table for lens shading correction
+ *
+ * It's an array of values to be later used as a texture.
+ * The values are in row - column - RGB order.
+ */
+
+/**
+ * \var DebayerParams::lscLut
+ * \brief Lens shading lookup table
+ */
+
+/**
+ * \var DebayerParams::lscLutVersion
+ * \brief Incremented on each \a lscLut change
+ */
+
+/**
  * \class Debayer
  * \brief Base debayering class
  *
