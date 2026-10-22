@@ -164,6 +164,8 @@ int IPASoftIsp::init(const IPASettings &settings,
 		params_->gamma = 1.0 / algorithms::kDefaultGamma;
 		params_->contrastExp = 1.0;
 		params_->gains = { { 1.0, 1.0, 1.0 } };
+		params_->lscLutVersion = 0;
+		params_->lscLut = DebayerParams::identityLscLut;
 		/* combinedMatrix is reset for each frame. */
 	}
 

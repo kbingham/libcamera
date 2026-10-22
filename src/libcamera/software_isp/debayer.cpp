@@ -67,6 +67,14 @@ namespace libcamera {
  */
 
 /**
+ * \var DebayerParams::identityLscLut
+ * \brief Lens shading lookup table of identity mapping
+ *
+ * This table can be used to initialise the lens shading lookup table or to
+ * not apply any real lens shading correction.
+ */
+
+/**
  * \var DebayerParams::lscLutVersion
  * \brief Incremented on each \a lscLut change
  */
