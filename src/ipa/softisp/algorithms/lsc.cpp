@@ -20,11 +20,17 @@ int Lsc::init(IPAContext &context, const ValueNode &tuningData)
 	for (unsigned int i = 0; i < kGridSize; i++)
 		gridPos_.push_back(static_cast<double>(i) / (kGridSize - 1));
 
-	return lscAlgo_.init(tuningData, context.ctrlMap,
+	int ret = lscAlgo_.init(tuningData, context.ctrlMap,
 			     { .keys = { "r", "g", "b" },
 			       .numHSamples = kGridSize,
 			       .numVSamples = kGridSize,
 			       .sensorSize = context.sensorInfo.activeArea.size() });
+	if (ret)
+		return ret;
+
+	context.lscEnabled = true;
+
+	return 0;
 }
 
 int Lsc::configure(IPAContext &context,

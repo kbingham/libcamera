@@ -107,6 +107,7 @@ Debayer::~Debayer()
  * \param[in] inputCfg The input configuration
  * \param[in] outputCfgs The output configurations
  * \param[in] ccmEnabled Whether a color correction matrix is applied
+ * \param[in] lscEnabled Whether lens shading correction grid is provided
  *
  * \return 0 on success, a negative errno on failure
  */

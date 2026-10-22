@@ -273,7 +273,8 @@ int DebayerEGL::initBayerShaders(PixelFormat inputFormat, PixelFormat outputForm
 
 int DebayerEGL::configure(const StreamConfiguration &inputCfg,
 			  const std::vector<std::reference_wrapper<const StreamConfiguration>> &outputCfgs,
-			  [[maybe_unused]] bool ccmEnabled)
+			  [[maybe_unused]] bool ccmEnabled,
+			  bool lscEnabled)
 {
 	if (getInputConfig(inputCfg.pixelFormat, inputConfig_) != 0) {
 		LOG(Debayer, Error)
@@ -292,6 +293,8 @@ int DebayerEGL::configure(const StreamConfiguration &inputCfg,
 			<< inputCfg.pixelFormat;
 		return -EINVAL;
 	}
+
+	lscEnabled_ = lscEnabled;
 
 	inputConfig_.stride = inputCfg.stride;
 	inputPixelFormat_ = inputCfg.pixelFormat;

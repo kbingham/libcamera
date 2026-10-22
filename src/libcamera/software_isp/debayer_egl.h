@@ -45,7 +45,8 @@ public:
 
 	int configure(const StreamConfiguration &inputCfg,
 		      const std::vector<std::reference_wrapper<const StreamConfiguration>> &outputCfgs,
-		      bool ccmEnabled) override;
+		      bool ccmEnabled,
+		      bool lscEnabled) override;
 
 	Size patternSize(PixelFormat inputFormat) override;
 
@@ -82,6 +83,7 @@ private:
 	unsigned int inputBufferCount_;
 	unsigned int outputBufferCount_;
 
+	bool lscEnabled_;
 	/* Shader parameters */
 	float firstRed_x_;
 	float firstRed_y_;
