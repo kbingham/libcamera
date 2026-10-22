@@ -475,6 +475,13 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 		},
 	}, impl_);
 
+	if (session.autoAllowed) {
+		/* By default do not run faster than 30fps. */
+		state.minFrameDuration = std::clamp(
+			utils::Duration(1.0s / 30),
+			session.minFrameDuration, session.maxFrameDuration);
+	}
+
 	/* \todo Move this to the `Camera` class. */
 	config.ctrlMap[&controls::AeEnable] = ControlInfo{
 		false, session.autoAllowed, session.autoAllowed
