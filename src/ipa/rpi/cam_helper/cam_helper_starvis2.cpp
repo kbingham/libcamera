@@ -17,7 +17,7 @@ using namespace RPiController;
 class CamHelperStarvis2 : public CamHelper
 {
 public:
-	CamHelperStarvis2();
+	CamHelperStarvis2(unsigned int frameIntegrationDiff = kFrameIntegrationDiff);
 	uint32_t gainCode(double gain) const override;
 	double gain(uint32_t gainCode) const override;
 
@@ -26,10 +26,10 @@ private:
 	 * Smallest difference between the frame length and integration time,
 	 * in units of lines.
 	 */
-	static constexpr int frameIntegrationDiff = 4;
+	static constexpr unsigned int kFrameIntegrationDiff = 4;
 };
 
-CamHelperStarvis2::CamHelperStarvis2()
+CamHelperStarvis2::CamHelperStarvis2(unsigned int frameIntegrationDiff)
 	: CamHelper({}, frameIntegrationDiff)
 {
 }
@@ -50,8 +50,16 @@ CamHelper *create()
 	return new CamHelperStarvis2();
 }
 
+CamHelper *create585()
+{
+	/* IMX585 and IMX676 manuals specify the minimum for SHR0 as 8 lines */
+	return new CamHelperStarvis2(8);
+}
+
+RegisterCamHelper reg585("imx585", &create585);
 RegisterCamHelper reg662("imx662", &create);
 RegisterCamHelper reg675("imx675", &create);
+RegisterCamHelper reg676("imx676", &create585);
 RegisterCamHelper reg678("imx678", &create);
 RegisterCamHelper reg832("imx832", &create);
 
