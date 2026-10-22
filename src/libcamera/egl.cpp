@@ -184,7 +184,7 @@ int eGL::createDMABufTexture2D(eGLImage &eglImage, int fd, bool output)
 		drm_format = DRM_FORMAT_R8;
 		break;
 	case GL_RG:
-		drm_format = DRM_FORMAT_RG88;
+		drm_format = DRM_FORMAT_GR88;
 		break;
 	case GL_RGBA:
 		drm_format = DRM_FORMAT_ARGB8888;
