@@ -877,9 +877,11 @@ void AgcAlgorithm::fillMetadata(const agc::Session &session,
 						 ? controls::AnalogueGainModeAuto
 						 : controls::AnalogueGainModeManual);
 
-	metadata.set(controls::AeExposureMode, frameContext.exposureMode);
-	metadata.set(controls::AeConstraintMode, frameContext.constraintMode);
-	metadata.set(controls::ExposureValue, frameContext.exposureValue);
+	if (session.autoAllowed) {
+		metadata.set(controls::AeExposureMode, frameContext.exposureMode);
+		metadata.set(controls::AeConstraintMode, frameContext.constraintMode);
+		metadata.set(controls::ExposureValue, frameContext.exposureValue);
+	}
 }
 
 } /* namespace ipa */
