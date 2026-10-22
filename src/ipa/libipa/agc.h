@@ -162,6 +162,10 @@ private:
 
 	std::variant<AgcMSV, AgcMeanLuminance> impl_;
 	CameraSensorHelper *sensor_ = nullptr;
+
+	struct {
+		bool hasExposureModes = false;
+	} tuning_;
 };
 
 } /* namespace ipa */

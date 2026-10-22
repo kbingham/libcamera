@@ -313,6 +313,7 @@ int AgcAlgorithm::init(const ValueNode &tuningData, CameraSensorHelper *sensor,
 		if (!agcConfig)
 			return -EINVAL;
 
+		tuning_.hasExposureModes = !agcConfig->exposureModeHelpers.empty();
 		impl_.emplace<AgcMeanLuminance>(std::move(*agcConfig));
 	} else {
 		impl_.emplace<AgcMSV>();
@@ -480,6 +481,16 @@ int AgcAlgorithm::configure(agc::Session &session, agc::ActiveState &state,
 		state.minFrameDuration = std::clamp(
 			utils::Duration(1.0s / 30),
 			session.minFrameDuration, session.maxFrameDuration);
+
+		if (!tuning_.hasExposureModes) {
+			/*
+			 * By default do not run slower than 15fps
+			 * if no exposure modes are defined.
+			 */
+			state.maxFrameDuration = std::clamp(
+				utils::Duration(1.0s / 15),
+				state.minFrameDuration, session.maxFrameDuration);
+		}
 	}
 
 	/* \todo Move this to the `Camera` class. */
