@@ -111,7 +111,7 @@ public:
 
 	int createInputDMABufTexture2D(eGLImage &eglImage, int fd);
 	int createOutputDMABufTexture2D(eGLImage &eglImage, int fd);
-	void createTexture2D(eGLImage &eglImage, void *data);
+	void createTexture2D(eGLImage &eglImage, void *data, GLint filter);
 	void updateTexture2D(eGLImage &eglImage, void *data);
 	void createOutputTexture2D(eGLImage &eglImage);
 
