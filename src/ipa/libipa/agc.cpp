@@ -851,7 +851,8 @@ void AgcAlgorithm::processFrameDuration(const agc::Session &session,
 	 * the minimum frame duration when we have short exposures.
 	 */
 	const auto frameLength = std::max<uint32_t>(
-		frameContext.minFrameDuration / lineDuration,
+		std::min(std::ceil(frameContext.minFrameDuration / lineDuration),
+			 frameContext.maxFrameDuration / lineDuration),
 		frameContext.exposure);
 
 	frameContext.vblank = frameLength - session.sensor.outputSize.height;
