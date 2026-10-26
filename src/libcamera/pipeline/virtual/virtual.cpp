@@ -135,8 +135,14 @@ VirtualCameraData::VirtualCameraData(PipelineHandler *pipe,
 	moveToThread(this);
 }
 
-void VirtualCameraData::processRequest(Request *request)
+void VirtualCameraData::processRequest(Request *request,
+				       uint64_t targetTimestamp)
 {
+	const auto targetTime = std::chrono::steady_clock::time_point{
+		std::chrono::nanoseconds(targetTimestamp)
+	};
+	std::this_thread::sleep_until(targetTime);
+
 	for (const auto &[stream, buffer] : request->buffers()) {
 		bool found = false;
 		/* map buffer and fill test patterns */
@@ -146,7 +152,7 @@ void VirtualCameraData::processRequest(Request *request)
 
 				fmd.status = FrameMetadata::Status::FrameSuccess;
 				fmd.sequence = streamConfig.seq++;
-				fmd.timestamp = currentTimestamp();
+				fmd.timestamp = targetTimestamp;
 
 				std::span<const FrameBuffer::Plane> planes = buffer->planes();
 				for (const auto [i, p] : utils::enumerate(planes))
@@ -164,6 +170,22 @@ void VirtualCameraData::processRequest(Request *request)
 		}
 		ASSERT(found);
 	}
+}
+
+void VirtualCameraData::processControls(const ControlList &ctrls)
+{
+	auto fdl = ctrls.get(controls::FrameDurationLimits);
+	if (!fdl)
+		return;
+
+	/*
+	 * Target the highest frame rate allowed by the client,
+	 * clamped to the values allowed by the config.
+	 */
+	targetFrameDuration_ = std::clamp(
+		fdl->front(),
+		config_.frameDurationLimits[0],
+		config_.frameDurationLimits[1]);
 }
 
 VirtualCameraConfiguration::VirtualCameraConfiguration(VirtualCameraData *data)
@@ -348,10 +370,18 @@ int PipelineHandlerVirtual::exportFrameBuffers([[maybe_unused]] Camera *camera,
 	return dmaBufAllocator_.exportBuffers(config.bufferCount, planeSizes, buffers);
 }
 
-int PipelineHandlerVirtual::start([[maybe_unused]] Camera *camera,
-				  [[maybe_unused]] const ControlList *controls)
+int PipelineHandlerVirtual::start(Camera *camera, const ControlList *controls)
 {
 	VirtualCameraData *data = cameraData(camera);
+
+	/* By default target the highest frame rate allowed by the config. */
+	data->targetFrameDuration_ = data->config_.frameDurationLimits[0];
+	ASSERT(data->targetFrameDuration_ > 0);
+
+	if (controls)
+		data->processControls(*controls);
+
+	data->targetTimestamp_ = 0;
 
 	for (auto &s : data->streamConfigs_)
 		s.seq = 0;
@@ -379,15 +409,28 @@ void PipelineHandlerVirtual::stopDevice(Camera *camera)
 		cancelRequest(data->queuedRequests_.front());
 }
 
-int PipelineHandlerVirtual::queueRequestDevice([[maybe_unused]] Camera *camera,
-					       Request *request)
+int PipelineHandlerVirtual::queueRequestDevice(Camera *camera, Request *request)
 {
 	VirtualCameraData *data = cameraData(camera);
-	const auto timestamp = currentTimestamp();
 
-	request->_d()->metadata().set(controls::SensorTimestamp, timestamp);
+	data->processControls(request->controls());
+
+	/*
+	 * TODO: Skip frames if we can't keep up with the maximum frame
+	 * duration.
+	 */
+	data->targetTimestamp_ = std::max(
+		currentTimestamp(),
+		data->targetTimestamp_ + data->targetFrameDuration_ * 1000);
+
+	request->_d()->metadata().set(controls::SensorTimestamp,
+				      data->targetTimestamp_);
+	request->_d()->metadata().set(controls::FrameDuration,
+				      data->targetFrameDuration_);
+
 	data->invokeMethod(&VirtualCameraData::processRequest,
-			   ConnectionTypeQueued, request);
+			   ConnectionTypeQueued, request,
+			   data->targetTimestamp_);
 
 	return 0;
 }
