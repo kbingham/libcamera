@@ -649,8 +649,8 @@ int V4L2CameraProxy::vidioc_qbuf(V4L2CameraFile *file, struct v4l2_buffer *arg)
 	if (ret < 0)
 		return ret;
 
-	buffers_[arg->index].flags |= V4L2_BUF_FLAG_QUEUED |
-				      V4L2_BUF_FLAG_PREPARED;
+	buffers_[arg->index].flags &= ~V4L2_BUF_FLAG_PREPARED;
+	buffers_[arg->index].flags |= V4L2_BUF_FLAG_QUEUED;
 
 	arg->flags = buffers_[arg->index].flags;
 
@@ -694,7 +694,7 @@ int V4L2CameraProxy::vidioc_dqbuf(V4L2CameraFile *file, struct v4l2_buffer *arg,
 
 	struct v4l2_buffer &buf = buffers_[currentBuf_];
 
-	buf.flags &= ~(V4L2_BUF_FLAG_QUEUED | V4L2_BUF_FLAG_DONE | V4L2_BUF_FLAG_PREPARED);
+	buf.flags &= ~(V4L2_BUF_FLAG_QUEUED | V4L2_BUF_FLAG_DONE);
 	buf.length = sizeimage_;
 	*arg = buf;
 
