@@ -255,7 +255,6 @@ void V4L2CameraProxy::updateBuffers()
 							[](unsigned int total, const auto &plane) {
 								return total + plane.bytesused;
 							});
-			buf.field = V4L2_FIELD_NONE;
 			buf.timestamp.tv_sec = fmd.timestamp / 1000000000;
 			buf.timestamp.tv_usec = (fmd.timestamp / 1000) % 1000000;
 			buf.sequence = fmd.sequence;
@@ -557,12 +556,13 @@ int V4L2CameraProxy::vidioc_reqbufs(V4L2CameraFile *file, struct v4l2_requestbuf
 	buffers_.resize(arg->count);
 	for (unsigned int i = 0; i < arg->count; i++) {
 		struct v4l2_buffer buf = {};
+		buf.index = i;
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		buf.length = v4l2PixFormat_.sizeimage;
+		buf.flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+		buf.field = V4L2_FIELD_NONE;
 		buf.memory = V4L2_MEMORY_MMAP;
 		buf.m.offset = i * v4l2PixFormat_.sizeimage;
-		buf.index = i;
-		buf.flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+		buf.length = v4l2PixFormat_.sizeimage;
 
 		buffers_[i] = buf;
 	}
