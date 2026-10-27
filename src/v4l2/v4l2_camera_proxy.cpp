@@ -262,7 +262,7 @@ void V4L2CameraProxy::updateBuffers()
 			buf.flags |= V4L2_BUF_FLAG_DONE;
 			break;
 		case FrameMetadata::FrameError:
-			buf.flags |= V4L2_BUF_FLAG_ERROR;
+			buf.flags |= V4L2_BUF_FLAG_DONE | V4L2_BUF_FLAG_ERROR;
 			break;
 		default:
 			break;
