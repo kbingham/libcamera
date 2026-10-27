@@ -698,6 +698,12 @@ int V4L2CameraProxy::vidioc_dqbuf(V4L2CameraFile *file, struct v4l2_buffer *arg,
 	buf.length = sizeimage_;
 	*arg = buf;
 
+	/*
+	 * Clear the internal error flag to ensure that subsequent QUERYBUF
+	 * calls will not return it, as implemented in videobuf2.
+	 */
+	buf.flags &= ~V4L2_BUF_FLAG_ERROR;
+
 	currentBuf_ = (currentBuf_ + 1) % bufferCount_;
 
 	uint64_t data;
@@ -778,7 +784,7 @@ int V4L2CameraProxy::vidioc_streamoff(V4L2CameraFile *file, int *arg)
 
 	for (struct v4l2_buffer &buf : buffers_)
 		buf.flags &= ~(V4L2_BUF_FLAG_QUEUED | V4L2_BUF_FLAG_DONE |
-			       V4L2_BUF_FLAG_PREPARED);
+			       V4L2_BUF_FLAG_ERROR | V4L2_BUF_FLAG_PREPARED);
 
 	return ret;
 }
