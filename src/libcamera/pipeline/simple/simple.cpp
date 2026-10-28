@@ -1228,6 +1228,15 @@ CameraConfiguration::Status SimpleCameraConfiguration::validate()
 	 * Then pick, among the possible configuration for the pixel format,
 	 * the smallest sensor resolution that can accommodate all streams
 	 * without upscaling.
+	 *
+	 * If both packed and unpacked Bayer capture formats are supported
+	 * prefer packed for lower memory usage and better software ISP
+	 * performance.
+	 *
+	 * Note preferring packed also works around a bug on ipu6/7 setups where
+	 * the CSI receives sometimes hands over corrupt frames. With unpacked
+	 * formats this causes OOB array accesses in the software ISP, due to
+	 * some of the unused high bits being 1 in these corrupt frames.
 	 */
 	const SimpleCameraData::Configuration *maxPipeConfig = nullptr;
 	pipeConfig_ = nullptr;
@@ -1235,12 +1244,25 @@ CameraConfiguration::Status SimpleCameraConfiguration::validate()
 	for (const SimpleCameraData::Configuration *pipeConfig : *configs) {
 		const Size &captureSize = pipeConfig->captureSize;
 		const Size &maxOutputSize = pipeConfig->outputSizes.max;
+		bool curCfgPacked = false;
+		bool newCfgPacked = false;
+
+		if (pipeConfig_) {
+			BayerFormat curBayerFmt = BayerFormat::fromPixelFormat(pipeConfig_->captureFormat);
+			BayerFormat newBayerFmt = BayerFormat::fromPixelFormat(pipeConfig->captureFormat);
+			/* Only compare packed vs unpacked if both formats are Bayer */
+			if (curBayerFmt.isValid() && newBayerFmt.isValid()) {
+				curCfgPacked = curBayerFmt.packing == BayerFormat::Packing::CSI2;
+				newCfgPacked = newBayerFmt.packing == BayerFormat::Packing::CSI2;
+			}
+		}
 
 		if (maxOutputSize.width >= maxProcessedStreamSize.width &&
 		    maxOutputSize.height >= maxProcessedStreamSize.height &&
 		    captureSize.width >= maxRawStreamSize.width &&
 		    captureSize.height >= maxRawStreamSize.height) {
-			if (!pipeConfig_ || captureSize < pipeConfig_->captureSize)
+			if (!pipeConfig_ || captureSize < pipeConfig_->captureSize ||
+			    (captureSize <= pipeConfig_->captureSize && !curCfgPacked && newCfgPacked))
 				pipeConfig_ = pipeConfig;
 		}
 
