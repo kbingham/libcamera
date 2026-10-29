@@ -5,23 +5,23 @@ version: 1
 algorithms:
   - Agc:
       AeMeteringMode:
-        MeteringCentreWeighted: [ 0, 0, 0, 0, 0, 0, 6, 8, 6, 0, 0, 8, 16, 8, 0, 0, 6, 8, 6, 0, 0, 0, 0, 0, 0 ]
-        MeteringSpot: [ 0, 0, 0, 0, 0, 0, 2, 4, 2, 0, 0, 4, 16, 4, 0, 0, 2, 4, 2, 0, 0, 0, 0, 0, 0 ]
-        MeteringMatrix: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
+        CentreWeighted: [ 0, 0, 0, 0, 0, 0, 6, 8, 6, 0, 0, 8, 16, 8, 0, 0, 6, 8, 6, 0, 0, 0, 0, 0, 0 ]
+        Spot: [ 0, 0, 0, 0, 0, 0, 2, 4, 2, 0, 0, 4, 16, 4, 0, 0, 2, 4, 2, 0, 0, 0, 0, 0, 0 ]
+        Matrix: [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
       AeExposureMode:
-        ExposureNormal:
+        Normal:
           exposureTime: [ 100, 10000, 30000, 60000, 120000 ]
           gain: [ 2.0, 4.0, 6.0, 6.0, 6.0 ]
-        ExposureShort:
+        Short:
           exposureTime: [ 100, 5000, 10000, 20000, 120000 ]
           gain: [ 2.0, 4.0, 6.0, 6.0, 6.0 ]
       AeConstraintMode:
-        ConstraintNormal:
+        Normal:
           lower:
             qLo: 0.98
             qHi: 1.0
             yTarget: 0.5
-        ConstraintHighlight:
+        Highlight:
           lower:
             qLo: 0.98
             qHi: 1.0
@@ -40,25 +40,25 @@ algorithms:
   - Awb:
       algorithm: "bayes"
       AwbMode:
-        AwbAuto:
+        Auto:
           lo: 2500
           hi: 8000
-        AwbIncandescent:
+        Incandescent:
           lo: 2500
           hi: 3000
-        AwbTungsten:
+        Tungsten:
           lo: 3000
           hi: 3500
-        AwbFluorescent:
+        Fluorescent:
           lo: 4000
           hi: 4700
-        AwbIndoor:
+        Indoor:
           lo: 3000
           hi: 5000
-        AwbDaylight:
+        Daylight:
           lo: 5500
           hi: 6500
-        AwbCloudy:
+        Cloudy:
           lo: 6500
           hi: 8000
       priors:
