@@ -527,7 +527,8 @@ double AgcMeanLuminance::estimateInitialGain(const Traits &traits, double yTarge
 	*/
 	for (unsigned int i = 0; i < 8; i++) {
 		double yValue = traits.estimateLuminance(yGain);
-		double extra_gain = std::min(10.0, yTarget / (yValue + .001));
+		double extra_gain = std::min(yTarget / std::max(yValue, 0.001),
+					     10.0);
 
 		yGain *= extra_gain;
 		LOG(AgcMeanLuminance, Debug) << "Y value: " << yValue
