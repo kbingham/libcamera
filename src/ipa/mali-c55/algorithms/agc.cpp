@@ -257,13 +257,21 @@ void Agc::process(IPAContext &context,
 	}
 
 	statistics_.parseStatistics(stats);
+	if (!statistics_.isValid()) {
+		LOG(MaliC55Agc, Debug) << "Ignoring invalid statistics";
+		agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {}, metadata);
+		return;
+	}
 
-	agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {{
-		.traits = AgcTraits(statistics_),
-		.yHist = statistics_.yHist,
-		.exposure = frameContext.sensor.exposure,
-		.gain = frameContext.sensor.gain,
-	}}, metadata);
+	agc_.process(
+		context.configuration.agc, context.activeState.agc, frameContext.agc,
+		{ {
+			.traits = AgcTraits(statistics_),
+			.yHist = statistics_.yHist,
+			.exposure = frameContext.sensor.exposure,
+			.gain = frameContext.sensor.gain,
+		} },
+		metadata);
 }
 
 REGISTER_IPA_ALGORITHM(Agc, "Agc")

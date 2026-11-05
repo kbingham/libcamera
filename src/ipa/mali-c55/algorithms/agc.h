@@ -32,6 +32,11 @@ public:
 	uint32_t decodeBinValue(uint16_t binVal);
 	void parseStatistics(const mali_c55_stats_buffer *stats);
 
+	bool isValid() const
+	{
+		return !rHist.empty() && !gHist.empty() && !bHist.empty();
+	}
+
 	Histogram rHist;
 	Histogram gHist;
 	Histogram bHist;
