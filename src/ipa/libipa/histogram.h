@@ -41,6 +41,7 @@ public:
 	uint64_t cumulativeFrequency(double bin) const;
 	double quantile(double q, uint32_t first = 0, uint32_t last = UINT_MAX) const;
 	double interQuantileMean(double lowQuantile, double hiQuantile) const;
+	bool empty() const { return total() == 0; }
 
 	uint32_t operator[](size_t bin) const
 	{

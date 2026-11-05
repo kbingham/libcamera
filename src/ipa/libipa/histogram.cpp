@@ -75,6 +75,16 @@ Histogram::Histogram(std::span<const uint32_t> data)
  */
 
 /**
+ * \fn Histogram::empty()
+ * \brief Determine if the histogram is empty
+ *
+ * An empty histogram is one which has only empty bins, that is, bins with
+ * a count of 0.
+ *
+ * \return True if the histogram is empty
+ */
+
+/**
  * \fn Histogram::operator[](size_t bin) const
  * \brief Retrieve the value for \a bin
  * \return The value in \a bin
