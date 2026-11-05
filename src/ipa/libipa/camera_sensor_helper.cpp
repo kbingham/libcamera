@@ -702,19 +702,10 @@ public:
 };
 REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx477, "imx477")
 
-class CameraSensorHelperImx662 : public CameraSensorHelper
-{
-public:
-	CameraSensorHelperImx662()
-	{
-		/* From datasheet: 0xc8 at 12bits. */
-		blackLevel_ = 3200;
-		gain_ = AnalogueGainExp{ 1.0, expGainDb(0.3) };
-		exposureMargin_ = 4;
-	}
-};
-REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx662, "imx662")
-
+/*
+ * Reusing CameraSensorHelperImx678 for multiple sensors, for convenience.
+ * They may need to be split apart if any differences are found later.
+ */
 class CameraSensorHelperImx678 : public CameraSensorHelper
 {
 public:
@@ -726,7 +717,8 @@ public:
 		exposureMargin_ = 4;
 	}
 };
-REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx678, "imx678")
+REGISTER_CAMERA_SENSOR_HELPER(CameraSensorHelperImx678, "imx662", "imx675",
+			      "imx678", "imx832")
 
 class CameraSensorHelperImx708 : public CameraSensorHelper
 {
