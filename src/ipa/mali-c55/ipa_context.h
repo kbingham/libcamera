@@ -38,10 +38,7 @@ struct IPASessionConfiguration {
 };
 
 struct IPAActiveState {
-	struct Agc : agc::ActiveState {
-		uint32_t temperatureK;
-	} agc;
-
+	ipa::agc::ActiveState agc;
 	ipa::awb::ActiveState awb;
 	ipa::ccm::ActiveState ccm;
 	ipa::gamma::ActiveState gamma;

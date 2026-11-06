@@ -180,8 +180,8 @@ std::tuple<uint8_t, uint8_t> Lsc::findBankAndAlpha(uint32_t ct) const
 	return { i, alpha };
 }
 
-void Lsc::prepare(IPAContext &context, [[maybe_unused]] const uint32_t frame,
-		  [[maybe_unused]] IPAFrameContext &frameContext,
+void Lsc::prepare([[maybe_unused]] IPAContext &context, [[maybe_unused]] const uint32_t frame,
+		  IPAFrameContext &frameContext,
 		  MaliC55Params *params)
 {
 	/*
@@ -192,7 +192,7 @@ void Lsc::prepare(IPAContext &context, [[maybe_unused]] const uint32_t frame,
 	 * that table and if we're past the first frame then we can just do
 	 * nothing - the config will never change.
 	 */
-	uint32_t temperatureK = context.activeState.agc.temperatureK;
+	uint32_t temperatureK = frameContext.awb.colourTemperature;
 	uint8_t bank, alpha;
 
 	if (colourTemperatures_.size() == 1) {

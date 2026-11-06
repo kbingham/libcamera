@@ -257,9 +257,6 @@ void Agc::process(IPAContext &context,
 	}
 
 	statistics_.parseStatistics(stats);
-	context.activeState.agc.temperatureK = estimateCCT({ { statistics_.rHist.interQuantileMean(0, 1),
-							       statistics_.gHist.interQuantileMean(0, 1),
-							       statistics_.bHist.interQuantileMean(0, 1) } });
 
 	agc_.process(context.configuration.agc, context.activeState.agc, frameContext.agc, {{
 		.traits = AgcTraits(statistics_),
@@ -267,8 +264,6 @@ void Agc::process(IPAContext &context,
 		.exposure = frameContext.sensor.exposure,
 		.gain = frameContext.sensor.gain,
 	}}, metadata);
-
-	metadata.set(controls::ColourTemperature, context.activeState.agc.temperatureK);
 }
 
 REGISTER_IPA_ALGORITHM(Agc, "Agc")
