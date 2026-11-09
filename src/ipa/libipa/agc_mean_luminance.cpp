@@ -9,7 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <span>
+#include <optional>
 
 #include <libcamera/base/log.h>
 #include <libcamera/base/utils.h>
@@ -107,6 +107,29 @@ static constexpr unsigned int kDefaultLuxLevel = 500;
  */
 
 /**
+ * \class AgcMeanLuminance::Configuration
+ * \brief A collection of parameters
+ *
+ * This type contains various configuration parameters for the algorithm
+ * that are generally parsed from a tuning file.
+ */
+
+/**
+ * \var AgcMeanLuminance::Configuration::relativeLuminanceTarget
+ * \brief The relative mean luminance target by lux value
+ */
+
+/**
+ * \var AgcMeanLuminance::Configuration::constraintModes
+ * \brief The available constraint modes
+ */
+
+/**
+ * \var AgcMeanLuminance::Configuration::exposureModeHelpers
+ * \brief The available exposure modes
+ */
+
+/**
  * \class AgcMeanLuminance::Traits
  * \brief A collection of callbacks
  *
@@ -148,17 +171,14 @@ static constexpr unsigned int kDefaultLuxLevel = 500;
  * section of a histogram to a target value, where the target and the boundaries
  * of the section of the histogram used in the calculation are taken from the
  * values defined for the currently configured AeConstraintMode within the
- * tuning data. This class provides a helper function to parse those tuning data
- * to discover the constraints, and so requires a specific format for those
- * data which is described in \ref parseTuningData(). The gain from the first
- * stage is then clamped to the gain from this stage.
+ * configuration. The gain from the first stage is then clamped to the gain from
+ * this stage.
  *
  * The final gain is used to adjust the effective exposure value of the image,
  * and that new exposure value is divided into exposure time, analogue gain and
  * digital gain according to the selected AeExposureMode. This class uses the
- * \ref ExposureModeHelper class to assist in that division, and expects the
- * data needed to initialise that class to be present in tuning data in a
- * format described in \ref parseTuningData().
+ * \ref ExposureModeHelper class to assist in that division, as provided by the
+ * configuration.
  *
  * In order to be able to use this algorithm an IPA module needs to be able to
  * do the following:
@@ -170,27 +190,21 @@ static constexpr unsigned int kDefaultLuxLevel = 500;
  *
  * IPA modules that want to use this class to implement their AEGC algorithm
  * should derive AgcMeanLuminance::Traits and override the necessary functions.
- * The users must call parseTuningData() in init(), and must also call configure()
- * and setLimits() in configure(). They may then use calculateNewEv() in process().
- * If the limits passed to setLimits() change for any reason (for example, in
- * response to a FrameDurationLimit control being passed in queueRequest()) then
- * setLimits() must be called again with the new values.
+ * The users can use AgcMeanLuminance::Configuration::parse() to parse the
+ * configuration from tuning data to pass to the constructor. Furthermore, they
+ * must call configure() and setLimits() in configure(). They may then use
+ * calculateNewEv() in process(). If the limits passed to setLimits() change
+ * for any reason (for example, in response to a FrameDurationLimit control
+ * being passed in queueRequest()) then setLimits() must be called again with
+ * the new values.
  */
 
-AgcMeanLuminance::AgcMeanLuminance()
-	: filteredExposure_(0s), luxWarningEnabled_(true), frameCount_(0)
-{
-}
+namespace {
 
-AgcMeanLuminance::~AgcMeanLuminance() = default;
-
-int AgcMeanLuminance::parseRelativeLuminanceTarget(const ValueNode &tuningData)
+int parseRelativeLuminanceTarget(AgcMeanLuminance::Configuration &config, const ValueNode &target)
 {
-	auto &target = tuningData["relativeLuminanceTarget"];
-	if (!target) {
-		relativeLuminanceTarget_ = { { { { 0.0, kDefaultRelativeLuminanceTarget } } } };
+	if (!target)
 		return 0;
-	}
 
 	auto pwl = target.get<Pwl>();
 	if (!pwl) {
@@ -199,11 +213,11 @@ int AgcMeanLuminance::parseRelativeLuminanceTarget(const ValueNode &tuningData)
 		return -EINVAL;
 	}
 
-	relativeLuminanceTarget_ = std::move(*pwl);
+	config.relativeLuminanceTarget = std::move(*pwl);
 	return 0;
 }
 
-int AgcMeanLuminance::parseConstraint(const ValueNode &modeDict, int32_t id)
+int parseConstraint(AgcMeanLuminance::Configuration &config, const ValueNode &modeDict, int32_t id)
 {
 	for (const auto &[boundName, content] : modeDict.asDict()) {
 		if (boundName != "upper" && boundName != "lower") {
@@ -213,7 +227,7 @@ int AgcMeanLuminance::parseConstraint(const ValueNode &modeDict, int32_t id)
 		}
 
 		unsigned int idx = static_cast<unsigned int>(boundName == "upper");
-		AgcConstraint::Bound bound = static_cast<AgcConstraint::Bound>(idx);
+		auto bound = static_cast<AgcMeanLuminance::AgcConstraint::Bound>(idx);
 		double qLo = content["qLo"].get<double>().value_or(0.98);
 		double qHi = content["qHi"].get<double>().value_or(1.0);
 		auto yTarget = content["yTarget"].get<Pwl>();
@@ -223,8 +237,13 @@ int AgcMeanLuminance::parseConstraint(const ValueNode &modeDict, int32_t id)
 			return -EINVAL;
 		}
 
-		AgcConstraint constraint = { bound, qLo, qHi, std::move(*yTarget) };
-		auto &constraints = constraintModes_[id];
+		AgcMeanLuminance::AgcConstraint constraint = {
+			bound,
+			qLo,
+			qHi,
+			std::move(*yTarget),
+		};
+		auto &constraints = config.constraintModes[id];
 
 		if (idx)
 			constraints.push_back(std::move(constraint));
@@ -235,7 +254,7 @@ int AgcMeanLuminance::parseConstraint(const ValueNode &modeDict, int32_t id)
 	return 0;
 }
 
-int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
+int parseConstraintModes(AgcMeanLuminance::Configuration &config, const ValueNode &constraintModes)
 {
 	static constexpr std::tuple<std::string_view, std::string_view, controls::AeConstraintModeEnum> compat[] = {
 		{ "ConstraintNormal", "Normal", controls::AeConstraintModeNormal },
@@ -244,7 +263,6 @@ int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 		{ "ConstraintCustom", "Custom", controls::AeConstraintModeCustom },
 	};
 
-	const ValueNode &constraintModes = tuningData[controls::AeConstraintMode.name()];
 	if (constraintModes.isDictionary()) {
 		for (const auto &[modeName, modeDict] : constraintModes.asDict()) {
 			std::optional<controls::AeConstraintModeEnum> modeValue;
@@ -278,33 +296,16 @@ int AgcMeanLuminance::parseConstraintModes(const ValueNode &tuningData)
 				return -EINVAL;
 			}
 
-			int ret = parseConstraint(modeDict, *modeValue);
+			int ret = parseConstraint(config, modeDict, *modeValue);
 			if (ret)
 				return ret;
 		}
 	}
 
-	/*
-	 * If the tuning data file contains no constraints then we use the
-	 * default constraint that the IPU3/RkISP1 Agc algorithms were adhering
-	 * to anyway before centralisation; this constraint forces the top 2% of
-	 * the histogram to be at least 0.5.
-	 */
-	if (constraintModes_.empty()) {
-		AgcConstraint constraint = {
-			AgcConstraint::Bound::Lower,
-			0.98,
-			1.0,
-			Pwl({ { { 0.0, 0.5 } } })
-		};
-
-		constraintModes_[controls::AeConstraintModeNormal].push_back(std::move(constraint));
-	}
-
 	return 0;
 }
 
-int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
+int parseExposureModes(AgcMeanLuminance::Configuration &config, const ValueNode &exposureModes)
 {
 	static constexpr std::tuple<std::string_view, std::string_view, controls::AeExposureModeEnum> compat[] = {
 		{ "ExposureNormal", "Normal", controls::AeExposureModeNormal },
@@ -313,7 +314,6 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 		{ "ExposureCustom", "Custom", controls::AeExposureModeCustom },
 	};
 
-	const ValueNode &exposureModes = tuningData[controls::AeExposureMode.name()];
 	if (exposureModes.isDictionary()) {
 		for (const auto &[modeName, modeValues] : exposureModes.asDict()) {
 			std::optional<controls::AeExposureModeEnum> modeValue;
@@ -372,44 +372,18 @@ int AgcMeanLuminance::parseExposureModes(const ValueNode &tuningData)
 				});
 			}
 
-			exposureModeHelpers_.try_emplace(*modeValue, std::move(stages));
+			config.exposureModeHelpers.try_emplace(
+				*modeValue, std::move(stages));
 		}
 	}
-
-	/*
-	 * If we don't have any exposure modes in the tuning data we create an
-	 * ExposureModeHelper using an empty vector of stages. This will result
-	 * in the ExposureModeHelper simply driving the exposure time as high as
-	 * possible before touching gain.
-	 */
-	if (exposureModeHelpers_.empty())
-		exposureModeHelpers_.try_emplace(controls::AeExposureModeNormal,
-						 std::vector<ExposureModeHelper::Stage>{});
 
 	return 0;
 }
 
-/**
- * \brief Configure the exposure mode helpers
- * \param[in] lineDuration The sensor line length
- * \param[in] sensorHelper The sensor helper
- *
- * This function configures the exposure mode helpers so they can correctly
- * take quantization effects into account.
- */
-void AgcMeanLuminance::configure(utils::Duration lineDuration,
-				 const CameraSensorHelper *sensorHelper)
-{
-	for (auto &[id, helper] : exposureModeHelpers_)
-		helper.configure(lineDuration, sensorHelper);
-
-	luxWarningEnabled_ = true;
-	filteredExposure_ = 0s;
-	frameCount_ = 0;
-}
+} /* namespace */
 
 /**
- * \brief Parse tuning data for AeConstraintMode and AeExposureMode controls
+ * \brief Parse tuning data
  * \param[in] tuningData the ValueNode representing the tuning data
  *
  * This function parses tuning data to build the list of allowed values for the
@@ -463,19 +437,86 @@ void AgcMeanLuminance::configure(utils::Duration lineDuration,
  *
  * \return 0 on success or a negative error code
  */
-int AgcMeanLuminance::parseTuningData(const ValueNode &tuningData)
+std::optional<AgcMeanLuminance::Configuration>
+AgcMeanLuminance::Configuration::parse(const ValueNode &tuningData)
 {
-	int ret;
+	AgcMeanLuminance::Configuration config;
 
-	ret = parseRelativeLuminanceTarget(tuningData);
-	if (ret)
-		return ret;
+	if (parseRelativeLuminanceTarget(config, tuningData["relativeLuminanceTarget"]))
+		return {};
 
-	ret = parseConstraintModes(tuningData);
-	if (ret)
-		return ret;
+	if (parseConstraintModes(config, tuningData[controls::AeConstraintMode.name()]))
+		return {};
 
-	return parseExposureModes(tuningData);
+	if (parseExposureModes(config, tuningData[controls::AeExposureMode.name()]))
+		return {};
+
+	return config;
+}
+
+/**
+ * \brief Construct an instance
+ * \param[in] config The configuration
+ *
+ * This function constructs and instance and initializes it with the
+ * configuration parameters specified in \a config.
+ */
+AgcMeanLuminance::AgcMeanLuminance(Configuration &&config)
+	: filteredExposure_(0s), luxWarningEnabled_(true), frameCount_(0),
+	  relativeLuminanceTarget_(std::move(config.relativeLuminanceTarget)),
+	  constraintModes_(std::move(config.constraintModes)),
+	  exposureModeHelpers_(std::move(config.exposureModeHelpers))
+{
+	if (relativeLuminanceTarget_.empty())
+		relativeLuminanceTarget_ = { { { { 0.0, kDefaultRelativeLuminanceTarget } } } };
+
+	/*
+	 * If the tuning data file contains no constraints then we use the
+	 * default constraint that the IPU3/RkISP1 Agc algorithms were adhering
+	 * to anyway before centralisation; this constraint forces the top 2% of
+	 * the histogram to be at least 0.5.
+	 */
+	if (constraintModes_.empty()) {
+		AgcConstraint constraint = {
+			AgcConstraint::Bound::Lower,
+			0.98,
+			1.0,
+			Pwl({ { { 0.0, 0.5 } } }),
+		};
+
+		constraintModes_[controls::AeConstraintModeNormal].push_back(std::move(constraint));
+	}
+
+	/*
+	 * If we don't have any exposure modes in the tuning data we create an
+	 * ExposureModeHelper using an empty vector of stages. This will result
+	 * in the ExposureModeHelper simply driving the exposure time as high as
+	 * possible before touching gain.
+	 */
+	if (exposureModeHelpers_.empty())
+		exposureModeHelpers_.try_emplace(controls::AeExposureModeNormal,
+						 std::vector<ExposureModeHelper::Stage>{});
+}
+
+AgcMeanLuminance::~AgcMeanLuminance() = default;
+
+/**
+ * \brief Configure the exposure mode helpers
+ * \param[in] lineDuration The sensor line length
+ * \param[in] sensorHelper The sensor helper
+ *
+ * This function configures the exposure mode helpers so they can correctly
+ * take quantization effects into account.
+ */
+void AgcMeanLuminance::configure(utils::Duration lineDuration,
+				 const CameraSensorHelper *sensorHelper)
+{
+	for (auto &[id, helper] : exposureModeHelpers_)
+		helper.configure(lineDuration, sensorHelper);
+
+	luxWarningEnabled_ = true;
+	filteredExposure_ = 0s;
+	frameCount_ = 0;
 }
 
 /**
@@ -502,12 +543,12 @@ void AgcMeanLuminance::setLimits(utils::Duration minExposureTime,
 
 /**
  * \fn AgcMeanLuminance::constraintModes()
- * \brief Get the constraint modes that have been parsed from tuning data
+ * \brief Get the available constraint modes
  */
 
 /**
  * \fn AgcMeanLuminance::exposureModeHelpers()
- * \brief Get the ExposureModeHelpers that have been parsed from tuning data
+ * \brief Get the available ExposureModeHelpers
  */
 
 /**

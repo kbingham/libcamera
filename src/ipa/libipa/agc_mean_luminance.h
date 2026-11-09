@@ -8,7 +8,7 @@
 #pragma once
 
 #include <map>
-#include <memory>
+#include <optional>
 #include <vector>
 
 #include <libcamera/base/utils.h>
@@ -26,9 +26,6 @@ namespace ipa {
 class AgcMeanLuminance
 {
 public:
-	AgcMeanLuminance();
-	~AgcMeanLuminance();
-
 	struct AgcConstraint {
 		enum class Bound {
 			Lower = 0,
@@ -45,9 +42,19 @@ public:
 		virtual double estimateLuminance(double gain) const = 0;
 	};
 
-	void configure(utils::Duration lineDuration, const CameraSensorHelper *sensorHelper);
-	int parseTuningData(const ValueNode &tuningData);
+	struct Configuration {
+		Pwl relativeLuminanceTarget;
+		std::map<int32_t, std::vector<AgcConstraint>> constraintModes;
+		std::map<int32_t, ExposureModeHelper> exposureModeHelpers;
 
+		[[nodiscard]]
+		static std::optional<Configuration> parse(const ValueNode &tuningData);
+	};
+
+	AgcMeanLuminance(Configuration &&config);
+	~AgcMeanLuminance();
+
+	void configure(utils::Duration lineDuration, const CameraSensorHelper *sensorHelper);
 	void setLimits(utils::Duration minExposureTime, utils::Duration maxExposureTime,
 		       double minGain, double maxGain, std::vector<AgcConstraint> constraints);
 
@@ -80,20 +87,17 @@ public:
 	double effectiveYTarget(double lux, double exposureCompensation) const;
 
 private:
-	int parseRelativeLuminanceTarget(const ValueNode &tuningData);
-	int parseConstraint(const ValueNode &modeDict, int32_t id);
-	int parseConstraintModes(const ValueNode &tuningData);
-	int parseExposureModes(const ValueNode &tuningData);
 	double estimateInitialGain(const Traits &traits, double yTarget) const;
 	double constraintClampGain(const Params &params, double gain) const;
 	utils::Duration filterExposure(utils::Duration exposureValue);
 
 	utils::Duration filteredExposure_;
 	mutable bool luxWarningEnabled_;
-	Pwl relativeLuminanceTarget_;
 	uint64_t frameCount_;
 
 	std::vector<AgcConstraint> additionalConstraints_;
+
+	Pwl relativeLuminanceTarget_;
 	std::map<int32_t, std::vector<AgcConstraint>> constraintModes_;
 	std::map<int32_t, ExposureModeHelper> exposureModeHelpers_;
 };

@@ -299,7 +299,7 @@ namespace agc {
  *
  * If a CameraSensorHelper is provided in \a sensor, an instance of
  * AgcMeanLuminance is instantiated and the tuning data is loaded by
- * calling AgcMeanLuminance::parseTuningData(). Otherwise an instance
+ * calling AgcMeanLuminance::Configuration::parse(). Otherwise an instance
  * of AgcMSV is instantiated, and in this case the tuning data is ignored.
  *
  * \return 0 on success, or a negative error code
@@ -310,10 +310,11 @@ int AgcAlgorithm::init(const ValueNode &tuningData, CameraSensorHelper *sensor,
 		       const ConfigurationParams &config)
 {
 	if (sensor) {
-		auto &impl = impl_.emplace<AgcMeanLuminance>();
-		int ret = impl.parseTuningData(tuningData);
-		if (ret)
-			return ret;
+		auto agcConfig = AgcMeanLuminance::Configuration::parse(tuningData);
+		if (!agcConfig)
+			return -EINVAL;
+
+		impl_.emplace<AgcMeanLuminance>(std::move(*agcConfig));
 	} else {
 		impl_.emplace<AgcMSV>();
 	}
