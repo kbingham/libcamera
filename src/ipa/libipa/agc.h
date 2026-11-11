@@ -154,8 +154,7 @@ public:
 
 private:
 	void processFrameDuration(const agc::Session &session,
-				  agc::FrameContext &frameContext,
-				  utils::Duration frameDuration);
+				  agc::FrameContext &frameContext);
 	void fillMetadata(const agc::Session &session,
 			  const agc::FrameContext &frameContext,
 			  ControlList &metadata);

@@ -725,7 +725,7 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
 			   ControlList &metadata)
 {
 	if (!params) {
-		processFrameDuration(session, frameContext, frameContext.minFrameDuration);
+		processFrameDuration(session, frameContext);
 		fillMetadata(session, frameContext, metadata);
 		return;
 	}
@@ -829,12 +829,7 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
 		<< "quantization-gain: " << state.automatic.quantizationGain << ", "
 		<< "digital-gain: " << state.automatic.digitalGain;
 
-	/*
-	 * Expand the target frame duration so that we do not run faster than
-	 * the minimum frame duration when we have short exposures.
-	 */
-	processFrameDuration(session, frameContext,
-			     std::max(frameContext.minFrameDuration, newExposureTime));
+	processFrameDuration(session, frameContext);
 
 	fillMetadata(session, frameContext, metadata);
 }
@@ -843,22 +838,26 @@ void AgcAlgorithm::process(const agc::Session &session, agc::ActiveState &state,
  * \brief Process frame duration and compute vblank
  * \param[in] session The session parameters
  * \param[in] frameContext The current frame context
- * \param[in] frameDuration The target frame duration
  *
  * Compute and populate vblank from the target frame duration.
  */
 void AgcAlgorithm::processFrameDuration(const agc::Session &session,
-					agc::FrameContext &frameContext,
-					utils::Duration frameDuration)
+					agc::FrameContext &frameContext)
 {
 	const utils::Duration &lineDuration = session.lineDuration;
 
-	frameContext.vblank =
-		(frameDuration / lineDuration) - session.sensor.outputSize.height;
+	/*
+	 * Expand the target frame duration so that we do not run faster than
+	 * the minimum frame duration when we have short exposures.
+	 */
+	const auto frameLength = std::max<uint32_t>(
+		frameContext.minFrameDuration / lineDuration,
+		frameContext.exposure);
+
+	frameContext.vblank = frameLength - session.sensor.outputSize.height;
 
 	/* Update frame duration accounting for line length quantization. */
-	frameContext.frameDuration =
-		(session.sensor.outputSize.height + frameContext.vblank) * lineDuration;
+	frameContext.frameDuration = frameLength * lineDuration;
 }
 
 void AgcAlgorithm::fillMetadata(const agc::Session &session,
