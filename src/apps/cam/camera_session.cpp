@@ -97,7 +97,16 @@ CameraSession::CameraSession(CameraManager *cm,
 		std::string orientOpt = options_[OptOrientation].toString();
 		static const std::map<std::string, libcamera::Orientation> orientations{
 			{ "rot0", libcamera::Orientation::Rotate0 },
+			{ "rot90", libcamera::Orientation::Rotate90 },
 			{ "rot180", libcamera::Orientation::Rotate180 },
+			{ "rot270", libcamera::Orientation::Rotate270 },
+
+			{ "rot0mirror", libcamera::Orientation::Rotate0Mirror },
+			{ "rot90mirror", libcamera::Orientation::Rotate90Mirror },
+			{ "rot180mirror", libcamera::Orientation::Rotate180Mirror },
+			{ "rot270mirror", libcamera::Orientation::Rotate270Mirror },
+
+			/* Helpful aliases */
 			{ "mirror", libcamera::Orientation::Rotate0Mirror },
 			{ "flip", libcamera::Orientation::Rotate180Mirror },
 		};

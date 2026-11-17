@@ -146,7 +146,10 @@ int CamApp::parseOptions(int argc, char *argv[])
 			 OptCamera);
 
 	parser.addOption(OptOrientation, OptionString,
-			 "Desired image orientation (rot0, rot180, mirror, flip)",
+			 "Desired image orientation. Supported values:\n"
+			 "- rot0, rot90, rot180, rot270,\n"
+			 "- rot0mirror, rot90mirror, rot180mirror, rot270mirror,\n"
+			 "- mirror (alias for rot0mirror), flip (alias for rot180mirror)",
 			 "orientation", ArgumentRequired, "orientation", false,
 			 OptCamera);
 #ifdef HAVE_KMS
